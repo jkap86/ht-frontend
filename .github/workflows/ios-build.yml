@@ -1,0 +1,100 @@
+name: iOS Build (Manual Signing with APP_CONFIG)
+
+on:
+  workflow_dispatch:
+  # Uncomment to enable auto builds on push:
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    env:
+      APP_ENV: prod
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.0" # set to your version
+          channel: "stable"
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # ==========================================================
+      #  Install distribution certificate (p12) for manual signing
+      # ==========================================================
+      - name: Install distribution certificate
+        env:
+          IOS_DIST_CERT_B64: ${{ secrets.IOS_DIST_CERT_B64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          echo "$IOS_DIST_CERT_B64" | base64 -d > dist-cert.p12
+
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import dist-cert.p12 -k build.keychain -P "$IOS_DIST_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+      # ==========================================================
+      #  Install App Store provisioning profile
+      # ==========================================================
+      - name: Install App Store provisioning profile
+        env:
+          IOS_APPSTORE_PROFILE_B64: ${{ secrets.IOS_APPSTORE_PROFILE_B64 }}
+        run: |
+          echo "$IOS_APPSTORE_PROFILE_B64" | base64 -d > profile.mobileprovision
+
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin <<< "$(security cms -D -i profile.mobileprovision 2>/dev/null)")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' /dev/stdin <<< "$(security cms -D -i profile.mobileprovision 2>/dev/null)")
+
+          echo "Profile UUID: $UUID"
+          echo "Profile Name: $PROFILE_NAME"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+
+      # ==========================================================
+      #  Build iOS IPA with APP_CONFIG dart-define
+      # ==========================================================
+      - name: Build iOS IPA (Flutter)
+        run: |
+          flutter build ipa \
+            --release \
+            --dart-define=APP_CONFIG="{\"env\":\"$APP_ENV\",\"apiBaseUrl\":\"$API_BASE_URL\"}"
+
+      # ==========================================================
+      #  Upload IPA to App Store Connect via API key
+      # ==========================================================
+      - name: Upload IPA to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          echo "$APP_STORE_CONNECT_KEY" > AuthKey.p8
+
+          IPA_PATH=$(ls build/ios/ipa/*.ipa | head -n1)
+          echo "Uploading IPA: $IPA_PATH"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+
+      # ==========================================================
+      #  Save IPA as GitHub artifact
+      # ==========================================================
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/*.ipa
