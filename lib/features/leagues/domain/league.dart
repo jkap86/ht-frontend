@@ -7,7 +7,7 @@ class League {
   final Map<String, dynamic>? scoringSettings;
   final String season;
   final String seasonType;
-  final List<dynamic>? rosterPositions;
+  final Map<String, dynamic>? rosterPositions;
   final int totalRosters;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -35,7 +35,7 @@ class League {
       scoringSettings: json['scoring_settings'] as Map<String, dynamic>?,
       season: json['season'] as String,
       seasonType: json['season_type'] as String? ?? 'regular',
-      rosterPositions: json['roster_positions'] as List<dynamic>?,
+      rosterPositions: json['roster_positions'] as Map<String, dynamic>?,
       totalRosters: json['total_rosters'] as int? ?? 12,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -66,7 +66,7 @@ class League {
     Map<String, dynamic>? scoringSettings,
     String? season,
     String? seasonType,
-    List<dynamic>? rosterPositions,
+    Map<String, dynamic>? rosterPositions,
     int? totalRosters,
     DateTime? createdAt,
     DateTime? updatedAt,
