@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/application/auth_notifier.dart';
 import '../../leagues/application/leagues_provider.dart';
 import '../../leagues/domain/league.dart';
+import '../../leagues/presentation/league_details_screen.dart';
 import 'widgets/add_league_modal.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -141,9 +142,10 @@ class _LeagueCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to league detail screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('View league: ${league.name}')),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => LeagueDetailsScreen(leagueId: league.id),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(12),
