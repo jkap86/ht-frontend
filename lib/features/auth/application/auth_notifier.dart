@@ -1,119 +1,158 @@
+// lib/features/auth/application/auth_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'auth_state.dart';
-import '../infrastructure/auth_repository.dart';
-import '../infrastructure/auth_token_storage.dart';
-import '../../../config/app_config.dart';
+import '../data/auth_repository.dart';
 
-/// Repository provider so we can inject it into the AuthNotifier.
-///
-/// Base URL comes from [appConfig.apiBaseUrl], which is populated from
-/// the APP_CONFIG dart-define JSON.
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final baseUrl = appConfig.apiBaseUrl;
+/// Overall authentication status for the app.
+enum AuthStatus {
+  unknown,
+  authenticated,
+  unauthenticated,
+}
 
-  // Optional: helpful in dev logs
-  // ignore: avoid_print
-  print('🔧 AuthRepository baseUrl = $baseUrl (env: ${appConfig.env})');
+/// Immutable auth state consumed by the UI.
+class AuthState {
+  final AuthStatus status;
+  final String? username;
+  final bool isLoading;
+  final String? error;
 
-  return AuthRepository(baseUrl: baseUrl);
-});
+  const AuthState({
+    required this.status,
+    this.username,
+    this.isLoading = false,
+    this.error,
+  });
 
-/// Handles authentication logic and exposes [AuthState].
-class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._authRepository) : super(AuthState.initial());
+  const AuthState.initial() : this(status: AuthStatus.unknown);
 
-  final AuthRepository _authRepository;
-
-  /// Attempts to restore a previous session from local storage.
-  ///
-  /// Call this once near app startup (e.g., from a FutureProvider or
-  /// a splash screen) to auto-log the user in if a token is present.
-  Future<void> restoreSession() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      final stored = await AuthTokenStorage.read();
-
-      if (stored == null) {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: false,
-          username: null,
-          token: null,
-        );
-        return;
-      }
-
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        username: stored.username,
-        token: stored.token,
-      );
-    } catch (e) {
-      // If anything goes wrong, just treat as logged out
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-        username: null,
-        token: null,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  /// Calls the backend to log in with username/password.
-  Future<void> login({
-    required String username,
-    required String password,
-  }) async {
-    if (username.trim().isEmpty || password.isEmpty) return;
-
-    state = state.copyWith(
-      isLoading: true,
-      errorMessage: null,
+  AuthState copyWith({
+    AuthStatus? status,
+    String? username,
+    bool? isLoading,
+    String? error, // pass null explicitly to clear
+  }) {
+    return AuthState(
+      status: status ?? this.status,
+      username: username ?? this.username,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
-
-    try {
-      final result = await _authRepository.login(
-        username: username,
-        password: password,
-      );
-
-      // Save token + username locally if token is present
-      if (result.token != null && result.token!.isNotEmpty) {
-        await AuthTokenStorage.save(
-          token: result.token!,
-          username: result.username,
-        );
-      }
-
-      state = state.copyWith(
-        isAuthenticated: true,
-        username: result.username,
-        token: result.token,
-        isLoading: false,
-        errorMessage: null,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  /// Logout resets auth state and clears stored token.
-  Future<void> logout() async {
-    await AuthTokenStorage.clear();
-
-    state = AuthState.initial();
   }
 }
 
-/// Global provider for the [AuthNotifier] / [AuthState].
+/// Notifier that coordinates API calls + token storage via [AuthRepository].
+class AuthNotifier extends StateNotifier<AuthState> {
+  final AuthRepository _repo;
+
+  AuthNotifier(this._repo) : super(const AuthState.initial());
+
+  void _setState(AuthState newState) {
+    state = newState;
+  }
+
+  Future<void> register(String username, String password) async {
+    _setState(state.copyWith(isLoading: true, error: null));
+
+    try {
+      final json = await _repo.register(username.trim(), password);
+      final user = json['user'] as Map<String, dynamic>?;
+
+      _setState(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          username: user?['username'] as String?,
+          isLoading: false,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      _setState(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          isLoading: false,
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> login(String username, String password) async {
+    _setState(state.copyWith(isLoading: true, error: null));
+
+    try {
+      final json = await _repo.login(username.trim(), password);
+      final user = json['user'] as Map<String, dynamic>?;
+
+      _setState(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          username: user?['username'] as String?,
+          isLoading: false,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      _setState(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          isLoading: false,
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  /// Check auth on app start: read token (inside repo), hit /me, update state.
+  Future<void> checkAuth() async {
+    _setState(state.copyWith(isLoading: true, error: null));
+
+    try {
+      final json = await _repo.me();
+      final user = json['user'] as Map<String, dynamic>?;
+
+      _setState(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          username: user?['username'] as String?,
+          isLoading: false,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      // If /me fails, clear token and mark unauthenticated.
+      await _repo.logout();
+      _setState(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          isLoading: false,
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  /// Backwards-compatible alias – if other code calls restoreSession(),
+  /// it will just perform the same logic as [checkAuth].
+  Future<void> restoreSession() async {
+    await checkAuth();
+  }
+
+  Future<void> logout() async {
+    await _repo.logout();
+    _setState(
+      const AuthState(
+        status: AuthStatus.unauthenticated,
+        username: null,
+        isLoading: false,
+        error: null,
+      ),
+    );
+  }
+}
+
+/// Global provider for [AuthNotifier] and [AuthState].
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repo = ref.watch(authRepositoryProvider);
+  final repo = AuthRepository();
   return AuthNotifier(repo);
 });

@@ -36,8 +36,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await authNotifier.login(
-      username: username,
-      password: password,
+      username,
+      password,
     );
 
     // 🔐 Make sure widget is still alive before using ref/context
@@ -45,9 +45,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
     // Show error if any (router handles success redirect)
     final authState = ref.read(authProvider);
-    if (authState.errorMessage != null && authState.errorMessage!.isNotEmpty) {
+    if (authState.error != null && authState.error!.isNotEmpty) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(authState.errorMessage!)),
+        SnackBar(content: Text(authState.error!)),
       );
     }
   }

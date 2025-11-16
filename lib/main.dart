@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config/app_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,8 +8,16 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 
+late final AppConfig appConfig;
+
 void main() {
-  runApp(const ProviderScope(child: MyApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+  appConfig = loadAppConfig();
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 /// Router provider so we can plug in auth state and guards.
@@ -19,11 +28,21 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
-      final bool isLoggedIn = authState.isAuthenticated;
-      final String path = state.fullPath ?? state.uri.path;
+      final authStatus = authState.status;
+      final String path = state.matchedLocation;
 
       final bool goingToLogin = path == '/login';
       final bool goingToRegister = path == '/register';
+
+      // If auth is still unknown, allow navigation to login/register
+      if (authStatus == AuthStatus.unknown) {
+        if (goingToLogin || goingToRegister) {
+          return null;
+        }
+        return '/login';
+      }
+
+      final bool isLoggedIn = authStatus == AuthStatus.authenticated;
 
       // If the user is NOT logged in and is trying to go anywhere
       // except /login or /register, send them to /login
@@ -82,12 +101,15 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     // Kick off session restore once, when the app starts.
     // This will read from SharedPreferences and update auth state.
-    ref.read(authProvider.notifier).restoreSession().whenComplete(() {
-      if (mounted) {
-        setState(() {
-          _restored = true;
-        });
-      }
+    // Use Future.microtask to avoid calling ref.read during build
+    Future.microtask(() {
+      ref.read(authProvider.notifier).restoreSession().whenComplete(() {
+        if (mounted) {
+          setState(() {
+            _restored = true;
+          });
+        }
+      });
     });
   }
 

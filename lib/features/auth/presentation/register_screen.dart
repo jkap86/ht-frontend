@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class RegisterScreen extends StatefulWidget {
+import '../application/auth_notifier.dart';
+
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _usernameController = TextEditingController();
@@ -16,7 +19,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -31,30 +33,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
 
-    try {
-      // TODO: replace with real backend register call
-      await Future<void>.delayed(const Duration(seconds: 1));
+    final authNotifier = ref.read(authProvider.notifier);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      if (!mounted) return;
+    await authNotifier.register(username, password);
 
-      // For now: after "successful" registration, go to login
-      context.go('/login');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    // Make sure widget is still alive before using ref/context
+    if (!mounted) return;
+
+    final authState = ref.read(authProvider);
+
+    // Check if registration was successful
+    if (authState.status == AuthStatus.authenticated) {
+      // Success! Router will automatically redirect to /home
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Registration successful!')),
+      );
+    } else if (authState.error != null && authState.error!.isNotEmpty) {
+      // Show error message
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(authState.error!)),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authState = ref.watch(authProvider);
+    final isSubmitting = authState.isLoading;
 
     return Scaffold(
       body: Center(
@@ -177,8 +187,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       SizedBox(
                         height: 48,
                         child: FilledButton(
-                          onPressed: _isSubmitting ? null : _onSubmit,
-                          child: _isSubmitting
+                          onPressed: isSubmitting ? null : _onSubmit,
+                          child: isSubmitting
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -194,7 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       /// Back to login
                       TextButton(
-                        onPressed: _isSubmitting
+                        onPressed: isSubmitting
                             ? null
                             : () {
                                 context.go('/login');
