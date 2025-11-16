@@ -2,53 +2,218 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/application/auth_notifier.dart';
+import '../../leagues/application/leagues_provider.dart';
+import '../../leagues/domain/league.dart';
+import 'widgets/add_league_modal.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final username = authState.username ?? 'User';
+    final leaguesAsync = ref.watch(myLeaguesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('My Leagues'),
         actions: [
           IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // This flips isAuthenticated to false
-              // GoRouter redirect logic in main.dart will handle sending user to /login
               ref.read(authProvider.notifier).logout();
             },
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Welcome, $username!',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You are logged in.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () {
-                ref.read(authProvider.notifier).logout();
+      body: leaguesAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading leagues',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () {
+                  ref.read(myLeaguesProvider.notifier).refresh();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (leagues) {
+          if (leagues.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.sports_football,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No leagues yet',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Create your first league to get started!',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => ref.read(myLeaguesProvider.notifier).refresh(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: leagues.length,
+              itemBuilder: (context, index) {
+                final league = leagues[index];
+                return _LeagueCard(league: league);
               },
-              icon: const Icon(Icons.logout),
-              label: const Text('Log out'),
             ),
-          ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AddLeagueModal(),
+          );
+        },
+        tooltip: 'Add League',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _LeagueCard extends StatelessWidget {
+  final League league;
+
+  const _LeagueCard({required this.league});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Status badge color
+    Color statusColor;
+    switch (league.status) {
+      case 'pre_draft':
+        statusColor = Colors.orange;
+        break;
+      case 'drafting':
+        statusColor = Colors.blue;
+        break;
+      case 'in_progress':
+        statusColor = Colors.green;
+        break;
+      case 'completed':
+        statusColor = Colors.grey;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          // TODO: Navigate to league detail screen
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('View league: ${league.name}')),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      league.name,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: statusColor, width: 1),
+                    ),
+                    child: Text(
+                      league.status.toUpperCase(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Season ${league.season}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.people,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${league.totalRosters} teams',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
