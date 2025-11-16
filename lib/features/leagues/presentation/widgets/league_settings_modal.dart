@@ -56,8 +56,8 @@ class LeagueSettingsModal extends StatelessWidget {
                   children: [
                     // Basic Info
                     _buildInfoSection('Basic Information', [
-                      _buildInfoRow('Season', league.season),
-                      _buildInfoRow('Season Type', _formatSeasonType(league.seasonType)),
+                      _buildInfoRow('Season', league.settings?['season']?.toString() ?? 'N/A'),
+                      _buildInfoRow('Season Type', _formatSeasonType(league.settings?['season_type'] as String? ?? 'regular')),
                       _buildInfoRow('Status', _formatStatus(league.status)),
                       _buildInfoRow('Total Teams', '${league.totalRosters}'),
                       _buildInfoRow(

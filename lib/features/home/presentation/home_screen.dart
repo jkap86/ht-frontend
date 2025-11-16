@@ -5,7 +5,7 @@ import '../../auth/application/auth_notifier.dart';
 import '../../leagues/application/leagues_provider.dart';
 import '../../leagues/domain/league.dart';
 import '../../leagues/presentation/league_details_screen.dart';
-import 'widgets/add_league_modal.dart';
+import 'widgets/add_league_modal_new.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -194,7 +194,7 @@ class _LeagueCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Season ${league.season}',
+                    'Season ${league.settings?['season'] ?? 'N/A'}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

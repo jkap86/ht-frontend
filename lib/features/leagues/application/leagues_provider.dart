@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/leagues_repository.dart';
 import '../domain/league.dart';
+import '../domain/repositories/leagues_repository_interface.dart';
 
 /// Provider for the leagues repository
-final leaguesRepositoryProvider = Provider<LeaguesRepository>((ref) {
+/// Uses abstract interface for better decoupling
+final leaguesRepositoryProvider = Provider<ILeaguesRepository>((ref) {
   return LeaguesRepository();
 });
 

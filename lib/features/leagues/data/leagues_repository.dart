@@ -1,30 +1,36 @@
 import '../domain/league.dart';
+import '../domain/repositories/leagues_repository_interface.dart';
 import 'leagues_api_client.dart';
 
-/// Repository layer for leagues
-/// Wraps the API client and could add caching, error handling, etc.
-class LeaguesRepository {
+/// Repository implementation for leagues
+/// Wraps the API client and handles DTO/Domain conversion
+class LeaguesRepository implements ILeaguesRepository {
   final LeaguesApiClient _apiClient;
 
   LeaguesRepository({LeaguesApiClient? apiClient})
       : _apiClient = apiClient ?? LeaguesApiClient();
 
+  @override
   Future<List<League>> getMyLeagues() async {
     try {
-      return await _apiClient.getMyLeagues();
+      final dtos = await _apiClient.getMyLeagues();
+      return dtos.map((dto) => dto.toDomain()).toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<League> getLeague(int leagueId) async {
+  @override
+  Future<League> getLeagueById(int id) async {
     try {
-      return await _apiClient.getLeague(leagueId);
+      final dto = await _apiClient.getLeague(id);
+      return dto.toDomain();
     } catch (e) {
       rethrow;
     }
   }
 
+  @override
   Future<League> createLeague({
     required String name,
     required String season,
@@ -35,7 +41,7 @@ class LeaguesRepository {
     required String seasonType,
   }) async {
     try {
-      return await _apiClient.createLeague(
+      final dto = await _apiClient.createLeague(
         name: name,
         season: season,
         totalRosters: totalRosters,
@@ -44,8 +50,15 @@ class LeaguesRepository {
         rosterPositions: rosterPositions,
         seasonType: seasonType,
       );
+      return dto.toDomain();
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Legacy method for backward compatibility - will be removed
+  @Deprecated('Use getLeagueById instead')
+  Future<League> getLeague(int leagueId) async {
+    return getLeagueById(leagueId);
   }
 }

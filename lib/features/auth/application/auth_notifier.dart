@@ -1,49 +1,13 @@
 // lib/features/auth/application/auth_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/auth_repository.dart';
+import '../domain/repositories/auth_repository_interface.dart';
+import '../data/auth_repository_new.dart';
+import 'auth_state.dart';
 
-/// Overall authentication status for the app.
-enum AuthStatus {
-  unknown,
-  authenticated,
-  unauthenticated,
-}
-
-/// Immutable auth state consumed by the UI.
-class AuthState {
-  final AuthStatus status;
-  final String? username;
-  final bool isLoading;
-  final String? error;
-
-  const AuthState({
-    required this.status,
-    this.username,
-    this.isLoading = false,
-    this.error,
-  });
-
-  const AuthState.initial() : this(status: AuthStatus.unknown);
-
-  AuthState copyWith({
-    AuthStatus? status,
-    String? username,
-    bool? isLoading,
-    String? error, // pass null explicitly to clear
-  }) {
-    return AuthState(
-      status: status ?? this.status,
-      username: username ?? this.username,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
-}
-
-/// Notifier that coordinates API calls + token storage via [AuthRepository].
+/// Notifier that coordinates auth operations using clean architecture
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repo;
+  final IAuthRepository _repo;
 
   AuthNotifier(this._repo) : super(const AuthState.initial());
 
@@ -52,18 +16,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> register(String username, String password) async {
-    _setState(state.copyWith(isLoading: true, error: null));
+    _setState(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final json = await _repo.register(username.trim(), password);
-      final user = json['user'] as Map<String, dynamic>?;
+      final authResult = await _repo.register(username.trim(), password);
 
       _setState(
         state.copyWith(
           status: AuthStatus.authenticated,
-          username: user?['username'] as String?,
+          user: authResult.user,
           isLoading: false,
-          error: null,
+          clearError: true,
         ),
       );
     } catch (e) {
@@ -78,18 +41,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String username, String password) async {
-    _setState(state.copyWith(isLoading: true, error: null));
+    _setState(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final json = await _repo.login(username.trim(), password);
-      final user = json['user'] as Map<String, dynamic>?;
+      final authResult = await _repo.login(username.trim(), password);
 
       _setState(
         state.copyWith(
           status: AuthStatus.authenticated,
-          username: user?['username'] as String?,
+          user: authResult.user,
           isLoading: false,
-          error: null,
+          clearError: true,
         ),
       );
     } catch (e) {
@@ -103,28 +65,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Check auth on app start: read token (inside repo), hit /me, update state.
+  /// Check auth on app start: read token, fetch user info, update state
   Future<void> checkAuth() async {
-    _setState(state.copyWith(isLoading: true, error: null));
+    _setState(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final json = await _repo.me();
-      final user = json['user'] as Map<String, dynamic>?;
+      final user = await _repo.getCurrentUser();
 
       _setState(
         state.copyWith(
           status: AuthStatus.authenticated,
-          username: user?['username'] as String?,
+          user: user,
           isLoading: false,
-          error: null,
+          clearError: true,
         ),
       );
     } catch (e) {
-      // If /me fails, clear token and mark unauthenticated.
+      // If getCurrentUser fails, clear token and mark unauthenticated
       await _repo.logout();
       _setState(
         state.copyWith(
           status: AuthStatus.unauthenticated,
+          clearUser: true,
           isLoading: false,
           error: e.toString(),
         ),
@@ -132,8 +94,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Backwards-compatible alias – if other code calls restoreSession(),
-  /// it will just perform the same logic as [checkAuth].
+  /// Backwards-compatible alias for checkAuth
   Future<void> restoreSession() async {
     await checkAuth();
   }
@@ -143,7 +104,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _setState(
       const AuthState(
         status: AuthStatus.unauthenticated,
-        username: null,
+        user: null,
         isLoading: false,
         error: null,
       ),
@@ -151,8 +112,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-/// Global provider for [AuthNotifier] and [AuthState].
+/// Provider for auth repository using interface
+final authRepositoryProvider = Provider<IAuthRepository>((ref) {
+  return AuthRepository();
+});
+
+/// Global provider for [AuthNotifier] and [AuthState]
+/// Now using clean architecture with repository interface
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repo = AuthRepository();
+  final repo = ref.watch(authRepositoryProvider);
   return AuthNotifier(repo);
 });

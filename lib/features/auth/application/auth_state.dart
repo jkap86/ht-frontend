@@ -1,44 +1,48 @@
 // lib/features/auth/application/auth_state.dart
+import '../domain/user.dart';
 
+/// Overall authentication status for the app
+enum AuthStatus {
+  unknown,
+  authenticated,
+  unauthenticated,
+}
+
+/// Immutable auth state using domain models
 class AuthState {
-  final bool isAuthenticated;
+  final AuthStatus status;
+  final User? user;
   final bool isLoading;
-  final String? username;
-  final String? token;
-  final String? errorMessage;
+  final String? error;
 
   const AuthState({
-    required this.isAuthenticated,
-    required this.isLoading,
-    required this.username,
-    required this.token,
-    required this.errorMessage,
+    required this.status,
+    this.user,
+    this.isLoading = false,
+    this.error,
   });
 
-  factory AuthState.initial() {
-    return const AuthState(
-      isAuthenticated: false,
-      isLoading: false,
-      username: null,
-      token: null,
-      errorMessage: null,
-    );
-  }
+  const AuthState.initial() : this(status: AuthStatus.unknown);
+
+  /// Convenience getter for backwards compatibility
+  bool get isAuthenticated => status == AuthStatus.authenticated;
+
+  /// Convenience getter for backwards compatibility
+  String? get username => user?.username;
 
   AuthState copyWith({
-    bool? isAuthenticated,
+    AuthStatus? status,
+    User? user,
     bool? isLoading,
-    String? username,
-    String? token,
-    String? errorMessage,
+    String? error,
     bool clearError = false,
+    bool clearUser = false,
   }) {
     return AuthState(
-      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      status: status ?? this.status,
+      user: clearUser ? null : (user ?? this.user),
       isLoading: isLoading ?? this.isLoading,
-      username: username ?? this.username,
-      token: token ?? this.token,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
