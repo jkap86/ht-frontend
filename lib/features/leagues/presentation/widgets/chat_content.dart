@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/league_chat_provider.dart';
 import 'chat_message_tile.dart';
+import '../../../direct_messages/presentation/widgets/dm_conversations_list.dart';
+import '../../../direct_messages/presentation/widgets/dm_conversation_view.dart';
+
+enum ChatMode { league, directMessages }
 
 /// Widget displaying chat messages and input field
 class ChatContent extends ConsumerStatefulWidget {
@@ -25,6 +29,11 @@ class _ChatContentState extends ConsumerState<ChatContent> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isSending = false;
+  ChatMode _chatMode = ChatMode.league;
+
+  // DM conversation state
+  String? _selectedUserId;
+  String? _selectedUsername;
 
   @override
   void dispose() {
@@ -92,18 +101,32 @@ class _ChatContentState extends ConsumerState<ChatContent> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.drag_handle),
-                    SizedBox(width: 8),
-                    Icon(Icons.chat),
-                    SizedBox(width: 8),
-                    Text(
-                      'Chat',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    const Icon(Icons.drag_handle),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _chatMode = _chatMode == ChatMode.league
+                              ? ChatMode.directMessages
+                              : ChatMode.league;
+                        });
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _chatMode == ChatMode.league ? 'League Chat' : 'Direct Messages',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.swap_horiz, size: 18),
+                        ],
                       ),
                     ),
                   ],
@@ -119,98 +142,125 @@ class _ChatContentState extends ConsumerState<ChatContent> {
             ),
           ),
 
-          // Chat messages
+          // Chat messages or DM conversations
           Expanded(
-            child: chatState.when(
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No messages yet.\nStart the conversation!',
-                      style: TextStyle(color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
+            child: _chatMode == ChatMode.league
+                ? chatState.when(
+                    data: (messages) {
+                      if (messages.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No messages yet.\nStart the conversation!',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
 
-                WidgetsBinding.instance
-                    .addPostFrameCallback((_) => _scrollToBottom());
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _scrollToBottom());
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(12),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    return ChatMessageTile(message: messages[index]);
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Error loading messages',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          return ChatMessageTile(message: messages[index]);
+                        },
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, stack) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Error loading messages',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => ref
+                                .refresh(leagueChatProvider(widget.leagueId)),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () =>
-                          ref.refresh(leagueChatProvider(widget.leagueId)),
-                      child: const Text(
-                        'Retry',
-                        style: TextStyle(fontSize: 12),
+                  )
+                : _selectedUserId != null && _selectedUsername != null
+                    ? DmConversationView(
+                        otherUserId: _selectedUserId!,
+                        otherUsername: _selectedUsername!,
+                        onBack: () {
+                          setState(() {
+                            _selectedUserId = null;
+                            _selectedUsername = null;
+                          });
+                        },
+                      )
+                    : DmConversationsList(
+                        onConversationSelected: (userId, username) {
+                          setState(() {
+                            _selectedUserId = userId;
+                            _selectedUsername = username;
+                          });
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
 
-          // Message input
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(12),
+          // Message input (only show for league chat, not for DM conversations list)
+          if (_chatMode == ChatMode.league ||
+              (_chatMode == ChatMode.directMessages && _selectedUserId == null))
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(12),
+                ),
               ),
+              child: _chatMode == ChatMode.league
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _messageController,
+                            decoration: const InputDecoration(
+                              hintText: 'Type a message...',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: _sendMessage,
+                          icon: const Icon(Icons.send),
+                          style: IconButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

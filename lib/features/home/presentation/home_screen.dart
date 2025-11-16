@@ -13,10 +13,11 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final leaguesAsync = ref.watch(myLeaguesProvider);
+    final authState = ref.watch(authProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Leagues'),
+        title: Text(authState.user?.username ?? 'My Leagues'),
         actions: [
           IconButton(
             tooltip: 'Log out',
