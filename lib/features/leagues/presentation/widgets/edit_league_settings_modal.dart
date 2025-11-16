@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/league.dart';
 import '../../application/edit_league_controller.dart';
+import 'league_settings_sections/editable_scoring_settings_section.dart';
+import 'league_settings_sections/editable_roster_positions_section.dart';
+import 'league_settings_sections/editable_waiver_settings_section.dart';
+import 'league_settings_sections/editable_dues_payouts_section.dart';
 
 /// Editable league settings modal for commissioners
 class EditLeagueSettingsModal extends ConsumerWidget {
@@ -22,9 +26,9 @@ class EditLeagueSettingsModal extends ConsumerWidget {
       if (next.isSuccess) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('League settings updated successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('League settings updated successfully'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
       }
@@ -53,18 +57,22 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Card(
-                          color: Colors.red.shade50,
+                          color: Theme.of(context).colorScheme.errorContainer,
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline,
-                                    color: Colors.red.shade700),
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Theme.of(context).colorScheme.onErrorContainer,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     state.error!,
-                                    style: TextStyle(color: Colors.red.shade700),
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onErrorContainer,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -83,26 +91,49 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                     const SizedBox(height: 16),
 
                     // Schedule Settings (editable)
-                    if (state.editedLeague.settings != null)
+                    if (state.editedLeague.settings != null) ...[
                       _EditableScheduleSection(
                         settings: state.editedLeague.settings!,
                         onChanged: controller.updateSetting,
                       ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
 
-                    // Note: Can add more editable sections here
-                    const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'Note: Additional settings (Scoring, Roster Positions, Waivers, Dues) can be edited in future updates.',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                          ),
-                        ),
+                    // Scoring Settings (editable)
+                    if (state.editedLeague.scoringSettings != null) ...[
+                      EditableScoringSettingsSection(
+                        scoringSettings: state.editedLeague.scoringSettings!,
+                        onChanged: controller.updateScoringSetting,
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Roster Positions (editable)
+                    if (state.editedLeague.rosterPositions != null) ...[
+                      EditableRosterPositionsSection(
+                        rosterPositions: state.editedLeague.rosterPositions!,
+                        onChanged: controller.updateRosterPosition,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Waiver Settings (editable)
+                    if (state.editedLeague.settings != null) ...[
+                      EditableWaiverSettingsSection(
+                        settings: state.editedLeague.settings!,
+                        onChanged: controller.updateSetting,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Dues & Payouts (editable)
+                    if (state.editedLeague.settings != null) ...[
+                      EditableDuesPayoutsSection(
+                        settings: state.editedLeague.settings!,
+                        onChanged: controller.updateSetting,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ],
                 ),
               ),
@@ -146,26 +177,35 @@ class _SettingsHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.edit, color: Colors.white),
+          Icon(
+            Icons.edit,
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Edit League Settings',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),
           if (hasChanges)
             IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
+              icon: Icon(
+                Icons.refresh,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
               onPressed: onReset,
               tooltip: 'Reset changes',
             ),
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: Icon(
+              Icons.close,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
             onPressed: onClose,
           ),
         ],
@@ -358,9 +398,11 @@ class _SettingsFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: Border(
-          top: BorderSide(color: Colors.grey.shade300),
+          top: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
       ),
       child: Row(
@@ -374,12 +416,12 @@ class _SettingsFooter extends StatelessWidget {
           FilledButton.icon(
             onPressed: (hasChanges && !isSubmitting) ? onSave : null,
             icon: isSubmitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   )
                 : const Icon(Icons.save),

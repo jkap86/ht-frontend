@@ -5,12 +5,12 @@ import 'user_dto.dart';
 class AuthResultDto {
   final UserDto user;
   final String token;
-  final String refreshToken;
+  final String? refreshToken;
 
   AuthResultDto({
     required this.user,
     required this.token,
-    required this.refreshToken,
+    this.refreshToken,
   });
 
   /// Convert JSON from API to DTO
@@ -18,7 +18,7 @@ class AuthResultDto {
     return AuthResultDto(
       user: UserDto.fromJson(json['user'] as Map<String, dynamic>),
       token: json['token'] as String,
-      refreshToken: json['refreshToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
     );
   }
 
@@ -27,7 +27,7 @@ class AuthResultDto {
     return AuthResult(
       user: user.toDomain(),
       token: token,
-      refreshToken: refreshToken,
+      refreshToken: refreshToken ?? '',
     );
   }
 }

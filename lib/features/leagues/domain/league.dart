@@ -10,6 +10,8 @@ class League {
   final DateTime? draftDate;
   final int? commissionerRosterId;
   final int? userRosterId; // Current user's roster_id in this league
+  final String season;
+  final String seasonType;
   final Map<String, dynamic>? settings;
   final Map<String, dynamic>? scoringSettings;
   final Map<String, dynamic>? rosterPositions;
@@ -26,6 +28,8 @@ class League {
     this.draftDate,
     this.commissionerRosterId,
     this.userRosterId,
+    required this.season,
+    required this.seasonType,
     this.settings,
     this.scoringSettings,
     this.rosterPositions,
@@ -51,6 +55,8 @@ class League {
     DateTime? draftDate,
     int? commissionerRosterId,
     int? userRosterId,
+    String? season,
+    String? seasonType,
     Map<String, dynamic>? settings,
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
@@ -67,6 +73,8 @@ class League {
       draftDate: draftDate ?? this.draftDate,
       commissionerRosterId: commissionerRosterId ?? this.commissionerRosterId,
       userRosterId: userRosterId ?? this.userRosterId,
+      season: season ?? this.season,
+      seasonType: seasonType ?? this.seasonType,
       settings: settings ?? this.settings,
       scoringSettings: scoringSettings ?? this.scoringSettings,
       rosterPositions: rosterPositions ?? this.rosterPositions,

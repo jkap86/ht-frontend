@@ -12,6 +12,8 @@ class LeagueDto {
   final DateTime? draftDate;
   final int? commissionerRosterId;
   final int? userRosterId;
+  final String season;
+  final String seasonType;
   final Map<String, dynamic>? settings;
   final Map<String, dynamic>? scoringSettings;
   final Map<String, dynamic>? rosterPositions;
@@ -28,6 +30,8 @@ class LeagueDto {
     this.draftDate,
     this.commissionerRosterId,
     this.userRosterId,
+    required this.season,
+    required this.seasonType,
     this.settings,
     this.scoringSettings,
     this.rosterPositions,
@@ -49,6 +53,8 @@ class LeagueDto {
           : null,
       commissionerRosterId: json['commissioner_roster_id'] as int?,
       userRosterId: json['user_roster_id'] as int?,
+      season: json['season'] as String,
+      seasonType: json['season_type'] as String,
       settings: json['settings'] as Map<String, dynamic>?,
       scoringSettings: json['scoring_settings'] as Map<String, dynamic>?,
       rosterPositions: json['roster_positions'] as Map<String, dynamic>?,
@@ -69,6 +75,8 @@ class LeagueDto {
       'draft_date': draftDate?.toIso8601String(),
       'commissioner_roster_id': commissionerRosterId,
       'user_roster_id': userRosterId,
+      'season': season,
+      'season_type': seasonType,
       'settings': settings,
       'scoring_settings': scoringSettings,
       'roster_positions': rosterPositions,
@@ -89,6 +97,8 @@ class LeagueDto {
       draftDate: draftDate,
       commissionerRosterId: commissionerRosterId,
       userRosterId: userRosterId,
+      season: season,
+      seasonType: seasonType,
       settings: settings,
       scoringSettings: scoringSettings,
       rosterPositions: rosterPositions,
@@ -109,6 +119,8 @@ class LeagueDto {
       draftDate: league.draftDate,
       commissionerRosterId: league.commissionerRosterId,
       userRosterId: league.userRosterId,
+      season: league.season,
+      seasonType: league.seasonType,
       settings: league.settings,
       scoringSettings: league.scoringSettings,
       rosterPositions: league.rosterPositions,

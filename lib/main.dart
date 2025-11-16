@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/app_config.dart';
+import 'config/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,14 +24,17 @@ void main() {
 
 /// Router provider so we can plug in auth state and guards.
 final routerProvider = Provider<GoRouter>((ref) {
+  print('🔍 [routerProvider] Router provider rebuild triggered');
   // Watch auth state so the router rebuilds when login/logout happens
   final authState = ref.watch(authProvider);
+  print('🔍 [routerProvider] Auth state watched: ${authState.status}, user: ${authState.user?.username}');
 
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
       final authStatus = authState.status;
       final String path = state.matchedLocation;
+      print('🔍 [Router redirect] Path: $path, AuthStatus: $authStatus');
 
       final bool goingToLogin = path == '/login';
       final bool goingToRegister = path == '/register';
@@ -99,18 +103,43 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
+    print('🔍 [_MyAppState] initState called');
 
     // Kick off session restore once, when the app starts.
-    // This will read from SharedPreferences and update auth state.
+    // Skip if already authenticated (e.g., after hot reload with cached state)
     // Use Future.microtask to avoid calling ref.read during build
     Future.microtask(() {
-      ref.read(authProvider.notifier).restoreSession().whenComplete(() {
-        if (mounted) {
-          setState(() {
-            _restored = true;
-          });
-        }
-      });
+      print('🔍 [_MyAppState] Future.microtask executing');
+      final currentAuthStatus = ref.read(authProvider).status;
+      print('🔍 [_MyAppState] Current auth status: $currentAuthStatus');
+
+      // Skip restoration if already authenticated (hot reload preserved state)
+      if (currentAuthStatus == AuthStatus.authenticated) {
+        print('🔍 [_MyAppState] Already authenticated (from cache), skipping restore');
+        setState(() {
+          _restored = true;
+        });
+        return;
+      }
+
+      // Only restore session if status is unknown (fresh start)
+      if (currentAuthStatus == AuthStatus.unknown) {
+        print('🔍 [_MyAppState] Status unknown, calling restoreSession');
+        ref.read(authProvider.notifier).restoreSession().whenComplete(() {
+          print('🔍 [_MyAppState] restoreSession completed');
+          if (mounted) {
+            setState(() {
+              _restored = true;
+            });
+          }
+        });
+      } else {
+        // If unauthenticated, just mark as restored
+        print('🔍 [_MyAppState] Already unauthenticated, skipping restore');
+        setState(() {
+          _restored = true;
+        });
+      }
     });
   }
 
@@ -133,17 +162,8 @@ class _MyAppState extends ConsumerState<MyApp> {
     return MaterialApp.router(
       title: 'Fantasy Football App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: router,
     );

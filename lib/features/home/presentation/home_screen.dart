@@ -194,7 +194,7 @@ class _LeagueCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Season ${league.settings?['season'] ?? 'N/A'}',
+                    'Season ${league.season}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

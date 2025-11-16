@@ -14,7 +14,7 @@ class UserDto {
   /// Convert JSON from API to DTO
   factory UserDto.fromJson(Map<String, dynamic> json) {
     return UserDto(
-      userId: json['userId'] as String,
+      userId: json['id'] as String,
       username: json['username'] as String,
     );
   }

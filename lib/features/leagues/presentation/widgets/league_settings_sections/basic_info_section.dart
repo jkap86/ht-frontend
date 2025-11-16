@@ -19,12 +19,11 @@ class BasicInfoSection extends StatelessWidget {
       children: [
         InfoRow(
           label: 'Season',
-          value: league.settings?['season']?.toString() ?? 'N/A',
+          value: league.season,
         ),
         InfoRow(
           label: 'Season Type',
-          value: _formatSeasonType(
-              league.settings?['season_type'] as String? ?? 'regular'),
+          value: _formatSeasonType(league.seasonType),
         ),
         InfoRow(
           label: 'Status',

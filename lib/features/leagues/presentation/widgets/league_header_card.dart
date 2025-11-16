@@ -36,7 +36,7 @@ class LeagueHeaderCard extends StatelessWidget {
                 _LeagueStatusBadge(status: league.status),
                 _LeagueInfoChip(
                   icon: Icons.calendar_today,
-                  label: '${league.settings?['season'] ?? 'N/A'} Season',
+                  label: '${league.season} Season',
                 ),
                 _LeagueInfoChip(
                   icon: Icons.people,

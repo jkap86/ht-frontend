@@ -1,73 +1,170 @@
-// lib/features/auth/data/auth_api_client.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
-import '../../../main.dart'; // where appConfig lives
+import '../../../main.dart';
+import '../domain/auth_exceptions.dart';
+import 'dtos/auth_result_dto.dart';
+import 'dtos/user_dto.dart';
+import 'auth_token_storage.dart';
 
+/// API client for authentication endpoints
+/// Handles HTTP communication and returns DTOs
 class AuthApiClient {
+  final String _baseUrl = appConfig.apiBaseUrl;
   final http.Client _client;
+  final AuthTokenStorage _storage;
 
-  AuthApiClient({http.Client? client}) : _client = client ?? http.Client();
+  AuthApiClient({
+    http.Client? client,
+    AuthTokenStorage? storage,
+  })  : _client = client ?? http.Client(),
+        _storage = storage ?? AuthTokenStorage();
 
-  Uri _uri(String path) {
-    // backend endpoints: /api/auth/...
-    return Uri.parse('${appConfig.apiBaseUrl}$path');
+  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  /// Parse HTTP errors and throw appropriate exceptions
+  Never _handleError(http.Response response, String operation) {
+    final statusCode = response.statusCode;
+
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final errorMessage = json['error'] as String? ?? 'Unknown error occurred';
+
+      switch (statusCode) {
+        case 400:
+          throw ValidationException(errorMessage);
+        case 401:
+          throw InvalidCredentialsException(errorMessage);
+        case 404:
+          throw NotFoundException(errorMessage);
+        case 409:
+          throw ConflictException(errorMessage);
+        default:
+          throw ServerException(errorMessage, statusCode);
+      }
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw ServerException('$operation failed with status $statusCode', statusCode);
+    }
   }
 
-  Future<Map<String, dynamic>> register({
-    required String email,
-    required String password,
-  }) async {
-    final response = await _client.post(
-      _uri('/api/auth/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+  /// Handle network errors
+  Never _handleNetworkError(Object error, String operation) {
+    if (error is SocketException) {
+      throw const NetworkException('Unable to connect to server');
     }
-
-    throw Exception('Register failed: ${response.statusCode} ${response.body}');
+    if (error is FormatException) {
+      throw const NetworkException('Invalid response from server');
+    }
+    throw NetworkException('$operation failed: ${error.toString()}');
   }
 
-  Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
-    final response = await _client.post(
-      _uri('/api/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
+  /// Register a new user
+  Future<AuthResultDto> register(String username, String password) async {
+    try {
+      final response = await _client.post(
+        _uri('/api/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
+      );
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _handleError(response, 'Registration');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return AuthResultDto.fromJson(json);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      _handleNetworkError(e, 'Registration');
     }
-
-    throw Exception('Login failed: ${response.statusCode} ${response.body}');
   }
 
-  Future<Map<String, dynamic>> me({
-    required String token,
-  }) async {
-    final response = await _client.get(
-      _uri('/api/auth/me'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+  /// Login with credentials
+  Future<AuthResultDto> login(String username, String password) async {
+    try {
+      final uri = _uri('/api/auth/login');
+      // ignore: avoid_print
+      print('🌐 Making login request to: $uri');
+      // ignore: avoid_print
+      print('🌐 Request body: ${jsonEncode({'username': username, 'password': password})}');
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final response = await _client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
+      );
+
+      // ignore: avoid_print
+      print('🌐 Response status: ${response.statusCode}');
+      // ignore: avoid_print
+      print('🌐 Response body: ${response.body}');
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _handleError(response, 'Login');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return AuthResultDto.fromJson(json);
+    } catch (e) {
+      // ignore: avoid_print
+      print('❌ Login request failed: $e');
+      if (e is AuthException) rethrow;
+      _handleNetworkError(e, 'Login');
     }
+  }
 
-    throw Exception('Me failed: ${response.statusCode} ${response.body}');
+  /// Get current user info
+  Future<UserDto> me() async {
+    try {
+      final token = await _storage.readToken();
+      if (token == null) {
+        throw const UnauthenticatedException('No authentication token found');
+      }
+
+      final response = await _client.get(
+        _uri('/api/auth/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _handleError(response, 'User info retrieval');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return UserDto.fromJson(json);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      _handleNetworkError(e, 'User info retrieval');
+    }
+  }
+
+  /// Refresh access token
+  Future<AuthResultDto> refreshAccessToken() async {
+    try {
+      final refreshToken = await _storage.readRefreshToken();
+      if (refreshToken == null) {
+        throw const TokenRefreshException('No refresh token available');
+      }
+
+      final response = await _client.post(
+        _uri('/api/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _handleError(response, 'Token refresh');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return AuthResultDto.fromJson(json);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      _handleNetworkError(e, 'Token refresh');
+    }
   }
 }

@@ -12,22 +12,29 @@ class AuthTokenStorage {
       : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> saveToken(String token) async {
+    print('🔍 [AuthTokenStorage] Saving access token (length: ${token.length})');
     await _storage.write(key: _accessTokenKey, value: token);
   }
 
   Future<String?> readToken() async {
-    return _storage.read(key: _accessTokenKey);
+    final token = await _storage.read(key: _accessTokenKey);
+    print('🔍 [AuthTokenStorage] Read access token: ${token != null ? 'Found (length: ${token.length})' : 'Not found'}');
+    return token;
   }
 
   Future<void> saveRefreshToken(String refreshToken) async {
+    print('🔍 [AuthTokenStorage] Saving refresh token (length: ${refreshToken.length})');
     await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
   Future<String?> readRefreshToken() async {
-    return _storage.read(key: _refreshTokenKey);
+    final token = await _storage.read(key: _refreshTokenKey);
+    print('🔍 [AuthTokenStorage] Read refresh token: ${token != null ? 'Found (length: ${token.length})' : 'Not found'}');
+    return token;
   }
 
   Future<void> clearToken() async {
+    print('🔍 [AuthTokenStorage] Clearing all tokens');
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _refreshTokenKey);
   }
