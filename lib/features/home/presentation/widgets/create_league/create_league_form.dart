@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/create_league_controller.dart';
+import '../../../../leagues/presentation/league_details_screen.dart';
+import '../../../../leagues/application/leagues_provider.dart';
 import '../league_form/dues_payouts_section.dart';
 import 'basic_settings_section.dart';
 import 'scoring_settings_section.dart';
@@ -18,13 +20,24 @@ class CreateLeagueForm extends ConsumerWidget {
     final state = ref.watch(createLeagueControllerProvider);
     final controller = ref.read(createLeagueControllerProvider.notifier);
 
-    // Listen for success and close modal
-    ref.listen(createLeagueControllerProvider, (previous, next) {
+    // Listen for success and navigate to league
+    ref.listen(createLeagueControllerProvider, (previous, next) async {
       if (next.isSuccess && !next.isSubmitting) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('League created successfully!')),
-        );
+        // Get the newly created league from the leagues list
+        final leagues = ref.read(myLeaguesProvider).valueOrNull ?? [];
+        if (leagues.isNotEmpty) {
+          final newLeague = leagues.first; // The newest league is at the top
+
+          // Close the modal
+          Navigator.of(context).pop();
+
+          // Navigate to the league details screen
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => LeagueDetailsScreen(leagueId: newLeague.id),
+            ),
+          );
+        }
       }
     });
 

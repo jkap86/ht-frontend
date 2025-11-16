@@ -35,7 +35,8 @@ class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
   }
 
   /// Create a new league and add it to the list
-  Future<void> addLeague({
+  /// Returns the created league
+  Future<League> addLeague({
     required String name,
     required String season,
     required int totalRosters,
@@ -61,6 +62,8 @@ class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
     state.whenData((leagues) {
       state = AsyncValue.data([newLeague, ...leagues]);
     });
+
+    return newLeague;
   }
 
   /// Update an existing league
