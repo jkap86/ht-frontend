@@ -85,21 +85,12 @@ class AuthApiClient {
   Future<AuthResultDto> login(String username, String password) async {
     try {
       final uri = _uri('/api/auth/login');
-      // ignore: avoid_print
-      print('🌐 Making login request to: $uri');
-      // ignore: avoid_print
-      print('🌐 Request body: ${jsonEncode({'username': username, 'password': password})}');
 
       final response = await _client.post(
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
-
-      // ignore: avoid_print
-      print('🌐 Response status: ${response.statusCode}');
-      // ignore: avoid_print
-      print('🌐 Response body: ${response.body}');
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         _handleError(response, 'Login');
@@ -108,8 +99,6 @@ class AuthApiClient {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return AuthResultDto.fromJson(json);
     } catch (e) {
-      // ignore: avoid_print
-      print('❌ Login request failed: $e');
       if (e is AuthException) rethrow;
       _handleNetworkError(e, 'Login');
     }
@@ -135,7 +124,14 @@ class AuthApiClient {
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return UserDto.fromJson(json);
+
+      // Backend returns { user: { id, username } }, extract the user object
+      final userData = json['user'] as Map<String, dynamic>?;
+      if (userData == null) {
+        throw const UnauthenticatedException('Invalid response format from /me endpoint');
+      }
+
+      return UserDto.fromJson(userData);
     } catch (e) {
       if (e is AuthException) rethrow;
       _handleNetworkError(e, 'User info retrieval');

@@ -7,27 +7,207 @@ class AppTheme {
   AppTheme._();
 
   /// Brand color - change this to update the entire app's color scheme
-  static const Color seedColor = Colors.cyanAccent;
+  static const Color seedColor = Colors.cyan;
 
   /// Light theme configuration
   static ThemeData get lightTheme {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: Brightness.light,
+    );
+
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: Brightness.light,
-      ),
+      colorScheme: colorScheme,
       useMaterial3: true,
+
+      // AppBar styling
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+      ),
+
+      // Card styling
+      cardTheme: CardTheme(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      // Input field styling
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+      ),
+
+      // Button styling
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      // Dialog styling
+      dialogTheme: DialogTheme(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
+      // Bottom sheet styling
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+      ),
+
+      // Chip styling
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
     );
   }
 
   /// Dark theme configuration
   static ThemeData get darkTheme {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: Brightness.dark,
+    );
+
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: Brightness.dark,
-      ),
+      colorScheme: colorScheme,
       useMaterial3: true,
+
+      // AppBar styling
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+      ),
+
+      // Card styling
+      cardTheme: CardTheme(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      // Input field styling
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+      ),
+
+      // Button styling
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      // Dialog styling
+      dialogTheme: DialogTheme(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
+      // Bottom sheet styling
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+      ),
+
+      // Chip styling
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
     );
   }
 }

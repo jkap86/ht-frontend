@@ -44,9 +44,7 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<User> getCurrentUser() async {
-    print('🔍 [AuthRepository] getCurrentUser called');
     final dto = await _apiClient.me();
-    print('🔍 [AuthRepository] API /me returned user: ${dto.username}');
     return dto.toDomain();
   }
 

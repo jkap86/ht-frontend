@@ -1,6 +1,7 @@
 Write-Host "🏗️ Building PROD Web..."
 
 flutter build web `
-  --dart-define=APP_CONFIG='{"env":"prod","apiBaseUrl":"https://api.example.com"}'
+  --dart-define=ENV=prod `
+  --dart-define=API_BASE_URL=https://api.example.com
 
 Write-Host "✔ Web build complete: build/web"
