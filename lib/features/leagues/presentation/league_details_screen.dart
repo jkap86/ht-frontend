@@ -114,137 +114,8 @@ class LeagueDetailsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Quick Stats Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Quick Info',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickStat(
-                          'League Type',
-                          league.settings?['is_public'] == true ? 'Public' : 'Private',
-                          Icons.lock_outline,
-                        ),
-                      ),
-                      Expanded(
-                        child: _buildQuickStat(
-                          'Season Type',
-                          _formatSeasonType(league.seasonType),
-                          Icons.sports_football,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (league.settings != null) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildQuickStat(
-                            'Regular Season',
-                            'Weeks ${league.settings!['start_week']}-${league.settings!['end_week']}',
-                            Icons.event,
-                          ),
-                        ),
-                        if (league.settings!['playoffs_enabled'] == true)
-                          Expanded(
-                            child: _buildQuickStat(
-                              'Playoffs',
-                              'Week ${league.settings!['playoff_week_start']} (${league.settings!['playoff_teams']} teams)',
-                              Icons.emoji_events,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Scoring Type Card
-          if (league.scoringSettings != null) ...[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Scoring Type',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildScoringType(context, league.scoringSettings!),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Actions Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Actions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: View teams
-                        },
-                        icon: const Icon(Icons.people),
-                        label: const Text('View Teams'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: View matchups
-                        },
-                        icon: const Icon(Icons.sports),
-                        label: const Text('Matchups'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: View standings
-                        },
-                        icon: const Icon(Icons.leaderboard),
-                        label: const Text('Standings'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Buy-In / Payouts Card
+          if (dues > 0) _buildBuyInCard(league, dues),
         ],
       ),
     );
@@ -314,101 +185,106 @@ class LeagueDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickStat(String label, String value, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: Colors.grey),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
+  Widget _buildBuyInCard(League league, double dues) {
+    final totalPot = dues * league.totalRosters;
+    final payoutStructure = league.settings?['payout_structure'] as List<dynamic>?;
+
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        leading: const Icon(Icons.attach_money),
+        title: Text(
+          'Buy-In: \$${dues.toStringAsFixed(2)}',
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      ],
+        subtitle: Text('Total Pot: \$${totalPot.toStringAsFixed(2)}'),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (payoutStructure != null && payoutStructure.isNotEmpty) ...[
+                  const Text(
+                    'Payout Structure',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...payoutStructure.map((payout) {
+                    final payoutMap = payout as Map<String, dynamic>;
+                    final type = payoutMap['type'] as String?;
+                    final place = payoutMap['place'] as int?;
+                    final percentage = (payoutMap['percentage'] as num?)?.toDouble();
+                    final amount = (payoutMap['amount'] as num?)?.toDouble();
+
+                    String label = _getPayoutLabel(type, place);
+                    String value = '';
+
+                    if (percentage != null) {
+                      value = '${percentage.toStringAsFixed(0)}%';
+                      if (amount != null) {
+                        value += ' (\$${amount.toStringAsFixed(2)})';
+                      }
+                    } else if (amount != null) {
+                      value = '\$${amount.toStringAsFixed(2)}';
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(label),
+                          Text(
+                            value,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ] else
+                  const Text(
+                    'No payout structure configured',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildScoringType(BuildContext context, Map<String, dynamic> scoringSettings) {
-    final receptions = (scoringSettings['receiving_receptions'] as num?)?.toDouble() ?? 0.0;
-
-    String scoringType;
-    String description;
-
-    if (receptions >= 1.0) {
-      scoringType = 'Full PPR';
-      description = '1 point per reception';
-    } else if (receptions >= 0.5) {
-      scoringType = 'Half PPR';
-      description = '0.5 points per reception';
-    } else {
-      scoringType = 'Standard';
-      description = 'No points for receptions';
+  String _getPayoutLabel(String? type, int? place) {
+    if (type == 'placement') {
+      return '${_getOrdinal(place ?? 1)} Place';
+    } else if (type == 'placement_points') {
+      return '${_getOrdinal(place ?? 1)} Most Points';
+    } else if (type == 'highest_weekly_score') {
+      return 'Highest Week Score';
+    } else if (type == 'regular_season_winner') {
+      return 'Regular Season Winner';
+    } else if (type == 'highest_points_non_playoff') {
+      return 'Highest Points (Non-Playoff)';
     }
-
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            Icons.score,
-            color: Theme.of(context).primaryColor,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                scoringType,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    return 'Payout';
   }
 
-  String _formatSeasonType(String seasonType) {
-    switch (seasonType.toLowerCase()) {
-      case 'regular':
-        return 'Redraft';
-      case 'playoff':
-        return 'Playoff';
-      case 'dynasty':
-        return 'Dynasty';
-      default:
-        return seasonType;
-    }
+  String _getOrdinal(int place) {
+    if (place == 1) return '1st';
+    if (place == 2) return '2nd';
+    if (place == 3) return '3rd';
+    return '${place}th';
   }
 }
