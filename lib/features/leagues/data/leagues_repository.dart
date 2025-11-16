@@ -56,6 +56,30 @@ class LeaguesRepository implements ILeaguesRepository {
     }
   }
 
+  @override
+  Future<League> updateLeague({
+    required int id,
+    String? name,
+    String? description,
+    Map<String, dynamic>? settings,
+    Map<String, dynamic>? scoringSettings,
+    Map<String, dynamic>? rosterPositions,
+  }) async {
+    try {
+      final dto = await _apiClient.updateLeague(
+        id: id,
+        name: name,
+        description: description,
+        settings: settings,
+        scoringSettings: scoringSettings,
+        rosterPositions: rosterPositions,
+      );
+      return dto.toDomain();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Legacy method for backward compatibility - will be removed
   @Deprecated('Use getLeagueById instead')
   Future<League> getLeague(int leagueId) async {

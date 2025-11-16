@@ -18,51 +18,59 @@ class LeagueDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final leaguesAsync = ref.watch(myLeaguesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('League Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              leaguesAsync.whenData((leagues) {
-                final league = leagues.firstWhere(
-                  (l) => l.id == leagueId,
-                  orElse: () => throw Exception('League not found'),
-                );
-                showDialog(
-                  context: context,
-                  builder: (context) => LeagueSettingsModal(league: league),
-                );
-              });
-            },
-          ),
-        ],
+    return leaguesAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('League Details')),
+        body: const Center(child: CircularProgressIndicator()),
       ),
-      body: leaguesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(myLeaguesProvider),
-                child: const Text('Retry'),
-              ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(title: const Text('League Details')),
+        body: _buildError(error, ref),
+      ),
+      data: (leagues) {
+        final league = leagues.firstWhere(
+          (l) => l.id == leagueId,
+          orElse: () => throw Exception('League not found'),
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('League Details'),
+            actions: [
+              // Only show settings button for commissioners
+              if (league.isCommissioner)
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) =>
+                          LeagueSettingsModal(league: league),
+                    );
+                  },
+                ),
             ],
           ),
-        ),
-        data: (leagues) {
-          final league = leagues.firstWhere(
-            (l) => l.id == leagueId,
-            orElse: () => throw Exception('League not found'),
-          );
-          return _buildLeagueOverview(context, league);
-        },
+          body: _buildLeagueOverview(context, league),
+        );
+      },
+    );
+  }
+
+  Widget _buildError(Object error, WidgetRef ref) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 16),
+          Text('Error: $error'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => ref.refresh(myLeaguesProvider),
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }

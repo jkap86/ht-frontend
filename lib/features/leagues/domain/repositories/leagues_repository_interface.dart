@@ -19,4 +19,14 @@ abstract class ILeaguesRepository {
     required Map<String, int> rosterPositions,
     required String seasonType,
   });
+
+  /// Update an existing league
+  Future<League> updateLeague({
+    required int id,
+    String? name,
+    String? description,
+    Map<String, dynamic>? settings,
+    Map<String, dynamic>? scoringSettings,
+    Map<String, dynamic>? rosterPositions,
+  });
 }

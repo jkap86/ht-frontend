@@ -103,4 +103,42 @@ class LeaguesApiClient {
       throw Exception('Failed to create league: ${response.statusCode}');
     }
   }
+
+  /// Update an existing league
+  Future<LeagueDto> updateLeague({
+    required int id,
+    String? name,
+    String? description,
+    Map<String, dynamic>? settings,
+    Map<String, dynamic>? scoringSettings,
+    Map<String, dynamic>? rosterPositions,
+  }) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    // Build request body with only provided fields
+    final Map<String, dynamic> body = {};
+    if (name != null) body['name'] = name;
+    if (description != null) body['description'] = description;
+    if (settings != null) body['settings'] = settings;
+    if (scoringSettings != null) body['scoring_settings'] = scoringSettings;
+    if (rosterPositions != null) body['roster_positions'] = rosterPositions;
+
+    final response = await _client.put(
+      _uri('/api/leagues/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return LeagueDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      throw Exception('Failed to update league: ${response.statusCode} - ${response.body}');
+    }
+  }
 }

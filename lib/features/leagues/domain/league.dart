@@ -8,6 +8,8 @@ class League {
   final String status;
   final String? draftType;
   final DateTime? draftDate;
+  final int? commissionerRosterId;
+  final int? userRosterId; // Current user's roster_id in this league
   final Map<String, dynamic>? settings;
   final Map<String, dynamic>? scoringSettings;
   final Map<String, dynamic>? rosterPositions;
@@ -22,12 +24,22 @@ class League {
     required this.status,
     this.draftType,
     this.draftDate,
+    this.commissionerRosterId,
+    this.userRosterId,
     this.settings,
     this.scoringSettings,
     this.rosterPositions,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// Check if current user is the commissioner
+  bool get isCommissioner {
+    if (commissionerRosterId == null || userRosterId == null) {
+      return false;
+    }
+    return commissionerRosterId == userRosterId;
+  }
 
   League copyWith({
     int? id,
@@ -37,6 +49,8 @@ class League {
     String? status,
     String? draftType,
     DateTime? draftDate,
+    int? commissionerRosterId,
+    int? userRosterId,
     Map<String, dynamic>? settings,
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
@@ -51,6 +65,8 @@ class League {
       status: status ?? this.status,
       draftType: draftType ?? this.draftType,
       draftDate: draftDate ?? this.draftDate,
+      commissionerRosterId: commissionerRosterId ?? this.commissionerRosterId,
+      userRosterId: userRosterId ?? this.userRosterId,
       settings: settings ?? this.settings,
       scoringSettings: scoringSettings ?? this.scoringSettings,
       rosterPositions: rosterPositions ?? this.rosterPositions,

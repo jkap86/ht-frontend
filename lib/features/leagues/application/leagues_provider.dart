@@ -62,4 +62,34 @@ class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
       state = AsyncValue.data([newLeague, ...leagues]);
     });
   }
+
+  /// Update an existing league
+  Future<void> updateLeague(
+    int id, {
+    String? name,
+    String? description,
+    Map<String, dynamic>? settings,
+    Map<String, dynamic>? scoringSettings,
+    Map<String, dynamic>? rosterPositions,
+  }) async {
+    final repository = ref.read(leaguesRepositoryProvider);
+
+    // Update the league via API
+    final updatedLeague = await repository.updateLeague(
+      id: id,
+      name: name,
+      description: description,
+      settings: settings,
+      scoringSettings: scoringSettings,
+      rosterPositions: rosterPositions,
+    );
+
+    // Update local state
+    state.whenData((leagues) {
+      final updatedLeagues = leagues.map((league) {
+        return league.id == id ? updatedLeague : league;
+      }).toList();
+      state = AsyncValue.data(updatedLeagues);
+    });
+  }
 }
