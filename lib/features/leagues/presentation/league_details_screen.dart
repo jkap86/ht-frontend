@@ -6,6 +6,7 @@ import 'widgets/league_settings_modal.dart';
 import 'widgets/edit_league_settings_modal.dart';
 import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
+import 'widgets/collapsible_chat_widget.dart';
 
 class LeagueDetailsScreen extends ConsumerWidget {
   final int leagueId;
@@ -52,7 +53,14 @@ class LeagueDetailsScreen extends ConsumerWidget {
               ),
             ],
           ),
-          body: _buildLeagueOverview(context, league),
+          body: SizedBox.expand(
+            child: Stack(
+              children: [
+                _buildLeagueOverview(context, league),
+                CollapsibleChatWidget(leagueId: leagueId),
+              ],
+            ),
+          ),
         );
       },
     );
