@@ -5,22 +5,22 @@ import '../../domain/chat_message.dart';
 class ChatMessageDto {
   final int id;
   final int leagueId;
-  final String userId;
+  final String? userId; // Nullable for system messages
   final String message;
   final String messageType;
   final Map<String, dynamic>? metadata;
   final DateTime createdAt;
-  final String username;
+  final String? username; // Nullable for system messages
 
   ChatMessageDto({
     required this.id,
     required this.leagueId,
-    required this.userId,
+    this.userId, // Nullable for system messages
     required this.message,
     required this.messageType,
     this.metadata,
     required this.createdAt,
-    required this.username,
+    this.username, // Nullable for system messages
   });
 
   /// Convert JSON from API to DTO
@@ -28,12 +28,12 @@ class ChatMessageDto {
     return ChatMessageDto(
       id: json['id'] as int,
       leagueId: json['league_id'] as int,
-      userId: json['user_id'] as String,
+      userId: json['user_id'] as String?, // Nullable for system messages
       message: json['message'] as String,
       messageType: json['message_type'] as String,
       metadata: json['metadata'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),
-      username: json['username'] as String,
+      username: json['username'] as String?, // Nullable for system messages
     );
   }
 

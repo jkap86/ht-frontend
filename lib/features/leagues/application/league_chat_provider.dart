@@ -1,11 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/league_chat_api_client.dart';
+import '../data/socket_service.dart';
 import '../domain/chat_message.dart';
 
 /// Provider for the league chat API client
 final leagueChatApiClientProvider = Provider<LeagueChatApiClient>((ref) {
   return LeagueChatApiClient();
+});
+
+/// Provider for the socket service (keepAlive to maintain single instance)
+final socketServiceProvider = Provider<SocketService>((ref) {
+  final service = SocketService();
+  // Keep the socket service alive even when no providers are listening
+  ref.keepAlive();
+  return service;
 });
 
 /// Family provider for league chat messages
@@ -18,8 +27,48 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
   @override
   Future<List<ChatMessage>> build(int leagueId) async {
     // Initial load of chat messages for this league
-    return _fetchMessages(leagueId);
+    final messages = await _fetchMessages(leagueId);
+
+    // Set up WebSocket connection and listeners
+    _setupWebSocket(leagueId);
+
+    return messages;
   }
+
+  Future<void> _setupWebSocket(int leagueId) async {
+    try {
+      final socketService = ref.read(socketServiceProvider);
+
+      // Connect to WebSocket if not already connected
+      if (!socketService.isConnected) {
+        print('[LeagueChatNotifier] Socket not connected, connecting...');
+        await socketService.connect();
+        // Wait a bit for the connection to be fully established
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      // Verify connection before joining
+      if (!socketService.isConnected) {
+        throw Exception('Failed to establish WebSocket connection');
+      }
+
+      print('[LeagueChatNotifier] Socket connected, joining league $leagueId');
+      // Join the league chat room
+      socketService.joinLeague(leagueId);
+
+      // Listen for new messages
+      socketService.onNewMessage((messageDto) {
+        print('[LeagueChatNotifier] Received message from WebSocket, adding to state');
+        final message = messageDto.toDomain();
+        addMessage(message);
+      });
+      print('[LeagueChatNotifier] WebSocket setup complete for league $leagueId');
+    } catch (e) {
+      // Log error but don't fail the initial load
+      print('[LeagueChatNotifier] Failed to set up WebSocket: $e');
+    }
+  }
+
 
   Future<List<ChatMessage>> _fetchMessages(int leagueId, {int limit = 100}) async {
     final apiClient = ref.read(leagueChatApiClientProvider);
@@ -39,16 +88,12 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
 
     try {
       // Send the message via API
-      final messageDto = await apiClient.sendChatMessage(
+      // The WebSocket will handle adding it to the local state
+      await apiClient.sendChatMessage(
         leagueId: arg,
         message: message,
         messageType: messageType,
       );
-
-      // Add the new message to local state
-      state.whenData((messages) {
-        state = AsyncValue.data([...messages, messageDto.toDomain()]);
-      });
     } catch (e) {
       // If sending fails, refresh to get the latest state
       await refresh();

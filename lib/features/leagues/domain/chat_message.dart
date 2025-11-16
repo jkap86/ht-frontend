@@ -3,22 +3,22 @@
 class ChatMessage {
   final int id;
   final int leagueId;
-  final String userId;
+  final String? userId; // Nullable for system messages
   final String message;
   final String messageType;
   final Map<String, dynamic>? metadata;
   final DateTime createdAt;
-  final String username;
+  final String? username; // Nullable for system messages
 
   const ChatMessage({
     required this.id,
     required this.leagueId,
-    required this.userId,
+    this.userId, // Nullable for system messages
     required this.message,
     required this.messageType,
     this.metadata,
     required this.createdAt,
-    required this.username,
+    this.username, // Nullable for system messages
   });
 
   /// Check if this is a system message

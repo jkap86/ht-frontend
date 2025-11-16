@@ -48,8 +48,8 @@ class ChatMessageTile extends StatelessWidget {
           CircleAvatar(
             radius: 14,
             child: Text(
-              message.username.isNotEmpty
-                  ? message.username[0].toUpperCase()
+              (message.username?.isNotEmpty ?? false)
+                  ? message.username![0].toUpperCase()
                   : '?',
               style: const TextStyle(fontSize: 12),
             ),
@@ -65,7 +65,7 @@ class ChatMessageTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      message.username,
+                      message.username ?? 'Unknown',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
