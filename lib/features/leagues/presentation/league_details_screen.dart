@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league.dart';
 import '../application/leagues_provider.dart';
+import 'widgets/league_settings_modal.dart';
 
 class LeagueDetailsScreen extends ConsumerWidget {
   final int leagueId;
@@ -22,7 +23,16 @@ class LeagueDetailsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Open league settings
+              leaguesAsync.whenData((leagues) {
+                final league = leagues.firstWhere(
+                  (l) => l.id == leagueId,
+                  orElse: () => throw Exception('League not found'),
+                );
+                showDialog(
+                  context: context,
+                  builder: (context) => LeagueSettingsModal(league: league),
+                );
+              });
             },
           ),
         ],
@@ -49,107 +59,193 @@ class LeagueDetailsScreen extends ConsumerWidget {
             (l) => l.id == leagueId,
             orElse: () => throw Exception('League not found'),
           );
-          return _buildLeagueDetails(context, league);
+          return _buildLeagueOverview(context, league);
         },
       ),
     );
   }
 
-  Widget _buildLeagueDetails(BuildContext context, League league) {
+  Widget _buildLeagueOverview(BuildContext context, League league) {
+    final dues = (league.settings?['dues'] as num?)?.toDouble() ?? 0.0;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // League Header
-          _buildHeaderCard(league),
-          const SizedBox(height: 16),
-
-          // Basic Info
-          _buildInfoSection('Basic Information', [
-            _buildInfoRow('Season', league.season),
-            _buildInfoRow('Season Type', _formatSeasonType(league.seasonType)),
-            _buildInfoRow('Status', _formatStatus(league.status)),
-            _buildInfoRow('Total Teams', '${league.totalRosters}'),
-            _buildInfoRow(
-              'League Type',
-              league.settings?['is_public'] == true ? 'Public' : 'Private',
-            ),
-          ]),
-          const SizedBox(height: 16),
-
-          // Schedule
-          if (league.settings != null) ...[
-            _buildInfoSection('Schedule', [
-              _buildInfoRow('Start Week', '${league.settings!['start_week'] ?? 'N/A'}'),
-              _buildInfoRow('End Week', '${league.settings!['end_week'] ?? 'N/A'}'),
-              _buildInfoRow(
-                'Playoffs',
-                league.settings!['playoffs_enabled'] == true ? 'Enabled' : 'Disabled',
+          // League Header Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    league.name,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildStatusBadge(league.status),
+                      _buildInfoChip(
+                        Icons.calendar_today,
+                        '${league.season} Season',
+                      ),
+                      _buildInfoChip(
+                        Icons.people,
+                        '${league.totalRosters} Teams',
+                      ),
+                      if (dues > 0)
+                        _buildInfoChip(
+                          Icons.attach_money,
+                          '\$${dues.toStringAsFixed(0)} Entry',
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              if (league.settings!['playoffs_enabled'] == true) ...[
-                _buildInfoRow('Playoff Start', 'Week ${league.settings!['playoff_week_start']}'),
-                _buildInfoRow('Playoff Teams', '${league.settings!['playoff_teams']}'),
-              ],
-            ]),
-            const SizedBox(height: 16),
-          ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
-          // Scoring Settings
+          // Quick Stats Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Quick Info',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickStat(
+                          'League Type',
+                          league.settings?['is_public'] == true ? 'Public' : 'Private',
+                          Icons.lock_outline,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildQuickStat(
+                          'Season Type',
+                          _formatSeasonType(league.seasonType),
+                          Icons.sports_football,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (league.settings != null) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildQuickStat(
+                            'Regular Season',
+                            'Weeks ${league.settings!['start_week']}-${league.settings!['end_week']}',
+                            Icons.event,
+                          ),
+                        ),
+                        if (league.settings!['playoffs_enabled'] == true)
+                          Expanded(
+                            child: _buildQuickStat(
+                              'Playoffs',
+                              'Week ${league.settings!['playoff_week_start']} (${league.settings!['playoff_teams']} teams)',
+                              Icons.emoji_events,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Scoring Type Card
           if (league.scoringSettings != null) ...[
-            _buildScoringSection(league.scoringSettings!),
-            const SizedBox(height: 16),
-          ],
-
-          // Roster Positions
-          if (league.rosterPositions != null) ...[
-            _buildRosterPositionsSection(league.rosterPositions!),
-            const SizedBox(height: 16),
-          ],
-
-          // Waiver Settings
-          if (league.settings != null) ...[
-            _buildInfoSection('Waiver Settings', [
-              _buildInfoRow('Waiver Type', _formatWaiverType(league.settings!['waiver_type'])),
-              if (league.settings!['waiver_type'] == 'faab')
-                _buildInfoRow('FAAB Budget', '\$${league.settings!['faab_budget'] ?? 100}'),
-              _buildInfoRow('Waiver Period', '${league.settings!['waiver_period_days'] ?? 2} days'),
-              _buildInfoRow(
-                'Process Schedule',
-                _formatProcessSchedule(league.settings!['process_schedule']),
-              ),
-            ]),
-            const SizedBox(height: 16),
-          ],
-
-          // Dues & Payouts
-          if (league.settings != null && league.settings!['dues'] != null) ...[
-            _buildDuesPayoutsSection(league.settings!),
-            const SizedBox(height: 16),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderCard(League league) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              league.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Scoring Type',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildScoringType(context, league.scoringSettings!),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            _buildStatusBadge(league.status),
+            const SizedBox(height: 16),
           ],
-        ),
+
+          // Actions Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Actions',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: View teams
+                        },
+                        icon: const Icon(Icons.people),
+                        label: const Text('View Teams'),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: View matchups
+                        },
+                        icon: const Icon(Icons.sports),
+                        label: const Text('Matchups'),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: View standings
+                        },
+                        icon: const Icon(Icons.leaderboard),
+                        label: const Text('Standings'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -157,144 +253,53 @@ class LeagueDetailsScreen extends ConsumerWidget {
   Widget _buildStatusBadge(String status) {
     Color color;
     String label;
+    IconData icon;
 
     switch (status.toLowerCase()) {
       case 'pre_draft':
         color = Colors.blue;
         label = 'Pre-Draft';
+        icon = Icons.schedule;
         break;
       case 'drafting':
         color = Colors.orange;
         label = 'Drafting';
+        icon = Icons.dynamic_feed;
         break;
       case 'in_season':
         color = Colors.green;
         label = 'In Season';
+        icon = Icons.play_circle;
         break;
       case 'complete':
         color = Colors.grey;
         label = 'Complete';
+        icon = Icons.check_circle;
         break;
       default:
         color = Colors.grey;
         label = status;
+        icon = Icons.info;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color, width: 2),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoSection(String title, List<Widget> children) {
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          Text(value),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScoringSection(Map<String, dynamic> scoringSettings) {
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        title: const Text(
-          'Scoring Settings',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Passing',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _buildInfoRow(
-                  'Touchdowns',
-                  '${scoringSettings['passing_touchdowns'] ?? 0} pts',
-                ),
-                _buildInfoRow(
-                  'Yards',
-                  '${scoringSettings['passing_yards'] ?? 0} pts/yd',
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Rushing',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _buildInfoRow(
-                  'Touchdowns',
-                  '${scoringSettings['rushing_touchdowns'] ?? 0} pts',
-                ),
-                _buildInfoRow(
-                  'Yards',
-                  '${scoringSettings['rushing_yards'] ?? 0} pts/yd',
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Receiving',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _buildInfoRow(
-                  'Touchdowns',
-                  '${scoringSettings['receiving_touchdowns'] ?? 0} pts',
-                ),
-                _buildInfoRow(
-                  'Yards',
-                  '${scoringSettings['receiving_yards'] ?? 0} pts/yd',
-                ),
-                _buildInfoRow(
-                  'Receptions',
-                  '${scoringSettings['receiving_receptions'] ?? 0} pts',
-                ),
-              ],
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
         ],
@@ -302,95 +307,102 @@ class LeagueDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRosterPositionsSection(Map<String, dynamic> rosterPositions) {
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        title: const Text(
-          'Roster Positions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: rosterPositions.entries
-                  .where((e) => (e.value as num) > 0)
-                  .map((e) => Chip(
-                        label: Text('${e.key}: ${e.value}'),
-                      ))
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+  Widget _buildInfoChip(IconData icon, String label) {
+    return Chip(
+      avatar: Icon(icon, size: 18),
+      label: Text(label),
     );
   }
 
-  Widget _buildDuesPayoutsSection(Map<String, dynamic> settings) {
-    final dues = (settings['dues'] as num?)?.toDouble() ?? 0.0;
-    final payoutStructure = settings['payout_structure'] as List<dynamic>?;
-
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        title: const Text(
-          'Dues & Payouts',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow('Entry Fee', dues > 0 ? '\$${dues.toStringAsFixed(2)}' : 'Free'),
-                if (payoutStructure != null && payoutStructure.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Payout Structure',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ...payoutStructure.map((payout) {
-                    final payoutMap = payout as Map<String, dynamic>;
-                    final type = payoutMap['type'] as String?;
-                    final place = payoutMap['place'] as int?;
-                    final percentage = (payoutMap['percentage'] as num?)?.toDouble();
-                    final amount = (payoutMap['amount'] as num?)?.toDouble();
-
-                    String label = _getPayoutLabel(type, place);
-                    String value = '';
-
-                    if (percentage != null) {
-                      value = '${percentage.toStringAsFixed(0)}%';
-                      if (amount != null) {
-                        value += ' (\$${amount.toStringAsFixed(2)})';
-                      }
-                    } else if (amount != null) {
-                      value = '\$${amount.toStringAsFixed(2)}';
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: _buildInfoRow(label, value),
-                    );
-                  }),
-                ],
-              ],
+  Widget _buildQuickStat(String label, String value, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.grey),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScoringType(BuildContext context, Map<String, dynamic> scoringSettings) {
+    final receptions = (scoringSettings['receiving_receptions'] as num?)?.toDouble() ?? 0.0;
+
+    String scoringType;
+    String description;
+
+    if (receptions >= 1.0) {
+      scoringType = 'Full PPR';
+      description = '1 point per reception';
+    } else if (receptions >= 0.5) {
+      scoringType = 'Half PPR';
+      description = '0.5 points per reception';
+    } else {
+      scoringType = 'Standard';
+      description = 'No points for receptions';
+    }
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.score,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                scoringType,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   String _formatSeasonType(String seasonType) {
     switch (seasonType.toLowerCase()) {
       case 'regular':
-        return 'Regular Season';
+        return 'Redraft';
       case 'playoff':
         return 'Playoff';
       case 'dynasty':
@@ -398,68 +410,5 @@ class LeagueDetailsScreen extends ConsumerWidget {
       default:
         return seasonType;
     }
-  }
-
-  String _formatStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'pre_draft':
-        return 'Pre-Draft';
-      case 'drafting':
-        return 'Drafting';
-      case 'in_season':
-        return 'In Season';
-      case 'complete':
-        return 'Complete';
-      default:
-        return status;
-    }
-  }
-
-  String _formatWaiverType(dynamic waiverType) {
-    if (waiverType == null) return 'N/A';
-    switch (waiverType.toString().toLowerCase()) {
-      case 'faab':
-        return 'FAAB (Free Agent Auction Bidding)';
-      case 'rolling':
-        return 'Rolling Waivers';
-      case 'continual':
-        return 'Continual Rolling List';
-      default:
-        return waiverType.toString();
-    }
-  }
-
-  String _formatProcessSchedule(dynamic schedule) {
-    if (schedule == null) return 'N/A';
-    switch (schedule.toString().toLowerCase()) {
-      case 'daily':
-        return 'Daily';
-      case 'weekly':
-        return 'Weekly';
-      default:
-        return schedule.toString();
-    }
-  }
-
-  String _getPayoutLabel(String? type, int? place) {
-    if (type == 'placement') {
-      return '${_getOrdinal(place ?? 1)} Place';
-    } else if (type == 'placement_points') {
-      return '${_getOrdinal(place ?? 1)} Most Points';
-    } else if (type == 'highest_weekly_score') {
-      return 'Highest Week Score';
-    } else if (type == 'regular_season_winner') {
-      return 'Regular Season Winner';
-    } else if (type == 'highest_points_non_playoff') {
-      return 'Highest Points (Non-Playoff)';
-    }
-    return 'Payout';
-  }
-
-  String _getOrdinal(int place) {
-    if (place == 1) return '1st';
-    if (place == 2) return '2nd';
-    if (place == 3) return '3rd';
-    return '${place}th';
   }
 }
