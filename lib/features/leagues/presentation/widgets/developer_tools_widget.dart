@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/socket/socket_providers.dart';
 import '../../../auth/application/auth_notifier.dart';
-import '../../application/league_chat_provider.dart';
 import '../../application/league_members_provider.dart';
 import '../../application/leagues_provider.dart';
 

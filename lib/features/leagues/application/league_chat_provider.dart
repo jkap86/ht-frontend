@@ -1,20 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/services/socket/socket_service.dart';
+import '../../../core/services/socket/socket_providers.dart';
 import '../data/chat_repository.dart';
 import '../data/league_socket_client.dart';
 import '../domain/repositories/chat_repository_interface.dart';
 import '../domain/chat_message.dart';
 import '../../auth/application/auth_notifier.dart';
-
-/// Provider for the base socket service (keepAlive to maintain single instance)
-final socketServiceProvider = Provider<SocketService>((ref) {
-  final storage = ref.watch(authStorageProvider);
-  final service = SocketService(storage: storage);
-  // Keep the socket service alive even when no providers are listening
-  ref.keepAlive();
-  return service;
-});
 
 /// Provider for the league-specific socket client
 final leagueSocketClientProvider = Provider<LeagueSocketClient>((ref) {

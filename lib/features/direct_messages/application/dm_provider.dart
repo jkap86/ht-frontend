@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../leagues/application/league_chat_provider.dart';
+import '../../../core/services/socket/socket_providers.dart';
 import '../data/dm_api_client.dart';
 import '../data/dm_socket_client.dart';
 import '../domain/direct_message.dart';
