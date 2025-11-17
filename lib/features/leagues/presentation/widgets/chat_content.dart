@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/league_chat_provider.dart';
-import 'chat_message_tile.dart';
-import '../../../direct_messages/presentation/widgets/dm_conversations_list.dart';
-import '../../../direct_messages/presentation/widgets/dm_conversation_view.dart';
+import '../../../chat/application/chat_room_notifier.dart';
+import '../../../chat/domain/chat_room.dart';
+import '../../../chat/presentation/widgets/chat_message_tile.dart';
+import '../../../direct_messages/application/dm_provider.dart';
+import '../../../auth/application/auth_notifier.dart';
+import '../../../auth/domain/user.dart';
 
 enum ChatMode { league, directMessages }
 
@@ -63,8 +65,13 @@ class _ChatContentState extends ConsumerState<ChatContent> {
     });
 
     try {
+      final chatRoom = ChatRoom(
+        id: widget.leagueId.toString(),
+        type: ChatRoomType.league,
+        displayName: 'League Chat',
+      );
       await ref
-          .read(leagueChatProvider(widget.leagueId).notifier)
+          .read(chatRoomProvider(chatRoom).notifier)
           .sendMessage(message);
       _messageController.clear();
       _scrollToBottom();
@@ -85,7 +92,12 @@ class _ChatContentState extends ConsumerState<ChatContent> {
 
   @override
   Widget build(BuildContext context) {
-    final chatState = ref.watch(leagueChatProvider(widget.leagueId));
+    final chatRoom = ChatRoom(
+      id: widget.leagueId.toString(),
+      type: ChatRoomType.league,
+      displayName: 'League Chat',
+    );
+    final chatState = ref.watch(chatRoomProvider(chatRoom));
 
     return Opacity(
       opacity: widget.opacity,
@@ -186,8 +198,14 @@ class _ChatContentState extends ConsumerState<ChatContent> {
                           ),
                           const SizedBox(height: 8),
                           TextButton(
-                            onPressed: () => ref
-                                .refresh(leagueChatProvider(widget.leagueId)),
+                            onPressed: () {
+                              final chatRoom = ChatRoom(
+                                id: widget.leagueId.toString(),
+                                type: ChatRoomType.league,
+                                displayName: 'League Chat',
+                              );
+                              ref.refresh(chatRoomProvider(chatRoom));
+                            },
                             child: const Text(
                               'Retry',
                               style: TextStyle(fontSize: 12),
@@ -198,24 +216,8 @@ class _ChatContentState extends ConsumerState<ChatContent> {
                     ),
                   )
                 : _selectedUserId != null && _selectedUsername != null
-                    ? DmConversationView(
-                        otherUserId: _selectedUserId!,
-                        otherUsername: _selectedUsername!,
-                        onBack: () {
-                          setState(() {
-                            _selectedUserId = null;
-                            _selectedUsername = null;
-                          });
-                        },
-                      )
-                    : DmConversationsList(
-                        onConversationSelected: (userId, username) {
-                          setState(() {
-                            _selectedUserId = userId;
-                            _selectedUsername = username;
-                          });
-                        },
-                      ),
+                    ? _buildDmConversation()
+                    : _buildConversationsList(),
           ),
 
           // Message input (only show for league chat, not for DM conversations list)
@@ -264,5 +266,292 @@ class _ChatContentState extends ConsumerState<ChatContent> {
         ],
       ),
     );
+  }
+
+  Widget _buildConversationsList() {
+    final conversationsAsync = ref.watch(conversationsProvider);
+
+    return conversationsAsync.when(
+      data: (conversations) {
+        if (conversations.isEmpty) {
+          return const Center(
+            child: Text(
+              'No conversations yet.\nStart a new conversation!',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: conversations.length,
+          itemBuilder: (context, index) {
+            final conversation = conversations[index];
+            final otherUserId = conversation.otherUserId;
+            final otherUsername = conversation.otherUsername;
+
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  child: Text(
+                    otherUsername.isNotEmpty
+                        ? otherUsername[0].toUpperCase()
+                        : '?',
+                  ),
+                ),
+                title: Text(
+                  otherUsername,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  conversation.lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: conversation.unreadCount > 0
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Colors.grey,
+                  ),
+                ),
+                trailing: conversation.unreadCount > 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          conversation.unreadCount.toString(),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedUserId = otherUserId;
+                    _selectedUsername = otherUsername;
+                  });
+                },
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red),
+            const SizedBox(height: 8),
+            Text(
+              'Error loading conversations',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => ref.refresh(conversationsProvider),
+              child: const Text(
+                'Retry',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDmConversation() {
+    final chatRoom = ChatRoom(
+      id: _selectedUserId!,
+      type: ChatRoomType.directMessage,
+      displayName: _selectedUsername!,
+    );
+    final messagesState = ref.watch(chatRoomProvider(chatRoom));
+
+    return Column(
+      children: [
+        // DM conversation header
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _selectedUserId = null;
+                    _selectedUsername = null;
+                  });
+                },
+                iconSize: 20,
+              ),
+              const SizedBox(width: 8),
+              CircleAvatar(
+                radius: 16,
+                child: Text(
+                  _selectedUsername!.isNotEmpty
+                      ? _selectedUsername![0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _selectedUsername!,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Messages
+        Expanded(
+          child: messagesState.when(
+            data: (messages) {
+              if (messages.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No messages yet.\nStart the conversation!',
+                    style: TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+
+              WidgetsBinding.instance
+                  .addPostFrameCallback((_) => _scrollToBottom());
+
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(12),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return ChatMessageTile(message: messages[index]);
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error loading messages',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      ref.invalidate(chatRoomProvider(chatRoom));
+                    },
+                    child: const Text(
+                      'Retry',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Message input
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(12),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(
+                    hintText: 'Type a message...',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  onSubmitted: (_) => _sendDmMessage(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _sendDmMessage,
+                icon: const Icon(Icons.send),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _sendDmMessage() async {
+    final message = _messageController.text.trim();
+    if (message.isEmpty || _isSending) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final chatRoom = ChatRoom(
+        id: _selectedUserId!,
+        type: ChatRoomType.directMessage,
+        displayName: _selectedUsername!,
+      );
+      await ref
+          .read(chatRoomProvider(chatRoom).notifier)
+          .sendMessage(message);
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
   }
 }

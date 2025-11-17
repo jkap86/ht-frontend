@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/dm_provider.dart';
-import 'dm_message_tile.dart';
+import '../../../chat/application/chat_room_notifier.dart';
+import '../../../chat/domain/chat_room.dart';
+import '../../../chat/presentation/widgets/chat_message_tile.dart';
 
 /// Widget displaying messages in a DM conversation
 class DmConversationView extends ConsumerStatefulWidget {
@@ -54,8 +55,13 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
     });
 
     try {
+      final chatRoom = ChatRoom(
+        id: widget.otherUserId,
+        type: ChatRoomType.directMessage,
+        displayName: widget.otherUsername,
+      );
       await ref
-          .read(dmConversationProvider(widget.otherUserId).notifier)
+          .read(chatRoomProvider(chatRoom).notifier)
           .sendMessage(message);
       _messageController.clear();
       _scrollToBottom();
@@ -76,7 +82,12 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesState = ref.watch(dmConversationProvider(widget.otherUserId));
+    final chatRoom = ChatRoom(
+      id: widget.otherUserId,
+      type: ChatRoomType.directMessage,
+      displayName: widget.otherUsername,
+    );
+    final messagesState = ref.watch(chatRoomProvider(chatRoom));
 
     return Column(
       children: [
@@ -139,7 +150,7 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
                 padding: const EdgeInsets.all(12),
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
-                  return DmMessageTile(message: messages[index]);
+                  return ChatMessageTile(message: messages[index]);
                 },
               );
             },
@@ -159,8 +170,14 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
                   ),
                   const SizedBox(height: 8),
                   TextButton(
-                    onPressed: () =>
-                        ref.refresh(dmConversationProvider(widget.otherUserId)),
+                    onPressed: () {
+                      final chatRoom = ChatRoom(
+                        id: widget.otherUserId,
+                        type: ChatRoomType.directMessage,
+                        displayName: widget.otherUsername,
+                      );
+                      ref.refresh(chatRoomProvider(chatRoom));
+                    },
                     child: const Text(
                       'Retry',
                       style: TextStyle(fontSize: 12),

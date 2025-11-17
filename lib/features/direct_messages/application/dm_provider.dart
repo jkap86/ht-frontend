@@ -6,6 +6,8 @@ import '../data/dm_socket_client.dart';
 import '../domain/direct_message.dart';
 import '../domain/conversation.dart';
 import '../../auth/application/auth_notifier.dart';
+import '../../leagues/application/leagues_provider.dart';
+import '../../leagues/application/league_members_provider.dart';
 
 /// Provider for the DM API client
 final dmApiClientProvider = Provider<DmApiClient>((ref) {
@@ -24,6 +26,23 @@ final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
   final apiClient = ref.read(dmApiClientProvider);
   final dtos = await apiClient.getConversations();
   return dtos.map((dto) => dto.toDomain()).toList();
+});
+
+/// Provider that combines all league members from all leagues
+/// Returns a Map of userId -> username
+final allLeagueMembersProvider = FutureProvider<Map<String, String>>((ref) async {
+  final leaguesAsync = await ref.watch(myLeaguesProvider.future);
+  final allMembers = <String, String>{};
+
+  // Fetch members for each league
+  for (final league in leaguesAsync) {
+    final membersAsync = await ref.watch(leagueMembersProvider(league.id).future);
+    for (final member in membersAsync) {
+      allMembers[member.userId] = member.username;
+    }
+  }
+
+  return allMembers;
 });
 
 /// Family provider for direct messages with a specific user

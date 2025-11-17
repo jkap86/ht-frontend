@@ -12,6 +12,7 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/leagues/presentation/league_details_screen.dart';
+import 'features/direct_messages/presentation/dm_screen.dart';
 
 late final AppConfig appConfig;
 
@@ -94,6 +95,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final leagueId = int.parse(state.pathParameters['leagueId']!);
           return LeagueDetailsScreen(leagueId: leagueId);
         },
+      ),
+      GoRoute(
+        path: '/messages',
+        name: 'messages',
+        builder: (context, state) => const DmScreen(),
       ),
     ],
   );

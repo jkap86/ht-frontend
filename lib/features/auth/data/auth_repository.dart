@@ -65,4 +65,10 @@ class AuthRepository implements IAuthRepository {
   Future<void> logout() async {
     await _storage.clearAll();
   }
+
+  @override
+  Future<List<User>> searchUsers(String query) async {
+    final dtos = await _apiClient.searchUsers(query);
+    return dtos.map((dto) => dto.toDomain()).toList();
+  }
 }

@@ -6,6 +6,7 @@ import '../../auth/application/auth_notifier.dart';
 import '../../leagues/application/leagues_provider.dart';
 import '../../leagues/domain/league.dart';
 import 'widgets/add_league_modal_new.dart';
+import 'widgets/collapsible_dm_chat_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,16 @@ class HomeScreen extends ConsumerWidget {
         title: Text(authState.user?.username ?? 'My Leagues'),
         actions: [
           IconButton(
+            tooltip: 'Add League',
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const AddLeagueModal(),
+              );
+            },
+          ),
+          IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -28,84 +39,79 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: leaguesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading leagues',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () {
-                  ref.read(myLeaguesProvider.notifier).refresh();
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-        data: (leagues) {
-          if (leagues.isEmpty) {
-            return Center(
+      body: Stack(
+        children: [
+          leaguesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.sports_football,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                  ),
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'No leagues yet',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    'Error loading leagues',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Create your first league to get started!',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    error.toString(),
+                    style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      ref.read(myLeaguesProvider.notifier).refresh();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
                   ),
                 ],
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => ref.read(myLeaguesProvider.notifier).refresh(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: leagues.length,
-              itemBuilder: (context, index) {
-                final league = leagues[index];
-                return _LeagueCard(league: league);
-              },
             ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AddLeagueModal(),
-          );
-        },
-        tooltip: 'Add League',
-        child: const Icon(Icons.add),
+            data: (leagues) {
+              if (leagues.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.sports_football,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No leagues yet',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Create your first league to get started!',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => ref.read(myLeaguesProvider.notifier).refresh(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: leagues.length,
+                  itemBuilder: (context, index) {
+                    final league = leagues[index];
+                    return _LeagueCard(league: league);
+                  },
+                ),
+              );
+            },
+          ),
+          const CollapsibleDmChatWidget(),
+        ],
       ),
     );
   }

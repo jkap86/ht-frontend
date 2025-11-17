@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../domain/chat_message.dart';
+import '../../../chat/domain/chat_message.dart';
 
 /// Widget for displaying a single chat message
 class ChatMessageTile extends StatelessWidget {
@@ -27,7 +27,7 @@ class ChatMessageTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              message.message,
+              message.text,
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey.shade700,
@@ -48,8 +48,8 @@ class ChatMessageTile extends StatelessWidget {
           CircleAvatar(
             radius: 14,
             child: Text(
-              (message.username?.isNotEmpty ?? false)
-                  ? message.username![0].toUpperCase()
+              (message.senderName?.isNotEmpty ?? false)
+                  ? message.senderName![0].toUpperCase()
                   : '?',
               style: const TextStyle(fontSize: 12),
             ),
@@ -65,7 +65,7 @@ class ChatMessageTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      message.username ?? 'Unknown',
+                      message.senderName ?? 'Unknown',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -85,7 +85,7 @@ class ChatMessageTile extends StatelessWidget {
 
                 // Message text
                 Text(
-                  message.message,
+                  message.text,
                   style: const TextStyle(fontSize: 13),
                 ),
               ],

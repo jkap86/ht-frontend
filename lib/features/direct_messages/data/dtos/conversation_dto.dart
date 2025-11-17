@@ -17,12 +17,18 @@ class ConversationDto {
   });
 
   factory ConversationDto.fromJson(Map<String, dynamic> json) {
+    // Handle unread_count which might come as string or int from database COUNT()
+    final unreadCountValue = json['unread_count'];
+    final unreadCount = unreadCountValue is String
+        ? int.parse(unreadCountValue)
+        : unreadCountValue as int;
+
     return ConversationDto(
       otherUserId: json['other_user_id'] as String,
       otherUsername: json['other_username'] as String,
       lastMessage: json['last_message'] as String,
       lastMessageTime: DateTime.parse(json['last_message_time'] as String),
-      unreadCount: json['unread_count'] as int,
+      unreadCount: unreadCount,
     );
   }
 

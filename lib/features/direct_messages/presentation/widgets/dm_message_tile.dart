@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/direct_message.dart';
+import '../../../chat/domain/chat_message.dart';
 
 /// Widget displaying a single direct message
 class DmMessageTile extends StatelessWidget {
-  final DirectMessage message;
+  final ChatMessage message;
 
   const DmMessageTile({
     super.key,
@@ -22,8 +22,8 @@ class DmMessageTile extends StatelessWidget {
           CircleAvatar(
             radius: 16,
             child: Text(
-              message.senderUsername.isNotEmpty
-                  ? message.senderUsername[0].toUpperCase()
+              (message.senderName?.isNotEmpty ?? false)
+                  ? message.senderName![0].toUpperCase()
                   : '?',
               style: const TextStyle(fontSize: 12),
             ),
@@ -38,7 +38,7 @@ class DmMessageTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      message.senderUsername,
+                      message.senderName ?? 'Unknown',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -57,7 +57,7 @@ class DmMessageTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 // Message text
                 Text(
-                  message.message,
+                  message.text,
                   style: const TextStyle(fontSize: 14),
                 ),
               ],

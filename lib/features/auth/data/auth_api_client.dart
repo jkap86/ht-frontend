@@ -163,4 +163,31 @@ class AuthApiClient {
       _handleNetworkError(e, 'Token refresh');
     }
   }
+
+  /// Search for users by username
+  Future<List<UserDto>> searchUsers(String query) async {
+    try {
+      final token = await _storage.readToken();
+      if (token == null) {
+        throw const UnauthenticatedException('No authentication token found');
+      }
+
+      final response = await _client.get(
+        _uri('/api/auth/users/search?q=${Uri.encodeComponent(query)}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _handleError(response, 'User search');
+      }
+
+      final json = jsonDecode(response.body) as List<dynamic>;
+      return json.map((userData) => UserDto.fromJson(userData as Map<String, dynamic>)).toList();
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      _handleNetworkError(e, 'User search');
+    }
+  }
 }

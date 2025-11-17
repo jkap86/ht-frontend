@@ -18,4 +18,7 @@ abstract class IAuthRepository {
 
   /// Logout user
   Future<void> logout();
+
+  /// Search for users by username
+  Future<List<User>> searchUsers(String query);
 }
