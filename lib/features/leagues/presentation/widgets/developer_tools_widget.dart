@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../auth/data/auth_repository.dart';
 import '../../../auth/application/auth_notifier.dart';
 import '../../application/leagues_provider.dart';
+import '../../application/league_chat_provider.dart';
 
 /// Developer tools widget - only visible in debug/dev mode
 class DeveloperToolsWidget extends ConsumerStatefulWidget {
@@ -64,8 +64,11 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       // Login as the new user (this will replace the old token)
       await ref.read(authProvider.notifier).login(username, 'password');
 
-      // Invalidate all providers to force fresh data
+      // Invalidate all data providers to force fresh data with new token
       ref.invalidate(myLeaguesProvider);
+
+      // IMPORTANT: Invalidate socket service so it reconnects with new token
+      ref.invalidate(socketServiceProvider);
 
       if (!mounted) return;
 
@@ -74,7 +77,7 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       });
 
       // Wait for state to update
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 300));
 
       if (mounted) {
         // Navigate all the way back to home screen to force full refresh
