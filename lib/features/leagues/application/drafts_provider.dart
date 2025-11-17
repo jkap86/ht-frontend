@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/drafts_api_client.dart';
+import '../../auth/application/auth_notifier.dart';
 
 /// Provider for the DraftsApiClient
 final draftsApiClientProvider = Provider<DraftsApiClient>((ref) {
-  return DraftsApiClient();
+  final storage = ref.watch(authStorageProvider);
+  return DraftsApiClient(storage: storage);
 });
 
 /// Provider for fetching drafts for a specific league

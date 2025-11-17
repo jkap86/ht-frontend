@@ -2,19 +2,19 @@ import '../domain/repositories/auth_repository_interface.dart';
 import '../domain/user.dart';
 import '../domain/auth_result.dart';
 import 'auth_api_client.dart';
-import 'auth_token_storage.dart';
+import 'auth_storage.dart';
 
 /// Repository implementation for authentication
 /// Handles DTO/Domain conversion and token management
 class AuthRepository implements IAuthRepository {
   final AuthApiClient _apiClient;
-  final AuthTokenStorage _storage;
+  final AuthStorage _storage;
 
   AuthRepository({
     AuthApiClient? apiClient,
-    AuthTokenStorage? storage,
-  })  : _apiClient = apiClient ?? AuthApiClient(),
-        _storage = storage ?? AuthTokenStorage();
+    required AuthStorage storage,
+  })  : _storage = storage,
+        _apiClient = apiClient ?? AuthApiClient(storage: storage);
 
   @override
   Future<AuthResult> register(String username, String password) async {
@@ -63,6 +63,6 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<void> logout() async {
-    await _storage.clearToken();
+    await _storage.clearAll();
   }
 }

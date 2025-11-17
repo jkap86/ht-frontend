@@ -1,14 +1,17 @@
 import '../domain/repositories/chat_repository_interface.dart';
 import '../domain/chat_message.dart';
 import 'league_chat_api_client.dart';
+import '../../auth/data/auth_storage.dart';
 
 /// Repository implementation for league chat
 /// Handles DTO/Domain conversion and delegates to API client
 class ChatRepository implements IChatRepository {
   final LeagueChatApiClient _apiClient;
 
-  ChatRepository({LeagueChatApiClient? apiClient})
-      : _apiClient = apiClient ?? LeagueChatApiClient();
+  ChatRepository({
+    LeagueChatApiClient? apiClient,
+    required AuthStorage storage,
+  }) : _apiClient = apiClient ?? LeagueChatApiClient(storage: storage);
 
   @override
   Future<List<ChatMessage>> getMessages(int leagueId, {int limit = 100}) async {

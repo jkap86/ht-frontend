@@ -1,18 +1,18 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../../main.dart';
-import '../../../features/auth/data/auth_token_storage.dart';
+import '../../../features/auth/data/auth_storage.dart';
 
 /// Base WebSocket service for managing Socket.IO connection
 /// Provides low-level connection management and room operations
 /// Feature-specific clients should wrap this service
 class SocketService {
   IO.Socket? _socket;
-  final AuthTokenStorage _storage;
+  final AuthStorage _storage;
   final String _baseUrl = appConfig.apiBaseUrl;
   final Set<String> _joinedRooms = {};
 
-  SocketService({AuthTokenStorage? storage})
-      : _storage = storage ?? AuthTokenStorage();
+  SocketService({required AuthStorage storage})
+      : _storage = storage;
 
   /// Connect to the WebSocket server with authentication
   Future<void> connect() async {

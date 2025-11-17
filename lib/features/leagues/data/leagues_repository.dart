@@ -2,14 +2,17 @@ import '../domain/league.dart';
 import '../domain/league_member.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
 import 'leagues_api_client.dart';
+import '../../auth/data/auth_storage.dart';
 
 /// Repository implementation for leagues
 /// Wraps the API client and handles DTO/Domain conversion
 class LeaguesRepository implements ILeaguesRepository {
   final LeaguesApiClient _apiClient;
 
-  LeaguesRepository({LeaguesApiClient? apiClient})
-      : _apiClient = apiClient ?? LeaguesApiClient();
+  LeaguesRepository({
+    LeaguesApiClient? apiClient,
+    required AuthStorage storage,
+  }) : _apiClient = apiClient ?? LeaguesApiClient(storage: storage);
 
   @override
   Future<List<League>> getMyLeagues() async {

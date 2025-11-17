@@ -6,20 +6,20 @@ import '../../../main.dart';
 import '../domain/auth_exceptions.dart';
 import 'dtos/auth_result_dto.dart';
 import 'dtos/user_dto.dart';
-import 'auth_token_storage.dart';
+import 'auth_storage.dart';
 
 /// API client for authentication endpoints
 /// Handles HTTP communication and returns DTOs
 class AuthApiClient {
   final String _baseUrl = appConfig.apiBaseUrl;
   final http.Client _client;
-  final AuthTokenStorage _storage;
+  final AuthStorage _storage;
 
   AuthApiClient({
     http.Client? client,
-    AuthTokenStorage? storage,
+    required AuthStorage storage,
   })  : _client = client ?? http.Client(),
-        _storage = storage ?? AuthTokenStorage();
+        _storage = storage;
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 

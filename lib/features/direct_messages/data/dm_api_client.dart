@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../main.dart';
-import '../../auth/data/auth_token_storage.dart';
+import '../../auth/data/auth_storage.dart';
 import 'dtos/conversation_dto.dart';
 import 'dtos/direct_message_dto.dart';
 
@@ -11,13 +11,13 @@ import 'dtos/direct_message_dto.dart';
 class DmApiClient {
   final String _baseUrl = appConfig.apiBaseUrl;
   final http.Client _client;
-  final AuthTokenStorage _storage;
+  final AuthStorage _storage;
 
   DmApiClient({
     http.Client? client,
-    AuthTokenStorage? storage,
+    required AuthStorage storage,
   })  : _client = client ?? http.Client(),
-        _storage = storage ?? AuthTokenStorage();
+        _storage = storage;
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 

@@ -3,20 +3,20 @@ import 'package:http/http.dart' as http;
 
 import '../../../main.dart';
 import 'dtos/chat_message_dto.dart';
-import '../../auth/data/auth_token_storage.dart';
+import '../../auth/data/auth_storage.dart';
 
 /// API client for league chat endpoints
 /// Handles HTTP communication and returns DTOs
 class LeagueChatApiClient {
   final String _baseUrl = appConfig.apiBaseUrl;
   final http.Client _client;
-  final AuthTokenStorage _storage;
+  final AuthStorage _storage;
 
   LeagueChatApiClient({
     http.Client? client,
-    AuthTokenStorage? storage,
+    required AuthStorage storage,
   })  : _client = client ?? http.Client(),
-        _storage = storage ?? AuthTokenStorage();
+        _storage = storage;
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 

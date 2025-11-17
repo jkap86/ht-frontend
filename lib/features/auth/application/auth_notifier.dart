@@ -1,8 +1,10 @@
 // lib/features/auth/application/auth_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/repositories/auth_repository_interface.dart';
 import '../data/auth_repository.dart';
+import '../data/auth_storage.dart';
 import 'auth_state.dart';
 
 /// Notifier that coordinates auth operations using clean architecture
@@ -176,9 +178,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
+/// Shared preferences provider
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
+  return await SharedPreferences.getInstance();
+});
+
+/// Auth storage provider
+final authStorageProvider = Provider<AuthStorage>((ref) {
+  final prefsAsync = ref.watch(sharedPreferencesProvider);
+
+  // Return a default storage if preferences aren't ready yet
+  // This will be replaced once preferences are loaded
+  return prefsAsync.when(
+    data: (prefs) => AuthStorage(preferences: prefs),
+    loading: () => throw Exception('SharedPreferences not ready'),
+    error: (_, __) => throw Exception('Failed to load SharedPreferences'),
+  );
+});
+
 /// Repository provider – exposes the concrete implementation
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
-  return AuthRepository();
+  final storage = ref.watch(authStorageProvider);
+  return AuthRepository(storage: storage);
 });
 
 /// Global auth provider

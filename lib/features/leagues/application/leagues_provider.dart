@@ -9,7 +9,8 @@ import '../domain/repositories/leagues_repository_interface.dart';
 /// Provider for the leagues repository
 /// Uses abstract interface for better decoupling
 final leaguesRepositoryProvider = Provider<ILeaguesRepository>((ref) {
-  return LeaguesRepository();
+  final storage = ref.watch(authStorageProvider);
+  return LeaguesRepository(storage: storage);
 });
 
 /// Provider for fetching user's leagues

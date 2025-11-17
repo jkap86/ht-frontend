@@ -5,10 +5,12 @@ import '../data/dm_api_client.dart';
 import '../data/dm_socket_client.dart';
 import '../domain/direct_message.dart';
 import '../domain/conversation.dart';
+import '../../auth/application/auth_notifier.dart';
 
 /// Provider for the DM API client
 final dmApiClientProvider = Provider<DmApiClient>((ref) {
-  return DmApiClient();
+  final storage = ref.watch(authStorageProvider);
+  return DmApiClient(storage: storage);
 });
 
 /// Provider for the DM-specific socket client
