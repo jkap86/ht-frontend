@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/application/auth_notifier.dart';
 import '../../application/league_chat_provider.dart';
+import '../../application/league_members_provider.dart';
 import '../../application/leagues_provider.dart';
 
 /// Developer tools widget - only visible in debug/dev mode
@@ -54,6 +55,11 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       // Count successes and failures
       final successes = results.where((r) => r['success'] == true).length;
       final failures = results.where((r) => r['success'] == false).length;
+
+      // Refresh league members provider to update the UI
+      if (successes > 0) {
+        ref.invalidate(leagueMembersProvider(widget.leagueId));
+      }
 
       setState(() {
         if (failures == 0) {

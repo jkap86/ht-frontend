@@ -104,7 +104,7 @@ class EditableDuesPayoutsSection extends ConsumerWidget {
                   const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 8),
-                  _buildLeagueMembersSection(context, ref),
+                  _buildLeagueMembersSection(context, ref, dues),
                 ],
               ],
             ),
@@ -164,7 +164,7 @@ class EditableDuesPayoutsSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeagueMembersSection(BuildContext context, WidgetRef ref) {
+  Widget _buildLeagueMembersSection(BuildContext context, WidgetRef ref, double dues) {
     final membersAsync = ref.watch(leagueMembersProvider(league.id));
 
     return ExpansionTile(
@@ -192,11 +192,14 @@ class EditableDuesPayoutsSection extends ConsumerWidget {
               itemCount: members.length,
               itemBuilder: (context, index) {
                 final member = members[index];
+                final isFreeLeague = dues == 0;
+
                 return SwitchListTile(
                   title: Text(member.username),
                   subtitle: Text('Roster ${member.rosterId}'),
                   value: member.paid,
-                  onChanged: (bool value) async {
+                  // Disable toggle if league is free
+                  onChanged: isFreeLeague ? null : (bool value) async {
                     try {
                       await ref
                           .read(leagueMembersProvider(league.id).notifier)

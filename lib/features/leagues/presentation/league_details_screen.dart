@@ -6,10 +6,13 @@ import 'widgets/league_settings_modal.dart';
 import 'widgets/edit_league_settings_modal.dart';
 import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
+import 'widgets/league_workflow_widget.dart';
+import 'widgets/dues_overview_card.dart';
 import 'widgets/collapsible_chat_widget.dart';
 import 'widgets/developer_tools_widget.dart';
+import '../application/league_members_provider.dart';
 
-class LeagueDetailsScreen extends ConsumerWidget {
+class LeagueDetailsScreen extends ConsumerStatefulWidget {
   final int leagueId;
 
   const LeagueDetailsScreen({
@@ -18,7 +21,14 @@ class LeagueDetailsScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LeagueDetailsScreen> createState() => _LeagueDetailsScreenState();
+}
+
+class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
+  String? _selectedStep;
+
+  @override
+  Widget build(BuildContext context) {
     final leaguesAsync = ref.watch(myLeaguesProvider);
 
     return leaguesAsync.when(
@@ -32,13 +42,13 @@ class LeagueDetailsScreen extends ConsumerWidget {
       ),
       data: (leagues) {
         final league = leagues.firstWhere(
-          (l) => l.id == leagueId,
+          (l) => l.id == widget.leagueId,
           orElse: () => throw Exception('League not found'),
         );
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('League Details'),
+            title: Text(league.name),
             actions: [
               // Settings button - editable for commissioners, read-only for others
               IconButton(
@@ -57,9 +67,9 @@ class LeagueDetailsScreen extends ConsumerWidget {
           body: SizedBox.expand(
             child: Stack(
               children: [
-                _buildLeagueOverview(context, league),
-                CollapsibleChatWidget(leagueId: leagueId),
-                DeveloperToolsWidget(leagueId: leagueId),
+                _buildLeagueOverview(context, league, ref),
+                CollapsibleChatWidget(leagueId: widget.leagueId),
+                DeveloperToolsWidget(leagueId: widget.leagueId),
               ],
             ),
           ),
@@ -86,8 +96,24 @@ class LeagueDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeagueOverview(BuildContext context, League league) {
+  Widget _buildLeagueOverview(BuildContext context, League league, WidgetRef ref) {
     final dues = (league.settings?['dues'] as num?)?.toDouble() ?? 0.0;
+    final membersAsync = ref.watch(leagueMembersProvider(league.id));
+
+    // Determine default workflow step based on league state
+    String defaultStep = 'Dues';
+    membersAsync.whenData((members) {
+      if (members.isNotEmpty) {
+        final allPaid = members.every((m) => m.paid);
+        final leagueFull = members.length >= league.totalRosters;
+        if (leagueFull && allPaid) {
+          defaultStep = 'Draft';
+        }
+      }
+    });
+
+    // Use selected step if set, otherwise use default
+    final selectedStep = _selectedStep ?? defaultStep;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -98,8 +124,24 @@ class LeagueDetailsScreen extends ConsumerWidget {
           LeagueHeaderCard(league: league),
           const SizedBox(height: 16),
 
-          // Buy-In / Payouts Card - extracted component
-          if (dues > 0) LeagueBuyInCard(league: league, dues: dues),
+          // Workflow steps
+          LeagueWorkflowWidget(
+            league: league,
+            onStepSelected: (step) {
+              setState(() {
+                _selectedStep = step;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Conditional content based on selected workflow step
+          if (selectedStep == 'Dues') ...[
+            DuesOverviewCard(league: league),
+          ] else if (dues > 0) ...[
+            // Buy-In / Payouts Card - shown for other steps if dues exist
+            LeagueBuyInCard(league: league, dues: dues),
+          ],
         ],
       ),
     );
