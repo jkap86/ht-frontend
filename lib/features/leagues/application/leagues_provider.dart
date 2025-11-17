@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/application/auth_notifier.dart';
+import '../../auth/application/auth_state.dart';
 import '../data/leagues_repository.dart';
 import '../domain/league.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
@@ -19,7 +21,15 @@ final myLeaguesProvider = AsyncNotifierProvider<MyLeaguesNotifier, List<League>>
 class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
   @override
   Future<List<League>> build() async {
-    // Initial load of leagues
+    // Watch the auth provider so this provider rebuilds when auth changes
+    final authState = ref.watch(authProvider);
+
+    // If not authenticated, return empty list
+    if (authState.status != AuthStatus.authenticated) {
+      return [];
+    }
+
+    // Initial load of leagues for the authenticated user
     return _fetchLeagues();
   }
 
