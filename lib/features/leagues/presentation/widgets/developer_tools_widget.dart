@@ -64,11 +64,11 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       // Login as the new user (this will replace the old token)
       await ref.read(authProvider.notifier).login(username, 'password');
 
-      // Invalidate all data providers to force fresh data with new token
-      ref.invalidate(myLeaguesProvider);
-
       // IMPORTANT: Invalidate socket service so it reconnects with new token
       ref.invalidate(socketServiceProvider);
+
+      // Force refresh of leagues provider and wait for API call to complete
+      await ref.refresh(myLeaguesProvider.future);
 
       if (!mounted) return;
 
@@ -76,8 +76,8 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
         _statusMessage = 'Logged in as $username';
       });
 
-      // Wait for state to update
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Brief delay to ensure UI updates
+      await Future.delayed(const Duration(milliseconds: 100));
 
       if (mounted) {
         // Navigate all the way back to home screen to force full refresh
