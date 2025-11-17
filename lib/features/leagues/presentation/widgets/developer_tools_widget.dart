@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../auth/application/auth_notifier.dart';
 import '../../application/leagues_provider.dart';
@@ -64,11 +65,9 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       // Login as the new user (this will replace the old token)
       await ref.read(authProvider.notifier).login(username, 'password');
 
-      // IMPORTANT: Invalidate socket service so it reconnects with new token
+      // IMPORTANT: Invalidate all related providers to force refresh with new token
       ref.invalidate(socketServiceProvider);
-
-      // Force refresh of leagues provider and wait for API call to complete
-      await ref.refresh(myLeaguesProvider.future);
+      ref.invalidate(myLeaguesProvider);
 
       if (!mounted) return;
 
@@ -76,12 +75,13 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
         _statusMessage = 'Logged in as $username';
       });
 
-      // Brief delay to ensure UI updates
+      // Brief delay to ensure token is saved
       await Future.delayed(const Duration(milliseconds: 100));
 
       if (mounted) {
-        // Navigate all the way back to home screen to force full refresh
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Use GoRouter to navigate to home, which will rebuild the HomeScreen widget
+        // This ensures the providers are watched from a fresh widget instance
+        context.go('/home');
       }
     } catch (e) {
       if (mounted) {
