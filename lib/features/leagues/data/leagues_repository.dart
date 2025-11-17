@@ -1,4 +1,5 @@
 import '../domain/league.dart';
+import '../domain/league_member.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
 import 'leagues_api_client.dart';
 
@@ -98,9 +99,48 @@ class LeaguesRepository implements ILeaguesRepository {
     }
   }
 
+  /// Developer endpoint to add users to league by username
+  @override
+  Future<List<Map<String, dynamic>>> devAddUsersToLeague(
+    int leagueId,
+    List<String> usernames,
+  ) async {
+    try {
+      return await _apiClient.devAddUsersToLeague(leagueId, usernames);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Legacy method for backward compatibility - will be removed
   @Deprecated('Use getLeagueById instead')
   Future<League> getLeague(int leagueId) async {
     return getLeagueById(leagueId);
+  }
+
+  /// Get league members with payment status
+  @override
+  Future<List<LeagueMember>> getLeagueMembers(int leagueId) async {
+    try {
+      final data = await _apiClient.getLeagueMembers(leagueId);
+      return data.map((json) => LeagueMember(
+        rosterId: json['rosterId'] as int,
+        userId: json['userId'] as String,
+        username: json['username'] as String,
+        paid: json['paid'] as bool,
+      )).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Toggle member payment status
+  @override
+  Future<void> toggleMemberPayment(int leagueId, int rosterId, bool paid) async {
+    try {
+      await _apiClient.toggleMemberPayment(leagueId, rosterId, paid);
+    } catch (e) {
+      rethrow;
+    }
   }
 }

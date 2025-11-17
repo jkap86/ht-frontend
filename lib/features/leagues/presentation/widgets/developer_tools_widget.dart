@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/application/auth_notifier.dart';
 import '../../application/league_chat_provider.dart';
+import '../../application/leagues_provider.dart';
 
 /// Developer tools widget - only visible in debug/dev mode
 class DeveloperToolsWidget extends ConsumerStatefulWidget {
@@ -26,29 +27,54 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
   String? _statusMessage;
 
   final List<String> _testUsers = List.generate(12, (i) => 'test${i + 1}');
+  final Set<String> _selectedUsers = {};
 
-  Future<void> _addAllUsersToLeague() async {
+  Future<void> _addSelectedUsersToLeague() async {
+    if (_selectedUsers.isEmpty) {
+      setState(() {
+        _statusMessage = 'No users selected';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _statusMessage = null;
     });
 
     try {
-      // TODO: You'll need to create an endpoint to add users to league
-      // For now, this is a placeholder
-      setState(() {
-        _statusMessage = 'Feature not yet implemented';
-      });
+      final repository = ref.read(leaguesRepositoryProvider);
+      final results = await repository.devAddUsersToLeague(
+        widget.leagueId,
+        _selectedUsers.toList(),
+      );
 
-      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+
+      // Count successes and failures
+      final successes = results.where((r) => r['success'] == true).length;
+      final failures = results.where((r) => r['success'] == false).length;
+
+      setState(() {
+        if (failures == 0) {
+          _statusMessage = 'Successfully added $successes user(s) to league';
+          _selectedUsers.clear(); // Clear selection on success
+        } else {
+          _statusMessage = 'Added $successes user(s), $failures failed';
+        }
+      });
     } catch (e) {
-      setState(() {
-        _statusMessage = 'Error: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'Error: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -172,13 +198,106 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Add all users button
+                // Select users section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Add Users to League',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_selectedUsers.length == _testUsers.length) {
+                            _selectedUsers.clear();
+                          } else {
+                            _selectedUsers.addAll(_testUsers);
+                          }
+                        });
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                      ),
+                      child: Text(
+                        _selectedUsers.length == _testUsers.length
+                            ? 'Deselect All'
+                            : 'Select All',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // User checkboxes
+                ..._testUsers.map((username) => InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (_selectedUsers.contains(username)) {
+                            _selectedUsers.remove(username);
+                          } else {
+                            _selectedUsers.add(username);
+                          }
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Checkbox(
+                                value: _selectedUsers.contains(username),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedUsers.add(username);
+                                    } else {
+                                      _selectedUsers.remove(username);
+                                    }
+                                  });
+                                },
+                                fillColor: MaterialStateProperty.resolveWith((states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return Colors.white;
+                                  }
+                                  return Colors.white24;
+                                }),
+                                checkColor: Colors.red.shade900,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                username,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+
+                const SizedBox(height: 12),
+
+                // Add selected users button
                 ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _addAllUsersToLeague,
+                  onPressed: _isLoading ? null : _addSelectedUsersToLeague,
                   icon: const Icon(Icons.group_add, size: 16),
-                  label: const Text(
-                    'Add All Users to League',
-                    style: TextStyle(fontSize: 12),
+                  label: Text(
+                    'Add Selected (${_selectedUsers.length})',
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -205,7 +324,7 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
                 ),
                 const SizedBox(height: 8),
 
-                // User buttons
+                // User login buttons
                 ..._testUsers.map((username) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: OutlinedButton(

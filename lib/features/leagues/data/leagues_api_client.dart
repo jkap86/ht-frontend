@@ -181,4 +181,83 @@ class LeaguesApiClient {
       throw Exception('Failed to delete league: ${response.statusCode} - ${response.body}');
     }
   }
+
+  /// Developer endpoint to add users to league by username
+  Future<List<Map<String, dynamic>>> devAddUsersToLeague(
+    int leagueId,
+    List<String> usernames,
+  ) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _client.post(
+      _uri('/api/leagues/$leagueId/dev/add-users'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'usernames': usernames}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = data['results'] as List<dynamic>;
+      return results.map((r) => r as Map<String, dynamic>).toList();
+    } else {
+      throw Exception('Failed to add users to league: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Get league members with payment status
+  Future<List<Map<String, dynamic>>> getLeagueMembers(int leagueId) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _client.get(
+      _uri('/api/leagues/$leagueId/members'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final members = data['members'] as List<dynamic>;
+      return members.map((m) => m as Map<String, dynamic>).toList();
+    } else {
+      throw Exception('Failed to load league members: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Toggle member payment status
+  Future<Map<String, dynamic>> toggleMemberPayment(
+    int leagueId,
+    int rosterId,
+    bool paid,
+  ) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _client.patch(
+      _uri('/api/leagues/$leagueId/members/$rosterId/payment'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'paid': paid}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to update payment status: ${response.statusCode} - ${response.body}');
+    }
+  }
 }

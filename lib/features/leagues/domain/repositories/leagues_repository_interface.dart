@@ -1,4 +1,5 @@
 import '../league.dart';
+import '../league_member.dart';
 
 /// Abstract interface for leagues repository
 /// Defines contract for data operations without implementation details
@@ -35,4 +36,16 @@ abstract class ILeaguesRepository {
 
   /// Delete league permanently
   Future<void> deleteLeague(int id);
+
+  /// Developer endpoint to add users to league by username
+  Future<List<Map<String, dynamic>>> devAddUsersToLeague(
+    int leagueId,
+    List<String> usernames,
+  );
+
+  /// Get league members with payment status
+  Future<List<LeagueMember>> getLeagueMembers(int leagueId);
+
+  /// Toggle member payment status
+  Future<void> toggleMemberPayment(int leagueId, int rosterId, bool paid);
 }

@@ -132,6 +132,7 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                       EditableDuesPayoutsSection(
                         settings: state.editedLeague.settings!,
                         onChanged: controller.updateSetting,
+                        league: league,
                       ),
                       const SizedBox(height: 16),
                     ],

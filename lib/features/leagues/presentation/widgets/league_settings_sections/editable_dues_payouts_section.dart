@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../domain/league.dart';
+import '../../../application/league_members_provider.dart';
 
 /// Editable dues and payouts section
-class EditableDuesPayoutsSection extends StatelessWidget {
+class EditableDuesPayoutsSection extends ConsumerWidget {
   final Map<String, dynamic> settings;
   final Function(String, dynamic) onChanged;
+  final League league;
 
   const EditableDuesPayoutsSection({
     super.key,
     required this.settings,
     required this.onChanged,
+    required this.league,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dues = (settings['dues'] as num?)?.toDouble() ?? 0.0;
 
     return Card(
@@ -92,6 +98,14 @@ class EditableDuesPayoutsSection extends StatelessWidget {
                   const SizedBox(height: 8),
                   _buildPayoutCalculator(dues),
                 ],
+
+                // League Members section (only for commissioners)
+                if (league.isCommissioner) ...[
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  _buildLeagueMembersSection(context, ref),
+                ],
               ],
             ),
           ),
@@ -147,6 +161,91 @@ class EditableDuesPayoutsSection extends StatelessWidget {
         '$label = $payoutText',
         style: const TextStyle(fontSize: 11),
       ),
+    );
+  }
+
+  Widget _buildLeagueMembersSection(BuildContext context, WidgetRef ref) {
+    final membersAsync = ref.watch(leagueMembersProvider(league.id));
+
+    return ExpansionTile(
+      title: const Text(
+        'League Members',
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+      initiallyExpanded: false,
+      children: [
+        membersAsync.when(
+          data: (members) {
+            if (members.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'No members found',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                return SwitchListTile(
+                  title: Text(member.username),
+                  subtitle: Text('Roster ${member.rosterId}'),
+                  value: member.paid,
+                  onChanged: (bool value) async {
+                    try {
+                      await ref
+                          .read(leagueMembersProvider(league.id).notifier)
+                          .togglePaymentStatus(member.rosterId, value);
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              value
+                                  ? '${member.username} marked as paid'
+                                  : '${member.username} marked as unpaid',
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update payment status: $e'),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  secondary: Icon(
+                    member.paid ? Icons.check_circle : Icons.cancel,
+                    color: member.paid ? Colors.green : Colors.grey,
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stack) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Error loading members: $error',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
