@@ -65,23 +65,26 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
       // Login as the new user (this will replace the old token)
       await ref.read(authProvider.notifier).login(username, 'password');
 
-      // IMPORTANT: Invalidate all related providers to force refresh with new token
-      ref.invalidate(socketServiceProvider);
-      ref.invalidate(myLeaguesProvider);
-
       if (!mounted) return;
 
-      setState(() {
-        _statusMessage = 'Logged in as $username';
-      });
+      // IMPORTANT: Invalidate socket service first so it reconnects with new token
+      ref.invalidate(socketServiceProvider);
 
-      // Brief delay to ensure token is saved
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Navigate to home FIRST, then refresh the leagues provider
+      // This ensures the HomeScreen is mounted and watching before we trigger the refresh
+      context.go('/home');
+
+      // Small delay to ensure navigation completes and HomeScreen is built
+      await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
-        // Use GoRouter to navigate to home, which will rebuild the HomeScreen widget
-        // This ensures the providers are watched from a fresh widget instance
-        context.go('/home');
+        // Now refresh the leagues provider - this triggers the API call
+        // Since HomeScreen is now watching, it will see the new data
+        ref.read(myLeaguesProvider.notifier).refresh();
+
+        setState(() {
+          _statusMessage = 'Logged in as $username';
+        });
       }
     } catch (e) {
       if (mounted) {
