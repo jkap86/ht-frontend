@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../application/create_league_controller.dart';
-import '../../../../leagues/presentation/league_details_screen.dart';
 import '../../../../leagues/application/leagues_provider.dart';
 import '../league_form/dues_payouts_section.dart';
 import 'basic_settings_section.dart';
+import 'create_draft_settings_section.dart';
 import 'scoring_settings_section.dart';
 import 'roster_positions_section.dart';
 import 'waiver_settings_section.dart';
@@ -32,11 +33,7 @@ class CreateLeagueForm extends ConsumerWidget {
           Navigator.of(context).pop();
 
           // Navigate to the league details screen
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => LeagueDetailsScreen(leagueId: newLeague.id),
-            ),
-          );
+          context.go('/league/${newLeague.id}');
         }
       }
     });
@@ -77,6 +74,14 @@ class CreateLeagueForm extends ConsumerWidget {
             onPlayoffTeamsChanged: controller.updatePlayoffTeams,
             nameError: state.error?.contains('name') == true ? state.error : null,
             seasonError: state.error?.contains('season') == true ? state.error : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Draft Settings Section - with local state management
+          CreateDraftSettingsSection(
+            data: state.data,
+            onDraftConfigurationsChanged: controller.updateDraftConfigurations,
+            rosterPositions: state.data.rosterPositions,
           ),
           const SizedBox(height: 16),
 

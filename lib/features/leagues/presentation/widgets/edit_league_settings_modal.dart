@@ -6,6 +6,7 @@ import 'league_settings_sections/editable_scoring_settings_section.dart';
 import 'league_settings_sections/editable_roster_positions_section.dart';
 import 'league_settings_sections/editable_waiver_settings_section.dart';
 import 'league_settings_sections/editable_dues_payouts_section.dart';
+import 'league_settings_sections/editable_draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
 
 /// Editable league settings modal for commissioners
@@ -85,9 +86,7 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                     // Basic Info (editable)
                     _EditableBasicInfoSection(
                       name: state.editedLeague.name,
-                      description: state.editedLeague.description,
                       onNameChanged: controller.updateName,
-                      onDescriptionChanged: controller.updateDescription,
                     ),
                     const SizedBox(height: 16),
 
@@ -99,6 +98,14 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                     ],
+
+                    // Draft Settings (editable)
+                    EditableDraftSettingsSection(
+                      leagueId: league.id,
+                      rosterPositions: state.editedLeague.rosterPositions,
+                      isCommissioner: league.isCommissioner,
+                    ),
+                    const SizedBox(height: 16),
 
                     // Scoring Settings (editable)
                     if (state.editedLeague.scoringSettings != null) ...[
@@ -223,15 +230,11 @@ class _SettingsHeader extends StatelessWidget {
 /// Editable basic info section
 class _EditableBasicInfoSection extends StatelessWidget {
   final String name;
-  final String? description;
   final Function(String) onNameChanged;
-  final Function(String?) onDescriptionChanged;
 
   const _EditableBasicInfoSection({
     required this.name,
-    required this.description,
     required this.onNameChanged,
-    required this.onDescriptionChanged,
   });
 
   @override
@@ -246,30 +249,14 @@ class _EditableBasicInfoSection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  initialValue: name,
-                  decoration: const InputDecoration(
-                    labelText: 'League Name *',
-                    border: OutlineInputBorder(),
-                    helperText: 'Must be at least 3 characters',
-                  ),
-                  onChanged: onNameChanged,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  initialValue: description ?? '',
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    helperText: 'Optional league description',
-                  ),
-                  maxLines: 3,
-                  onChanged: onDescriptionChanged,
-                ),
-              ],
+            child: TextFormField(
+              initialValue: name,
+              decoration: const InputDecoration(
+                labelText: 'League Name *',
+                border: OutlineInputBorder(),
+                helperText: 'Must be at least 3 characters',
+              ),
+              onChanged: onNameChanged,
             ),
           ),
         ],

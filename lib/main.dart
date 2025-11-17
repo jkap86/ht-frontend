@@ -10,6 +10,7 @@ import 'features/auth/application/auth_state.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'features/leagues/presentation/league_details_screen.dart';
 
 late final AppConfig appConfig;
 
@@ -78,6 +79,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/league/:leagueId',
+        name: 'league',
+        builder: (context, state) {
+          final leagueId = int.parse(state.pathParameters['leagueId']!);
+          return LeagueDetailsScreen(leagueId: leagueId);
+        },
       ),
     ],
   );

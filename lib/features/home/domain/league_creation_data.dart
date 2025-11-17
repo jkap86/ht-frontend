@@ -36,6 +36,9 @@ class LeagueCreationData {
   final double entryFee;
   final List<Map<String, dynamic>> payoutStructure;
 
+  // Draft Settings - stored as list of draft configurations
+  final List<Map<String, dynamic>> draftConfigurations;
+
   const LeagueCreationData({
     required this.name,
     required this.season,
@@ -58,6 +61,7 @@ class LeagueCreationData {
     required this.tradeDetailsSetting,
     required this.entryFee,
     required this.payoutStructure,
+    required this.draftConfigurations,
   });
 
   /// Create settings map for API
@@ -125,6 +129,7 @@ class LeagueCreationData {
       tradeDetailsSetting: 'proposer_choice',
       entryFee: 0.0,
       payoutStructure: [],
+      draftConfigurations: [],
     );
   }
 
@@ -150,6 +155,7 @@ class LeagueCreationData {
     String? tradeDetailsSetting,
     double? entryFee,
     List<Map<String, dynamic>>? payoutStructure,
+    List<Map<String, dynamic>>? draftConfigurations,
   }) {
     return LeagueCreationData(
       name: name ?? this.name,
@@ -173,6 +179,7 @@ class LeagueCreationData {
       tradeDetailsSetting: tradeDetailsSetting ?? this.tradeDetailsSetting,
       entryFee: entryFee ?? this.entryFee,
       payoutStructure: payoutStructure ?? this.payoutStructure,
+      draftConfigurations: draftConfigurations ?? this.draftConfigurations,
     );
   }
 }

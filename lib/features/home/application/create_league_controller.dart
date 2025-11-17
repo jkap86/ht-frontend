@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league_creation_data.dart';
 import '../../leagues/application/leagues_provider.dart';
+import '../../leagues/application/drafts_provider.dart';
 
 /// State for the create league form
 class CreateLeagueState {
@@ -197,6 +198,30 @@ class CreateLeagueController extends StateNotifier<CreateLeagueState> {
     );
   }
 
+  void updateDraftConfigurations(List<Map<String, dynamic>> configurations) {
+    state = state.copyWith(
+      data: state.data.copyWith(draftConfigurations: configurations),
+      clearError: true,
+    );
+  }
+
+  void addDraftConfiguration(Map<String, dynamic> configuration) {
+    final updatedConfigurations = [...state.data.draftConfigurations, configuration];
+    updateDraftConfigurations(updatedConfigurations);
+  }
+
+  void updateDraftConfiguration(int index, Map<String, dynamic> configuration) {
+    final updatedConfigurations = [...state.data.draftConfigurations];
+    updatedConfigurations[index] = configuration;
+    updateDraftConfigurations(updatedConfigurations);
+  }
+
+  void removeDraftConfiguration(int index) {
+    final updatedConfigurations = [...state.data.draftConfigurations];
+    updatedConfigurations.removeAt(index);
+    updateDraftConfigurations(updatedConfigurations);
+  }
+
   /// Validate form data
   String? validateName() {
     if (state.data.name.trim().isEmpty) {
@@ -220,7 +245,7 @@ class CreateLeagueController extends StateNotifier<CreateLeagueState> {
     return null;
   }
 
-  /// Submit form - create league
+  /// Submit form - create league and drafts
   Future<void> submitForm() async {
     // Validate
     final nameError = validateName();
@@ -250,6 +275,23 @@ class CreateLeagueController extends StateNotifier<CreateLeagueState> {
             rosterPositions: data.rosterPositions,
             seasonType: data.seasonType,
           );
+
+      // Get the newly created league to get its ID
+      final leagues = await _ref.read(myLeaguesProvider.future);
+      if (leagues.isNotEmpty && data.draftConfigurations.isNotEmpty) {
+        final newLeague = leagues.first; // The newest league is at the top
+
+        // Create each draft configuration
+        final draftsApiClient = _ref.read(draftsApiClientProvider);
+        for (final draftConfig in data.draftConfigurations) {
+          try {
+            await draftsApiClient.createDraft(newLeague.id, draftConfig);
+          } catch (e) {
+            // Log error but continue with other drafts
+            print('Error creating draft: $e');
+          }
+        }
+      }
 
       state = state.copyWith(
         isSubmitting: false,

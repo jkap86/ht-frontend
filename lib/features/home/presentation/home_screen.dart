@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/application/auth_notifier.dart';
 import '../../leagues/application/leagues_provider.dart';
 import '../../leagues/domain/league.dart';
-import '../../leagues/presentation/league_details_screen.dart';
 import 'widgets/add_league_modal_new.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -143,11 +143,7 @@ class _LeagueCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => LeagueDetailsScreen(leagueId: league.id),
-            ),
-          );
+          context.go('/league/${league.id}');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

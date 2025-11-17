@@ -8,6 +8,7 @@ import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
 import 'widgets/league_workflow_widget.dart';
 import 'widgets/dues_overview_card.dart';
+import 'widgets/draft_overview_card.dart';
 import 'widgets/collapsible_chat_widget.dart';
 import 'widgets/developer_tools_widget.dart';
 import '../application/league_members_provider.dart';
@@ -138,6 +139,8 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
           // Conditional content based on selected workflow step
           if (selectedStep == 'Dues') ...[
             DuesOverviewCard(league: league),
+          ] else if (selectedStep == 'Draft') ...[
+            DraftOverviewCard(league: league),
           ] else if (dues > 0) ...[
             // Buy-In / Payouts Card - shown for other steps if dues exist
             LeagueBuyInCard(league: league, dues: dues),
