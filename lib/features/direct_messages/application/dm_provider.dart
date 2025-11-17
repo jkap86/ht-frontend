@@ -2,12 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../leagues/application/league_chat_provider.dart';
 import '../data/dm_api_client.dart';
+import '../data/dm_socket_client.dart';
 import '../domain/direct_message.dart';
 import '../domain/conversation.dart';
 
 /// Provider for the DM API client
 final dmApiClientProvider = Provider<DmApiClient>((ref) {
   return DmApiClient();
+});
+
+/// Provider for the DM-specific socket client
+final dmSocketClientProvider = Provider<DmSocketClient>((ref) {
+  final socketService = ref.watch(socketServiceProvider);
+  return DmSocketClient(socketService);
 });
 
 /// Provider for the list of conversations
@@ -38,6 +45,7 @@ class DmConversationNotifier extends FamilyAsyncNotifier<List<DirectMessage>, St
   Future<void> _setupWebSocket(String otherUserId) async {
     try {
       final socketService = ref.read(socketServiceProvider);
+      final dmSocketClient = ref.read(dmSocketClientProvider);
 
       // Connect to WebSocket if not already connected
       if (!socketService.isConnected) {
@@ -58,10 +66,10 @@ class DmConversationNotifier extends FamilyAsyncNotifier<List<DirectMessage>, St
 
       print('[DmConversationNotifier] Socket connected, joining conversation $conversationId');
       // Join the DM conversation room
-      socketService.joinDmConversation(conversationId);
+      dmSocketClient.joinConversation(conversationId);
 
       // Listen for new direct messages
-      socketService.onNewDirectMessage((messageDto) {
+      dmSocketClient.onNewDirectMessage((messageDto) {
         print('[DmConversationNotifier] Received message from WebSocket, adding to state');
         final message = messageDto.toDomain();
         // Only add if this message is part of this conversation

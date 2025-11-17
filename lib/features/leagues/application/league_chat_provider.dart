@@ -1,20 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/league_chat_api_client.dart';
-import '../data/socket_service.dart';
+import '../../../core/services/socket/socket_service.dart';
+import '../data/chat_repository.dart';
+import '../data/league_socket_client.dart';
+import '../domain/repositories/chat_repository_interface.dart';
 import '../domain/chat_message.dart';
 
-/// Provider for the league chat API client
-final leagueChatApiClientProvider = Provider<LeagueChatApiClient>((ref) {
-  return LeagueChatApiClient();
-});
-
-/// Provider for the socket service (keepAlive to maintain single instance)
+/// Provider for the base socket service (keepAlive to maintain single instance)
 final socketServiceProvider = Provider<SocketService>((ref) {
   final service = SocketService();
   // Keep the socket service alive even when no providers are listening
   ref.keepAlive();
   return service;
+});
+
+/// Provider for the league-specific socket client
+final leagueSocketClientProvider = Provider<LeagueSocketClient>((ref) {
+  final socketService = ref.watch(socketServiceProvider);
+  return LeagueSocketClient(socketService);
+});
+
+/// Provider for the chat repository
+final chatRepositoryProvider = Provider<IChatRepository>((ref) {
+  return ChatRepository();
 });
 
 /// Family provider for league chat messages
@@ -38,6 +46,7 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
   Future<void> _setupWebSocket(int leagueId) async {
     try {
       final socketService = ref.read(socketServiceProvider);
+      final leagueSocketClient = ref.read(leagueSocketClientProvider);
 
       // Connect to WebSocket if not already connected
       if (!socketService.isConnected) {
@@ -54,10 +63,10 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
 
       print('[LeagueChatNotifier] Socket connected, joining league $leagueId');
       // Join the league chat room
-      socketService.joinLeague(leagueId);
+      leagueSocketClient.joinLeague(leagueId);
 
       // Listen for new messages
-      socketService.onNewMessage((messageDto) {
+      leagueSocketClient.onNewMessage((messageDto) {
         print('[LeagueChatNotifier] Received message from WebSocket, adding to state');
         final message = messageDto.toDomain();
         addMessage(message);
@@ -71,9 +80,8 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
 
 
   Future<List<ChatMessage>> _fetchMessages(int leagueId, {int limit = 100}) async {
-    final apiClient = ref.read(leagueChatApiClientProvider);
-    final dtos = await apiClient.getChatMessages(leagueId, limit: limit);
-    return dtos.map((dto) => dto.toDomain()).toList();
+    final repository = ref.read(chatRepositoryProvider);
+    return await repository.getMessages(leagueId, limit: limit);
   }
 
   /// Refresh the chat messages
@@ -84,12 +92,12 @@ class LeagueChatNotifier extends FamilyAsyncNotifier<List<ChatMessage>, int> {
 
   /// Send a new message
   Future<void> sendMessage(String message, {String messageType = 'chat'}) async {
-    final apiClient = ref.read(leagueChatApiClientProvider);
+    final repository = ref.read(chatRepositoryProvider);
 
     try {
       // Send the message via API
       // The WebSocket will handle adding it to the local state
-      await apiClient.sendChatMessage(
+      await repository.sendMessage(
         leagueId: arg,
         message: message,
         messageType: messageType,
