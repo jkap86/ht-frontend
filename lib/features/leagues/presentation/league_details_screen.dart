@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league.dart';
 import '../application/leagues_provider.dart';
 import 'widgets/league_settings_modal.dart';
-import 'widgets/edit_league_settings_modal.dart';
 import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
 import 'widgets/league_workflow_widget.dart';
@@ -51,15 +50,13 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
           appBar: AppBar(
             title: Text(league.name),
             actions: [
-              // Settings button - editable for commissioners, read-only for others
+              // Settings button - always shows read-only modal
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => league.isCommissioner
-                        ? EditLeagueSettingsModal(league: league)
-                        : LeagueSettingsModal(league: league),
+                    builder: (context) => LeagueSettingsModal(league: league),
                   );
                 },
               ),

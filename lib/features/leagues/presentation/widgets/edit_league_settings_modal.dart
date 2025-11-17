@@ -8,6 +8,7 @@ import 'league_settings_sections/editable_waiver_settings_section.dart';
 import 'league_settings_sections/editable_dues_payouts_section.dart';
 import 'league_settings_sections/editable_draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
+import 'league_settings_modal.dart';
 
 /// Editable league settings modal for commissioners
 class EditLeagueSettingsModal extends ConsumerWidget {
@@ -23,7 +24,7 @@ class EditLeagueSettingsModal extends ConsumerWidget {
     final state = ref.watch(editLeagueControllerProvider(league));
     final controller = ref.read(editLeagueControllerProvider(league).notifier);
 
-    // Show success and close modal
+    // Show success and reopen view modal
     ref.listen(editLeagueControllerProvider(league), (previous, next) {
       if (next.isSuccess) {
         Navigator.of(context).pop();
@@ -32,6 +33,11 @@ class EditLeagueSettingsModal extends ConsumerWidget {
             content: const Text('League settings updated successfully'),
             backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
+        );
+        // Reopen the read-only modal after save
+        showDialog(
+          context: context,
+          builder: (context) => LeagueSettingsModal(league: league),
         );
       }
     });
@@ -43,7 +49,14 @@ class EditLeagueSettingsModal extends ConsumerWidget {
           children: [
             // Header
             _SettingsHeader(
-              onClose: () => Navigator.of(context).pop(),
+              league: league,
+              onClose: () {
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (context) => LeagueSettingsModal(league: league),
+                );
+              },
               hasChanges: state.hasChanges,
               onReset: controller.resetChanges,
             ),
@@ -153,9 +166,16 @@ class EditLeagueSettingsModal extends ConsumerWidget {
             ),
             // Footer with actions
             _SettingsFooter(
+              league: league,
               hasChanges: state.hasChanges,
               isSubmitting: state.isSubmitting,
-              onCancel: () => Navigator.of(context).pop(),
+              onCancel: () {
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (context) => LeagueSettingsModal(league: league),
+                );
+              },
               onSave: controller.submitChanges,
             ),
           ],
@@ -167,11 +187,13 @@ class EditLeagueSettingsModal extends ConsumerWidget {
 
 /// Settings modal header with close and reset buttons
 class _SettingsHeader extends StatelessWidget {
+  final League league;
   final VoidCallback onClose;
   final bool hasChanges;
   final VoidCallback onReset;
 
   const _SettingsHeader({
+    required this.league,
     required this.onClose,
     required this.hasChanges,
     required this.onReset,
@@ -374,12 +396,14 @@ class _EditableScheduleSection extends StatelessWidget {
 
 /// Settings footer with cancel and save buttons
 class _SettingsFooter extends StatelessWidget {
+  final League league;
   final bool hasChanges;
   final bool isSubmitting;
   final VoidCallback onCancel;
   final VoidCallback onSave;
 
   const _SettingsFooter({
+    required this.league,
     required this.hasChanges,
     required this.isSubmitting,
     required this.onCancel,

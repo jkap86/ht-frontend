@@ -64,6 +64,7 @@ class DraftOverviewCard extends ConsumerWidget {
                         draft: draft,
                         draftNumber: index + 1,
                         leagueId: league.id,
+                        isCommissioner: league.isCommissioner,
                       ),
                     );
                   }).toList(),
@@ -97,11 +98,13 @@ class _DraftCard extends ConsumerStatefulWidget {
   final Map<String, dynamic> draft;
   final int draftNumber;
   final int leagueId;
+  final bool isCommissioner;
 
   const _DraftCard({
     required this.draft,
     required this.draftNumber,
     required this.leagueId,
+    required this.isCommissioner,
   });
 
   @override
@@ -313,34 +316,36 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             ),
         ],
 
-        // Randomize button
-        FilledButton.icon(
-          onPressed: draftOrderState.isLoading
-              ? null
-              : () async {
-                  try {
-                    await ref
-                        .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
-                        .randomize();
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error randomizing draft order: $e'),
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                        ),
-                      );
+        // Randomize button (only for commissioners)
+        if (widget.isCommissioner) ...[
+          FilledButton.icon(
+            onPressed: draftOrderState.isLoading
+                ? null
+                : () async {
+                    try {
+                      await ref
+                          .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                          .randomize();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error randomizing draft order: $e'),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
-          icon: const Icon(Icons.shuffle),
-          label: Text(
-            draftOrder.toLowerCase() == 'derby'
-                ? 'Randomize Derby Order'
-                : 'Randomize Draft Order',
+                  },
+            icon: const Icon(Icons.shuffle),
+            label: Text(
+              draftOrder.toLowerCase() == 'derby'
+                  ? 'Randomize Derby Order'
+                  : 'Randomize Draft Order',
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+        ],
         // Draft order list
         draftOrderState.when(
           data: (order) {

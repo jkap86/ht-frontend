@@ -6,7 +6,9 @@ import 'league_settings_sections/scoring_settings_section.dart';
 import 'league_settings_sections/roster_positions_section.dart';
 import 'league_settings_sections/waiver_settings_section.dart';
 import 'league_settings_sections/dues_payouts_section.dart';
+import 'league_settings_sections/draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
+import 'edit_league_settings_modal.dart';
 
 /// League settings modal - displays all league configuration
 class LeagueSettingsModal extends StatelessWidget {
@@ -26,6 +28,7 @@ class LeagueSettingsModal extends StatelessWidget {
           children: [
             // Header
             _SettingsHeader(
+              league: league,
               onClose: () => Navigator.of(context).pop(),
             ),
             // Content
@@ -67,6 +70,10 @@ class LeagueSettingsModal extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
 
+                    // Draft Settings
+                    DraftSettingsSection(league: league),
+                    const SizedBox(height: 16),
+
                     // Dues & Payouts
                     if (league.settings != null &&
                         league.settings!['dues'] != null) ...[
@@ -92,9 +99,13 @@ class LeagueSettingsModal extends StatelessWidget {
 
 /// Settings modal header
 class _SettingsHeader extends StatelessWidget {
+  final League league;
   final VoidCallback onClose;
 
-  const _SettingsHeader({required this.onClose});
+  const _SettingsHeader({
+    required this.league,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +132,20 @@ class _SettingsHeader extends StatelessWidget {
               ),
             ),
           ),
+          // Edit button (only for commissioners)
+          if (league.isCommissioner) ...[
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.white),
+              onPressed: () {
+                // Close current modal and open edit modal
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (context) => EditLeagueSettingsModal(league: league),
+                );
+              },
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.close, color: Colors.white),
             onPressed: onClose,
