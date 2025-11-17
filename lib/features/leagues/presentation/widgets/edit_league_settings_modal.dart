@@ -6,6 +6,7 @@ import 'league_settings_sections/editable_scoring_settings_section.dart';
 import 'league_settings_sections/editable_roster_positions_section.dart';
 import 'league_settings_sections/editable_waiver_settings_section.dart';
 import 'league_settings_sections/editable_dues_payouts_section.dart';
+import 'league_settings_sections/danger_zone_section.dart';
 
 /// Editable league settings modal for commissioners
 class EditLeagueSettingsModal extends ConsumerWidget {
@@ -134,6 +135,10 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                     ],
+
+                    // Danger Zone (always visible for commissioners)
+                    DangerZoneSection(league: league),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

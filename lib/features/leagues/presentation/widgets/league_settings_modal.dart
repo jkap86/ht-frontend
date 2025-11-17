@@ -6,6 +6,7 @@ import 'league_settings_sections/scoring_settings_section.dart';
 import 'league_settings_sections/roster_positions_section.dart';
 import 'league_settings_sections/waiver_settings_section.dart';
 import 'league_settings_sections/dues_payouts_section.dart';
+import 'league_settings_sections/danger_zone_section.dart';
 
 /// League settings modal - displays all league configuration
 class LeagueSettingsModal extends StatelessWidget {
@@ -70,6 +71,12 @@ class LeagueSettingsModal extends StatelessWidget {
                     if (league.settings != null &&
                         league.settings!['dues'] != null) ...[
                       DuesPayoutsSection(settings: league.settings!),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Danger Zone (only for commissioners)
+                    if (league.isCommissioner) ...[
+                      DangerZoneSection(league: league),
                       const SizedBox(height: 16),
                     ],
                   ],

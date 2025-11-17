@@ -80,6 +80,24 @@ class LeaguesRepository implements ILeaguesRepository {
     }
   }
 
+  @override
+  Future<void> resetLeague(int id) async {
+    try {
+      await _apiClient.resetLeague(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteLeague(int id) async {
+    try {
+      await _apiClient.deleteLeague(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Legacy method for backward compatibility - will be removed
   @Deprecated('Use getLeagueById instead')
   Future<League> getLeague(int leagueId) async {

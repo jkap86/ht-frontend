@@ -141,4 +141,44 @@ class LeaguesApiClient {
       throw Exception('Failed to update league: ${response.statusCode} - ${response.body}');
     }
   }
+
+  /// Reset league - clears rosters, drafts, and matchups but preserves settings
+  Future<void> resetLeague(int id) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _client.post(
+      _uri('/api/leagues/$id/reset'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reset league: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Delete league permanently
+  Future<void> deleteLeague(int id) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _client.delete(
+      _uri('/api/leagues/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to delete league: ${response.statusCode} - ${response.body}');
+    }
+  }
 }

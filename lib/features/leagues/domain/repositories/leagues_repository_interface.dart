@@ -29,4 +29,10 @@ abstract class ILeaguesRepository {
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
   });
+
+  /// Reset league - clears rosters, drafts, and matchups but preserves settings
+  Future<void> resetLeague(int id);
+
+  /// Delete league permanently
+  Future<void> deleteLeague(int id);
 }
