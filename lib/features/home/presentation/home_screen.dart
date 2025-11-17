@@ -7,11 +7,33 @@ import '../../leagues/domain/league.dart';
 import '../../leagues/presentation/league_details_screen.dart';
 import 'widgets/add_league_modal_new.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  String? _lastUsername;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Check if the user has changed (e.g., via developer tools quick login)
+    final currentUsername = ref.read(authProvider).user?.username;
+    if (_lastUsername != null && currentUsername != null && _lastUsername != currentUsername) {
+      // User changed! Refresh the leagues data
+      Future.microtask(() {
+        ref.read(myLeaguesProvider.notifier).refresh();
+      });
+    }
+    _lastUsername = currentUsername;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final leaguesAsync = ref.watch(myLeaguesProvider);
     final authState = ref.watch(authProvider);
 

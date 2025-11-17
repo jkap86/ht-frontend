@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/application/auth_notifier.dart';
-import '../../application/leagues_provider.dart';
 import '../../application/league_chat_provider.dart';
 
 /// Developer tools widget - only visible in debug/dev mode
@@ -67,25 +66,15 @@ class _DeveloperToolsWidgetState extends ConsumerState<DeveloperToolsWidget> {
 
       if (!mounted) return;
 
-      // IMPORTANT: Invalidate socket service first so it reconnects with new token
+      setState(() {
+        _statusMessage = 'Logged in as $username';
+      });
+
+      // IMPORTANT: Invalidate socket service so it reconnects with new token
       ref.invalidate(socketServiceProvider);
 
-      // Navigate to home FIRST, then refresh the leagues provider
-      // This ensures the HomeScreen is mounted and watching before we trigger the refresh
+      // Navigate to home - HomeScreen will detect the username change and refresh automatically
       context.go('/home');
-
-      // Small delay to ensure navigation completes and HomeScreen is built
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      if (mounted) {
-        // Now refresh the leagues provider - this triggers the API call
-        // Since HomeScreen is now watching, it will see the new data
-        ref.read(myLeaguesProvider.notifier).refresh();
-
-        setState(() {
-          _statusMessage = 'Logged in as $username';
-        });
-      }
     } catch (e) {
       if (mounted) {
         setState(() {
