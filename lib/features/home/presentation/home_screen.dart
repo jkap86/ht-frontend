@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../auth/application/auth_notifier.dart';
 import '../../leagues/application/leagues_provider.dart';
 import '../../leagues/domain/league.dart';
-import '../../direct_messages/presentation/dm_screen.dart';
 import 'widgets/add_league_modal_new.dart';
+import 'widgets/collapsible_dm_list_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,17 +20,6 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(authState.user?.username ?? 'My Leagues'),
         actions: [
-          IconButton(
-            tooltip: 'Messages',
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const DmScreen(),
-                ),
-              );
-            },
-          ),
           IconButton(
             tooltip: 'Add League',
             icon: const Icon(Icons.add),
@@ -50,7 +39,9 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: leaguesAsync.when(
+      body: Stack(
+        children: [
+          leaguesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -118,6 +109,9 @@ class HomeScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+          const CollapsibleDmListWidget(),
+        ],
       ),
     );
   }
