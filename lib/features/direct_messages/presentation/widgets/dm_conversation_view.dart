@@ -6,6 +6,7 @@ import '../../../chat/application/chat_providers.dart';
 import '../../../chat/presentation/widgets/chat_message_bubble.dart';
 import '../../../chat/presentation/widgets/chat_input_bar.dart';
 import '../../../chat/presentation/widgets/chat_error_banner.dart';
+import '../../../auth/application/auth_notifier.dart';
 
 /// Conversation view for a single direct message thread.
 ///
@@ -115,6 +116,9 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
       );
     }
 
+    // Get current user ID to determine if message is from me
+    final currentUserId = ref.read(authProvider).user?.userId;
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -130,12 +134,9 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
         //   ...
         // }
         final text = (msg['message'] ?? '').toString();
-
-        // If you have user context, you can detect "isMe"
-        // by comparing msg['sender_id'] to your auth userId.
-        // For now, we just show a generic bubble.
+        final senderId = (msg['sender_id'] ?? '').toString();
         final senderName = (msg['sender_username'] ?? '').toString();
-        const isMe = false;
+        final isMe = currentUserId != null && senderId == currentUserId;
 
         return ChatMessageBubble.user(
           text: text,
@@ -146,7 +147,7 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
     );
   }
 
-  void _handleSend(ChatNotifier dmNotifier) {
+  void _handleSend(DmChatNotifier dmNotifier) {
     final ok = dmNotifier.sendMessage(message: _textController.text);
     if (ok) {
       _textController.clear();

@@ -41,6 +41,9 @@ class LeagueDto {
 
   /// Convert JSON from API to DTO
   factory LeagueDto.fromJson(Map<String, dynamic> json) {
+    // Extract settings object for nested values
+    final settings = json['settings'] as Map<String, dynamic>?;
+
     return LeagueDto(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -53,9 +56,10 @@ class LeagueDto {
           : null,
       commissionerRosterId: json['commissioner_roster_id'] as int?,
       userRosterId: json['user_roster_id'] as int?,
-      season: json['season'] as String,
-      seasonType: json['season_type'] as String,
-      settings: json['settings'] as Map<String, dynamic>?,
+      // Season and seasonType are nested in settings
+      season: settings?['season'] as String? ?? '',
+      seasonType: settings?['season_type'] as String? ?? 'regular',
+      settings: settings,
       scoringSettings: json['scoring_settings'] as Map<String, dynamic>?,
       rosterPositions: json['roster_positions'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),

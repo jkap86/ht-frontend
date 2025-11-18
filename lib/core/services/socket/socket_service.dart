@@ -35,7 +35,6 @@ class SocketService {
     _socket = IO.io(
       _baseUrl,
       IO.OptionBuilder()
-          .setTransports(['websocket'])
           .enableAutoConnect()
           .setAuth({'token': token})
           .build(),

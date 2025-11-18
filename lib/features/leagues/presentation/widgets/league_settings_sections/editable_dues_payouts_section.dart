@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/league.dart';
 import '../../../application/league_members_provider.dart';
+import '../../../application/edit_league_controller.dart';
 
 /// Editable dues and payouts section
 class EditableDuesPayoutsSection extends ConsumerWidget {
@@ -166,6 +167,8 @@ class EditableDuesPayoutsSection extends ConsumerWidget {
 
   Widget _buildLeagueMembersSection(BuildContext context, WidgetRef ref, double dues) {
     final membersAsync = ref.watch(leagueMembersProvider(league.id));
+    final editState = ref.watch(editLeagueControllerProvider(league));
+    final editController = ref.read(editLeagueControllerProvider(league).notifier);
 
     return ExpansionTile(
       title: const Text(
@@ -194,43 +197,23 @@ class EditableDuesPayoutsSection extends ConsumerWidget {
                 final member = members[index];
                 final isFreeLeague = dues == 0;
 
+                // Check if there's a pending change for this member
+                final hasPendingChange = editState.pendingPaymentChanges.containsKey(member.rosterId);
+                final currentValue = hasPendingChange
+                    ? editState.pendingPaymentChanges[member.rosterId]!
+                    : member.paid;
+
                 return SwitchListTile(
                   title: Text(member.username),
                   subtitle: Text('Roster ${member.rosterId}'),
-                  value: member.paid,
+                  value: currentValue,
                   // Disable toggle if league is free
-                  onChanged: isFreeLeague ? null : (bool value) async {
-                    try {
-                      await ref
-                          .read(leagueMembersProvider(league.id).notifier)
-                          .togglePaymentStatus(member.rosterId, value);
-
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              value
-                                  ? '${member.username} marked as paid'
-                                  : '${member.username} marked as unpaid',
-                            ),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to update payment status: $e'),
-                            backgroundColor: Theme.of(context).colorScheme.error,
-                          ),
-                        );
-                      }
-                    }
+                  onChanged: isFreeLeague ? null : (bool value) {
+                    editController.updateMemberPaymentStatus(member.rosterId, value);
                   },
                   secondary: Icon(
-                    member.paid ? Icons.check_circle : Icons.cancel,
-                    color: member.paid ? Colors.green : Colors.grey,
+                    currentValue ? Icons.check_circle : Icons.cancel,
+                    color: currentValue ? Colors.green : Colors.grey,
                   ),
                 );
               },

@@ -1,29 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_config_provider.dart';
+import '../../../core/infrastructure/api_client.dart';
+import '../../auth/application/auth_notifier.dart';
+import '../data/dm_api_client.dart';
 import 'widgets/dm_conversations_list.dart';
 
-/// Simple provider that should return the list of DM conversations for the
-/// current user.
-///
-/// TODO:
-///   Replace the body of this provider with a real implementation:
-///   - Call your REST API
-///   - Or read from an existing repository/service
-///
-/// Expected item shape (but you can adapt as needed):
-/// {
-///   "conversationId": "...",
-///   "otherUserId": "...",
-///   "otherUsername": "...",
-///   "lastMessage": "...",
-///   "lastMessageAt": "2025-11-17T10:00:00Z",
-///   "unreadCount": 2
-/// }
+/// Provider for the DmApiClient
+final dmApiClientProvider = Provider<DmApiClient>((ref) {
+  final config = ref.watch(appConfigProvider);
+  final storage = ref.watch(authStorageProvider);
+
+  final apiClient = ApiClient(baseUrl: config.apiBaseUrl);
+
+  return DmApiClient(apiClient: apiClient, storage: storage);
+});
+
+/// Provider for fetching DM conversations for the current user.
+/// Returns a list of conversation objects compatible with DmConversationsList.
 final dmConversationsProvider = FutureProvider<List<dynamic>>((ref) async {
-  // TODO: wire this to your backend.
-  // For now, return an empty list so the screen still works.
-  return <dynamic>[];
+  final apiClient = ref.watch(dmApiClientProvider);
+  final currentUserId = ref.watch(authProvider).user?.userId;
+
+  if (currentUserId == null) {
+    return [];
+  }
+
+  final conversations = await apiClient.getConversations();
+
+  // Transform DTOs to the format expected by DmConversationsList
+  return conversations.map((convo) {
+    final dto = convo.toDomain();
+
+    // Create proper conversation ID by sorting both user IDs
+    final ids = [currentUserId, dto.otherUserId]..sort();
+    final conversationId = '${ids[0]}_${ids[1]}';
+
+    return {
+      'conversationId': conversationId,
+      'otherUserId': dto.otherUserId,
+      'otherUsername': dto.otherUsername,
+      'lastMessage': dto.lastMessage,
+      'lastMessageAt': dto.lastMessageTime.toIso8601String(),
+      'last_message_at': dto.lastMessageTime.toIso8601String(),
+      'unreadCount': dto.unreadCount,
+    };
+  }).toList();
 });
 
 /// Main Direct Messages screen.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/application/auth_notifier.dart';
 import '../../../direct_messages/application/unified_dm_chat_provider.dart';
 import '../../../chat/application/chat_providers.dart';
 import '../../../chat/presentation/widgets/chat_message_bubble.dart';
@@ -121,6 +122,8 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
       );
     }
 
+    final currentUserId = ref.read(authProvider).user?.userId;
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -130,11 +133,9 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
 
         final text = (msg['message'] ?? '').toString();
         final senderName = (msg['sender_username'] ?? '').toString();
+        final senderId = (msg['sender_id'] ?? '').toString();
 
-        // TODO: if you have the current user's ID, set isMe based on:
-        // final myUserId = ref.read(authUserProvider)?.id;
-        // final isMe = msg['sender_id'] == myUserId;
-        const isMe = false;
+        final isMe = currentUserId != null && senderId == currentUserId;
 
         return ChatMessageBubble.user(
           text: text,
@@ -145,7 +146,7 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
     );
   }
 
-  void _handleSend(ChatNotifier dmNotifier) {
+  void _handleSend(DmChatNotifier dmNotifier) {
     final ok = dmNotifier.sendMessage(message: _textController.text);
     if (ok) {
       _textController.clear();

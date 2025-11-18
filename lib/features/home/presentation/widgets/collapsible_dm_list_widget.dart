@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../direct_messages/presentation/dm_screen.dart';
-import '../../../direct_messages/presentation/widgets/dm_conversations_list.dart';
 import '../../../leagues/presentation/widgets/chat_resize_handles.dart';
+import 'dm_list_content.dart';
 
 /// Collapsible DM list widget that can be expanded to varying sizes or collapsed to an icon
 class CollapsibleDmListWidget extends ConsumerStatefulWidget {
@@ -361,79 +360,9 @@ class _CollapsibleDmListWidgetState extends ConsumerState<CollapsibleDmListWidge
   }
 
   Widget _buildDmListContent() {
-    final theme = Theme.of(context);
-    final conversationsAsync = ref.watch(dmConversationsProvider);
-
-    return Opacity(
+    return DmListContent(
       opacity: _opacityAnimation.value,
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.chat_bubble_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Direct Messages',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
-                  onPressed: _toggleExpanded,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-          // Conversations list
-          Expanded(
-            child: conversationsAsync.when(
-              data: (conversations) {
-                return DmConversationsList(
-                  conversations: conversations,
-                );
-              },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, stack) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Failed to load conversations',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: theme.colorScheme.error,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      onClose: _toggleExpanded,
     );
   }
 

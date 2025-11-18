@@ -74,6 +74,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: <RouteBase>[
       GoRoute(
+        path: '/',
+        redirect: (context, state) {
+          final authStatus = ref.read(authProvider).status;
+          if (authStatus == AuthStatus.authenticated) {
+            return '/home';
+          }
+          return '/login';
+        },
+      ),
+      GoRoute(
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
