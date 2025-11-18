@@ -8,7 +8,6 @@ import '../domain/repositories/auth_repository_interface.dart';
 import '../data/auth_repository.dart';
 import '../data/auth_api_client.dart';
 import '../data/auth_storage.dart';
-import '../data/auth_token_provider.dart';
 import 'auth_state.dart';
 
 /// Notifier that coordinates auth operations using clean architecture
@@ -196,13 +195,6 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 final authStorageProvider = Provider<AuthStorage>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return AuthStorage(preferences: prefs);
-});
-
-/// Token provider for socket authentication
-/// Provides restricted access to just token retrieval (not full storage)
-final authTokenProvider = Provider<AuthTokenProvider>((ref) {
-  final storage = ref.watch(authStorageProvider);
-  return AuthTokenProvider(storage);
 });
 
 /// Repository provider – exposes the concrete implementation
