@@ -2,6 +2,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/socket/token_provider.dart';
+
 /// Unified storage for authentication data
 ///
 /// Responsibilities:
@@ -17,7 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Usage:
 /// This class should ONLY be used by AuthRepository.
 /// Do NOT call AuthStorage methods directly from UI or business logic.
-class AuthStorage {
+class AuthStorage implements TokenProvider {
   // Secure storage keys (for sensitive data)
   static const _accessTokenKey = 'auth_token';
   static const _refreshTokenKey = 'refresh_token';
@@ -49,6 +51,7 @@ class AuthStorage {
   /// Used by: AuthRepository for API requests
   /// Returns: Token string or null if not found
   /// Storage: FlutterSecureStorage (encrypted)
+  @override
   Future<String?> readToken() async {
     return await _secureStorage.read(key: _accessTokenKey);
   }

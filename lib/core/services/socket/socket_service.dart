@@ -1,19 +1,19 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import '../../../features/auth/data/auth_storage.dart';
+import 'token_provider.dart';
 
 /// Base WebSocket service for managing Socket.IO connection.
 /// Provides low-level connection management and room operations.
 /// Feature-specific clients should wrap this service.
 class SocketService {
   IO.Socket? _socket;
-  final AuthStorage _storage;
+  final TokenProvider _tokenProvider;
   final String _baseUrl;
   final Set<String> _joinedRooms = {};
 
   SocketService({
-    required AuthStorage storage,
+    required TokenProvider tokenProvider,
     required String baseUrl,
-  })  : _storage = storage,
+  })  : _tokenProvider = tokenProvider,
         _baseUrl = baseUrl;
 
   /// Connect to the WebSocket server with authentication.
@@ -23,7 +23,7 @@ class SocketService {
       return true;
     }
 
-    final token = await _storage.readToken();
+    final token = await _tokenProvider.readToken();
     if (token == null) {
       print('[SocketService] No auth token found, skipping socket connect');
       return false;
