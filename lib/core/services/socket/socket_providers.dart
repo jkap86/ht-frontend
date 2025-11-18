@@ -6,10 +6,10 @@ import 'socket_service.dart';
 /// Global socket service provider
 /// This is shared across all features that need WebSocket connectivity
 ///
-/// Note: AuthStorage implements TokenProvider, allowing core to depend on
-/// the abstraction rather than the concrete auth implementation.
+/// Note: Uses AuthTokenProvider for token access, maintaining proper
+/// separation - SocketService only gets token reading capability.
 final socketServiceProvider = Provider<SocketService>((ref) {
-  final tokenProvider = ref.watch(authStorageProvider);
+  final tokenProvider = ref.watch(authTokenProvider);
   final config = ref.watch(appConfigProvider);
   final service = SocketService(
     tokenProvider: tokenProvider,
