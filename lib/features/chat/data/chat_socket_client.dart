@@ -10,32 +10,49 @@ class ChatSocketClient {
 
   /// Join a chat room (league or DM)
   void joinRoom(String roomId, ChatRoomType type) {
-    if (!_socketService.isConnected) {
-      print('[ChatSocketClient] Socket not connected');
-      return;
-    }
-
+    bool success;
     if (type == ChatRoomType.league) {
       print('[ChatSocketClient] Joining league chat: $roomId');
-      _socketService.emit('join_league', {'leagueId': int.parse(roomId)});
+      success = _socketService.tryJoinRoom(
+        'join_league',
+        {'leagueId': int.parse(roomId)},
+        'league_$roomId',
+      );
     } else {
       print('[ChatSocketClient] Joining DM conversation: $roomId');
-      _socketService.emit('join_dm', {'conversationId': roomId});
+      success = _socketService.tryJoinRoom(
+        'join_dm',
+        {'conversationId': roomId},
+        'dm_$roomId',
+      );
+    }
+
+    if (!success) {
+      print('[ChatSocketClient] Failed to join room $roomId (socket not connected)');
     }
   }
 
   /// Leave a chat room
   void leaveRoom(String roomId, ChatRoomType type) {
-    if (!_socketService.isConnected) {
-      return;
-    }
-
+    bool success;
     if (type == ChatRoomType.league) {
       print('[ChatSocketClient] Leaving league chat: $roomId');
-      _socketService.emit('leave_league', {'leagueId': int.parse(roomId)});
+      success = _socketService.tryLeaveRoom(
+        'leave_league',
+        {'leagueId': int.parse(roomId)},
+        'league_$roomId',
+      );
     } else {
       print('[ChatSocketClient] Leaving DM conversation: $roomId');
-      _socketService.emit('leave_dm', {'conversationId': roomId});
+      success = _socketService.tryLeaveRoom(
+        'leave_dm',
+        {'conversationId': roomId},
+        'dm_$roomId',
+      );
+    }
+
+    if (!success) {
+      print('[ChatSocketClient] Failed to leave room $roomId (socket not connected)');
     }
   }
 

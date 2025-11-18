@@ -16,13 +16,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   static bool _isRestoring = false;
 
   AuthNotifier(this._repo) : super(_cachedState ?? const AuthState.initial()) {
-    // Only restore from storage if we don't have a cached state
-    // or if we're in an unauthenticated state
-    if (_cachedState == null || _cachedState!.status == AuthStatus.unauthenticated) {
-      _restoreOnStart();
-    } else if (_cachedState!.status == AuthStatus.unknown) {
-      // If we have a cached unknown state, it means we were in the middle of restoring
-      // Continue the restoration process
+    // Only restore from storage if:
+    // 1. No cached state exists (first run), OR
+    // 2. Cached state is unknown (initial/restoring), OR
+    // 3. Cached state is unauthenticated (logged out or failed restore)
+    // AND we're not already in the middle of a restore operation
+    final shouldRestore = _cachedState == null ||
+        _cachedState!.status == AuthStatus.unknown ||
+        _cachedState!.status == AuthStatus.unauthenticated;
+
+    if (shouldRestore && !_isRestoring) {
       _restoreOnStart();
     }
   }
@@ -113,17 +116,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _repo.logout();
 
-    // Clear the cache on explicit logout
-    _cachedState = null;
-
-    _setState(
-      state.copyWith(
-        status: AuthStatus.unauthenticated,
-        clearUser: true,
-        isLoading: false,
-        clearError: true,
-      ),
+    // Create the unauthenticated state
+    final loggedOutState = state.copyWith(
+      status: AuthStatus.unauthenticated,
+      clearUser: true,
+      isLoading: false,
+      clearError: true,
     );
+
+    // Set both state and cache to unauthenticated
+    // This ensures consistent state management
+    state = loggedOutState;
+    _cachedState = loggedOutState;
   }
 
   /// Restore session from stored tokens:

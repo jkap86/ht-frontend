@@ -1,5 +1,4 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import '../../../main.dart';
 import '../../../features/auth/data/auth_storage.dart';
 
 /// Base WebSocket service for managing Socket.IO connection
@@ -8,11 +7,12 @@ import '../../../features/auth/data/auth_storage.dart';
 class SocketService {
   IO.Socket? _socket;
   final AuthStorage _storage;
-  final String _baseUrl = appConfig.apiBaseUrl;
-  final Set<String> _joinedRooms = {};
+  final String _baseUrl;
+  final Map<String, _RoomJoinInfo> _joinedRooms = {};
 
-  SocketService({required AuthStorage storage})
-      : _storage = storage;
+  SocketService({required AuthStorage storage, required String baseUrl})
+      : _storage = storage,
+        _baseUrl = baseUrl;
 
   /// Connect to the WebSocket server with authentication
   Future<void> connect() async {
@@ -37,9 +37,9 @@ class SocketService {
     _socket!.onConnect((_) {
       print('[SocketService] WebSocket connected successfully');
       // Rejoin all previously joined rooms
-      for (final room in _joinedRooms) {
-        print('[SocketService] Rejoining room: $room');
-        _emitJoinRoom(room);
+      for (final entry in _joinedRooms.entries) {
+        print('[SocketService] Rejoining room: ${entry.key}');
+        _socket!.emit(entry.value.event, entry.value.data);
       }
     });
 
@@ -69,14 +69,20 @@ class SocketService {
       throw Exception('Socket not connected');
     }
     print('[SocketService] Joining room: $roomName');
-    _joinedRooms.add(roomName);
+    _joinedRooms[roomName] = _RoomJoinInfo(event: roomName, data: data);
     _socket!.emit(roomName, data);
   }
 
-  /// Internal helper to emit join room event
-  void _emitJoinRoom(String roomName) {
-    // This will be overridden by feature-specific clients
-    // that know their specific join event format
+  /// Safe join room - returns true if successful, false otherwise
+  bool tryJoinRoom(String event, Map<String, dynamic> data, String roomKey) {
+    if (_socket == null || !_socket!.connected) {
+      print('[SocketService] Cannot join room $roomKey: socket not connected');
+      return false;
+    }
+    print('[SocketService] Joining room: $roomKey');
+    _joinedRooms[roomKey] = _RoomJoinInfo(event: event, data: data);
+    _socket!.emit(event, data);
+    return true;
   }
 
   /// Leave a room
@@ -84,8 +90,19 @@ class SocketService {
     if (_socket == null || !_socket!.connected) {
       throw Exception('Socket not connected');
     }
-    _joinedRooms.remove(data.toString());
     _socket!.emit(eventName, data);
+  }
+
+  /// Safe leave room - returns true if successful, false otherwise
+  bool tryLeaveRoom(String event, Map<String, dynamic> data, String roomKey) {
+    if (_socket == null || !_socket!.connected) {
+      print('[SocketService] Cannot leave room $roomKey: socket not connected');
+      return false;
+    }
+    print('[SocketService] Leaving room: $roomKey');
+    _joinedRooms.remove(roomKey);
+    _socket!.emit(event, data);
+    return true;
   }
 
   /// Register an event listener
@@ -118,9 +135,27 @@ class SocketService {
     _socket!.emit(event, data);
   }
 
+  /// Safe emit - returns true if successful, false otherwise
+  bool tryEmit(String event, dynamic data) {
+    if (_socket == null || !_socket!.connected) {
+      print('[SocketService] Cannot emit $event: socket not connected');
+      return false;
+    }
+    _socket!.emit(event, data);
+    return true;
+  }
+
   /// Check if the socket is connected
   bool get isConnected => _socket?.connected ?? false;
 
   /// Get the underlying socket instance (for advanced use cases)
   IO.Socket? get socket => _socket;
+}
+
+/// Internal class to track room join information for reconnection
+class _RoomJoinInfo {
+  final String event;
+  final Map<String, dynamic> data;
+
+  _RoomJoinInfo({required this.event, required this.data});
 }
