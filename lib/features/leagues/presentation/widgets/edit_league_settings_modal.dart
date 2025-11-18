@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/league.dart';
 import '../../application/edit_league_controller.dart';
-import 'league_settings_sections/editable_scoring_settings_section.dart';
-import 'league_settings_sections/editable_roster_positions_section.dart';
-import 'league_settings_sections/editable_waiver_settings_section.dart';
 import 'league_settings_sections/editable_dues_payouts_section.dart';
 import 'league_settings_sections/editable_draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
+import 'league_settings_sections/info_row.dart';
+import '../../../../shared/models/settings_mode.dart';
+import '../../../../shared/widgets/settings/shared_schedule_section.dart';
+import '../../../../shared/widgets/settings/shared_scoring_settings_section.dart';
+import '../../../../shared/widgets/settings/shared_roster_positions_section.dart';
+import '../../../../shared/widgets/settings/shared_waiver_settings_section.dart';
 import 'league_settings_modal.dart';
 
 /// Editable league settings modal for commissioners
@@ -98,14 +101,15 @@ class EditLeagueSettingsModal extends ConsumerWidget {
 
                     // Basic Info (editable)
                     _EditableBasicInfoSection(
-                      name: state.editedLeague.name,
+                      league: state.editedLeague,
                       onNameChanged: controller.updateName,
                     ),
                     const SizedBox(height: 16),
 
                     // Schedule Settings (editable)
                     if (state.editedLeague.settings != null) ...[
-                      _EditableScheduleSection(
+                      SharedScheduleSection(
+                        mode: SettingsMode.edit,
                         settings: state.editedLeague.settings!,
                         onChanged: controller.updateSetting,
                       ),
@@ -122,7 +126,8 @@ class EditLeagueSettingsModal extends ConsumerWidget {
 
                     // Scoring Settings (editable)
                     if (state.editedLeague.scoringSettings != null) ...[
-                      EditableScoringSettingsSection(
+                      SharedScoringSettingsSection(
+                        mode: SettingsMode.edit,
                         scoringSettings: state.editedLeague.scoringSettings!,
                         onChanged: controller.updateScoringSetting,
                       ),
@@ -131,7 +136,8 @@ class EditLeagueSettingsModal extends ConsumerWidget {
 
                     // Roster Positions (editable)
                     if (state.editedLeague.rosterPositions != null) ...[
-                      EditableRosterPositionsSection(
+                      SharedRosterPositionsSection(
+                        mode: SettingsMode.edit,
                         rosterPositions: state.editedLeague.rosterPositions!,
                         onChanged: controller.updateRosterPosition,
                       ),
@@ -140,7 +146,8 @@ class EditLeagueSettingsModal extends ConsumerWidget {
 
                     // Waiver Settings (editable)
                     if (state.editedLeague.settings != null) ...[
-                      EditableWaiverSettingsSection(
+                      SharedWaiverSettingsSection(
+                        mode: SettingsMode.edit,
                         settings: state.editedLeague.settings!,
                         onChanged: controller.updateSetting,
                       ),
@@ -251,11 +258,11 @@ class _SettingsHeader extends StatelessWidget {
 
 /// Editable basic info section
 class _EditableBasicInfoSection extends StatelessWidget {
-  final String name;
+  final League league;
   final Function(String) onNameChanged;
 
   const _EditableBasicInfoSection({
-    required this.name,
+    required this.league,
     required this.onNameChanged,
   });
 
@@ -271,120 +278,42 @@ class _EditableBasicInfoSection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: TextFormField(
-              initialValue: name,
-              decoration: const InputDecoration(
-                labelText: 'League Name *',
-                border: OutlineInputBorder(),
-                helperText: 'Must be at least 3 characters',
-              ),
-              onChanged: onNameChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Editable schedule section
-class _EditableScheduleSection extends StatelessWidget {
-  final Map<String, dynamic> settings;
-  final Function(String, dynamic) onChanged;
-
-  const _EditableScheduleSection({
-    required this.settings,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final playoffsEnabled = settings['playoffs_enabled'] == true;
-
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        title: const Text(
-          'Schedule',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: settings['start_week']?.toString() ?? '1',
-                        decoration: const InputDecoration(
-                          labelText: 'Start Week',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) =>
-                            onChanged('start_week', int.tryParse(value) ?? 1),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue:
-                            settings['end_week']?.toString() ?? '14',
-                        decoration: const InputDecoration(
-                          labelText: 'End Week',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) =>
-                            onChanged('end_week', int.tryParse(value) ?? 14),
-                      ),
-                    ),
-                  ],
+                // Editable League Name
+                TextFormField(
+                  initialValue: league.name,
+                  decoration: const InputDecoration(
+                    labelText: 'League Name *',
+                    border: OutlineInputBorder(),
+                    helperText: 'Must be at least 3 characters',
+                  ),
+                  onChanged: onNameChanged,
                 ),
                 const SizedBox(height: 16),
-                SwitchListTile(
-                  title: const Text('Enable Playoffs'),
-                  value: playoffsEnabled,
-                  onChanged: (value) => onChanged('playoffs_enabled', value),
+
+                // Read-only fields (matching view mode)
+                InfoRow(
+                  label: 'Season',
+                  value: league.season,
                 ),
-                if (playoffsEnabled) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          initialValue: settings['playoff_week_start']
-                                  ?.toString() ??
-                              '15',
-                          decoration: const InputDecoration(
-                            labelText: 'Playoff Start Week',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) => onChanged(
-                              'playoff_week_start', int.tryParse(value) ?? 15),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          initialValue:
-                              settings['playoff_teams']?.toString() ?? '4',
-                          decoration: const InputDecoration(
-                            labelText: 'Playoff Teams',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) => onChanged(
-                              'playoff_teams', int.tryParse(value) ?? 4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                InfoRow(
+                  label: 'Season Type',
+                  value: _formatSeasonType(league.seasonType),
+                ),
+                InfoRow(
+                  label: 'Status',
+                  value: _formatStatus(league.status),
+                ),
+                InfoRow(
+                  label: 'Total Teams',
+                  value: '${league.totalRosters}',
+                ),
+                InfoRow(
+                  label: 'League Type',
+                  value: league.settings?['is_public'] == true ? 'Public' : 'Private',
+                ),
               ],
             ),
           ),
@@ -392,7 +321,36 @@ class _EditableScheduleSection extends StatelessWidget {
       ),
     );
   }
+
+  String _formatSeasonType(String seasonType) {
+    switch (seasonType.toLowerCase()) {
+      case 'regular':
+        return 'Regular Season';
+      case 'playoff':
+        return 'Playoff';
+      case 'dynasty':
+        return 'Dynasty';
+      default:
+        return seasonType;
+    }
+  }
+
+  String _formatStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'pre_draft':
+        return 'Pre-Draft';
+      case 'drafting':
+        return 'Drafting';
+      case 'in_season':
+        return 'In Season';
+      case 'complete':
+        return 'Complete';
+      default:
+        return status;
+    }
+  }
 }
+
 
 /// Settings footer with cancel and save buttons
 class _SettingsFooter extends StatelessWidget {

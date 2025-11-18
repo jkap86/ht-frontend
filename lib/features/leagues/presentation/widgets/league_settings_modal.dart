@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../domain/league.dart';
 import 'league_settings_sections/basic_info_section.dart';
-import 'league_settings_sections/schedule_section.dart';
-import 'league_settings_sections/scoring_settings_section.dart';
-import 'league_settings_sections/roster_positions_section.dart';
-import 'league_settings_sections/waiver_settings_section.dart';
 import 'league_settings_sections/dues_payouts_section.dart';
 import 'league_settings_sections/draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
+import '../../../../shared/models/settings_mode.dart';
+import '../../../../shared/widgets/settings/shared_schedule_section.dart';
+import '../../../../shared/widgets/settings/shared_scoring_settings_section.dart';
+import '../../../../shared/widgets/settings/shared_roster_positions_section.dart';
+import '../../../../shared/widgets/settings/shared_waiver_settings_section.dart';
 import 'edit_league_settings_modal.dart';
 
 /// League settings modal - displays all league configuration
@@ -44,13 +45,17 @@ class LeagueSettingsModal extends StatelessWidget {
 
                     // Schedule
                     if (league.settings != null) ...[
-                      ScheduleSection(settings: league.settings!),
+                      SharedScheduleSection(
+                        mode: SettingsMode.view,
+                        settings: league.settings!,
+                      ),
                       const SizedBox(height: 16),
                     ],
 
                     // Scoring Settings
                     if (league.scoringSettings != null) ...[
-                      ScoringSettingsSection(
+                      SharedScoringSettingsSection(
+                        mode: SettingsMode.view,
                         scoringSettings: league.scoringSettings!,
                       ),
                       const SizedBox(height: 16),
@@ -58,7 +63,8 @@ class LeagueSettingsModal extends StatelessWidget {
 
                     // Roster Positions
                     if (league.rosterPositions != null) ...[
-                      RosterPositionsSection(
+                      SharedRosterPositionsSection(
+                        mode: SettingsMode.view,
                         rosterPositions: league.rosterPositions!,
                       ),
                       const SizedBox(height: 16),
@@ -66,7 +72,10 @@ class LeagueSettingsModal extends StatelessWidget {
 
                     // Waiver Settings
                     if (league.settings != null) ...[
-                      WaiverSettingsSection(settings: league.settings!),
+                      SharedWaiverSettingsSection(
+                        mode: SettingsMode.view,
+                        settings: league.settings!,
+                      ),
                       const SizedBox(height: 16),
                     ],
 
