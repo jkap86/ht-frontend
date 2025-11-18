@@ -128,20 +128,13 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
       itemBuilder: (context, index) {
         final msg = state.messages[index];
 
-        String text = '';
-        String? senderName;
-        bool isMe = false;
+        final text = (msg['message'] ?? '').toString();
+        final senderName = (msg['sender_username'] ?? '').toString();
 
-        if (msg is Map) {
-          text = (msg['message'] ?? '').toString();
-          senderName = (msg['sender_username'] ?? '').toString();
-
-          // TODO: if you have the current user's ID, set isMe based on:
-          // final myUserId = ref.read(authUserProvider)?.id;
-          // isMe = msg['sender_id'] == myUserId;
-        } else {
-          text = msg.toString();
-        }
+        // TODO: if you have the current user's ID, set isMe based on:
+        // final myUserId = ref.read(authUserProvider)?.id;
+        // final isMe = msg['sender_id'] == myUserId;
+        const isMe = false;
 
         return ChatMessageBubble.user(
           text: text,

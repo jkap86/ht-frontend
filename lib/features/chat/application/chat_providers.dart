@@ -10,8 +10,7 @@ import '../data/chat_socket_client.dart';
 class ChatState {
   final bool isConnecting;
   final bool isConnected;
-  final List<dynamic>
-      messages; // Replace `dynamic` with a proper DTO if desired.
+  final List<Map<String, dynamic>> messages;
   final String? errorMessage;
 
   const ChatState({
@@ -31,7 +30,7 @@ class ChatState {
   ChatState copyWith({
     bool? isConnecting,
     bool? isConnected,
-    List<dynamic>? messages,
+    List<Map<String, dynamic>>? messages,
     String? errorMessage,
   }) {
     return ChatState(
@@ -81,7 +80,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       _messagesSub = _client!.messages.listen(
         (msg) {
-          final updated = List<dynamic>.from(state.messages)..add(msg);
+          final updated = List<Map<String, dynamic>>.from(state.messages)..add(msg);
           state = state.copyWith(messages: updated);
         },
         onError: (err, stack) {

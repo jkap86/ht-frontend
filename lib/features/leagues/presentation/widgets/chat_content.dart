@@ -113,17 +113,9 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
       itemBuilder: (context, index) {
         final msg = state.messages[index];
 
-        String text = '';
-        String? username;
-        String messageType = 'chat';
-
-        if (msg is Map) {
-          text = (msg['message'] ?? '').toString();
-          username = (msg['username'] ?? '').toString();
-          messageType = (msg['message_type'] ?? 'chat').toString();
-        } else {
-          text = msg.toString();
-        }
+        final text = (msg['message'] ?? '').toString();
+        final username = (msg['username'] ?? '').toString();
+        final messageType = (msg['message_type'] ?? 'chat').toString();
 
         final isSystem = messageType == 'system';
 

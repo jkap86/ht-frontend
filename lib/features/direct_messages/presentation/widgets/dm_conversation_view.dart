@@ -129,20 +129,13 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
         //   "sender_username": "...",
         //   ...
         // }
-        String text = '';
-        String? senderName;
-        bool isMe = false;
+        final text = (msg['message'] ?? '').toString();
 
-        if (msg is Map) {
-          text = (msg['message'] ?? '').toString();
-
-          // If you have user context, you can detect "isMe"
-          // by comparing msg['sender_id'] to your auth userId.
-          // For now, we just show a generic bubble.
-          senderName = (msg['sender_username'] ?? '').toString();
-        } else {
-          text = msg.toString();
-        }
+        // If you have user context, you can detect "isMe"
+        // by comparing msg['sender_id'] to your auth userId.
+        // For now, we just show a generic bubble.
+        final senderName = (msg['sender_username'] ?? '').toString();
+        const isMe = false;
 
         return ChatMessageBubble.user(
           text: text,
