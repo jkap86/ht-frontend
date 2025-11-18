@@ -1,166 +1,161 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/services/socket/socket_providers.dart';
-import '../domain/chat_message.dart';
-import '../domain/chat_room.dart';
 import 'chat_providers.dart';
-import '../../auth/application/auth_notifier.dart';
 
-/// Family provider for chat rooms
-/// Each room (league or DM conversation) has its own instance
-final chatRoomProvider = AsyncNotifierProvider.family<ChatRoomNotifier, List<ChatMessage>, ChatRoom>(() {
+/// Simple model representing a chat room.
+class ChatRoom {
+  final String roomName;
+  final String displayName;
+  final int unreadCount;
+  final bool isJoined;
+
+  const ChatRoom({
+    required this.roomName,
+    required this.displayName,
+    this.unreadCount = 0,
+    this.isJoined = false,
+  });
+
+  ChatRoom copyWith({
+    String? roomName,
+    String? displayName,
+    int? unreadCount,
+    bool? isJoined,
+  }) {
+    return ChatRoom(
+      roomName: roomName ?? this.roomName,
+      displayName: displayName ?? this.displayName,
+      unreadCount: unreadCount ?? this.unreadCount,
+      isJoined: isJoined ?? this.isJoined,
+    );
+  }
+}
+
+/// State for chat rooms: list of rooms + which one is currently active.
+class ChatRoomState {
+  final List<ChatRoom> rooms;
+  final String? activeRoomName;
+
+  const ChatRoomState({
+    required this.rooms,
+    required this.activeRoomName,
+  });
+
+  factory ChatRoomState.initial() => const ChatRoomState(
+        rooms: [],
+        activeRoomName: null,
+      );
+
+  ChatRoomState copyWith({
+    List<ChatRoom>? rooms,
+    String? activeRoomName,
+  }) {
+    return ChatRoomState(
+      rooms: rooms ?? this.rooms,
+      activeRoomName: activeRoomName ?? this.activeRoomName,
+    );
+  }
+
+  ChatRoom? get activeRoom => rooms.firstWhere(
+        (r) => r.roomName == activeRoomName,
+        orElse: () => const ChatRoom(
+          roomName: '',
+          displayName: '',
+        ),
+      );
+}
+
+/// Notifier that manages available chat rooms and active selection.
+///
+/// This does NOT manage socket connections directly — that’s the job of
+/// the [ChatNotifier] via [chatProvider]. This just tracks which room
+/// is selected and some basic metadata like unread counts.
+class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
+  ChatRoomNotifier() : super(ChatRoomState.initial());
+
+  /// Initialize with a predefined list of rooms.
+  ///
+  /// Example:
+  ///   [
+  ///     ChatRoom(roomName: 'global_chat', displayName: 'Global'),
+  ///     ChatRoom(roomName: 'announcements', displayName: 'Announcements'),
+  ///   ]
+  void setInitialRooms(List<ChatRoom> rooms, {String? activeRoomName}) {
+    state = ChatRoomState(
+      rooms: rooms,
+      activeRoomName:
+          activeRoomName ?? (rooms.isNotEmpty ? rooms.first.roomName : null),
+    );
+  }
+
+  /// Set the active/selected room by name.
+  void selectRoom(String roomName) {
+    if (!state.rooms.any((r) => r.roomName == roomName)) {
+      return;
+    }
+    state = state.copyWith(activeRoomName: roomName);
+  }
+
+  /// Add a new room to the list (or replace if it already exists).
+  void upsertRoom(ChatRoom room) {
+    final existingIndex =
+        state.rooms.indexWhere((r) => r.roomName == room.roomName);
+
+    final updatedRooms = List<ChatRoom>.from(state.rooms);
+    if (existingIndex == -1) {
+      updatedRooms.add(room);
+    } else {
+      updatedRooms[existingIndex] = room;
+    }
+
+    state = state.copyWith(rooms: updatedRooms);
+  }
+
+  /// Update unread count for a room.
+  void setUnreadCount(String roomName, int unreadCount) {
+    final updatedRooms = state.rooms
+        .map(
+          (r) =>
+              r.roomName == roomName ? r.copyWith(unreadCount: unreadCount) : r,
+        )
+        .toList();
+    state = state.copyWith(rooms: updatedRooms);
+  }
+
+  /// Increment unread count for a room (e.g., when a new message arrives
+  /// and that room is not active).
+  void incrementUnread(String roomName) {
+    final updatedRooms = state.rooms
+        .map((r) => r.roomName == roomName
+            ? r.copyWith(unreadCount: r.unreadCount + 1)
+            : r)
+        .toList();
+    state = state.copyWith(rooms: updatedRooms);
+  }
+
+  /// Clear unread count for a room (e.g., when user visits the room).
+  void clearUnread(String roomName) {
+    setUnreadCount(roomName, 0);
+  }
+}
+
+/// Provider for managing chat rooms and the currently active room.
+final chatRoomProvider =
+    StateNotifierProvider<ChatRoomNotifier, ChatRoomState>((ref) {
   return ChatRoomNotifier();
 });
 
-class ChatRoomNotifier extends FamilyAsyncNotifier<List<ChatMessage>, ChatRoom> {
-  @override
-  Future<List<ChatMessage>> build(ChatRoom arg) async {
-    // Initial load of messages for this room
-    final messages = await _fetchMessages(arg);
+/// Convenience provider: the active ChatState for the selected room.
+/// Returns null if there is no active room.
+final activeRoomChatStateProvider = Provider<ChatState?>((ref) {
+  final roomsState = ref.watch(chatRoomProvider);
+  final activeRoomName = roomsState.activeRoomName;
 
-    // Set up WebSocket connection and listeners
-    _setupWebSocket(arg);
-
-    return messages;
+  if (activeRoomName == null || activeRoomName.isEmpty) {
+    return null;
   }
 
-  Future<void> _setupWebSocket(ChatRoom room) async {
-    try {
-      final socketService = ref.read(socketServiceProvider);
-      final chatSocketClient = ref.read(chatSocketClientProvider);
-
-      // Connect to WebSocket if not already connected
-      if (!socketService.isConnected) {
-        print('[ChatRoomNotifier] Socket not connected, connecting...');
-        await socketService.connect();
-        // Wait a bit for the connection to be fully established
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      // Verify connection before joining
-      if (!socketService.isConnected) {
-        throw Exception('Failed to establish WebSocket connection');
-      }
-
-      // For DMs, we need to compute the conversation ID (sorted user IDs)
-      // room.id is the other user's ID, so we need to get current user's ID
-      String roomIdForSocket = room.id;
-      if (room.type == ChatRoomType.directMessage) {
-        final currentUserId = await _getCurrentUserId();
-        final conversationId = _createConversationId(currentUserId, room.id);
-        roomIdForSocket = conversationId;
-        print('[ChatRoomNotifier] Computed conversationId: $conversationId for DM with ${room.id}');
-      }
-
-      print('[ChatRoomNotifier] Socket connected, joining room $roomIdForSocket');
-      // Join the chat room (league or DM)
-      chatSocketClient.joinRoom(roomIdForSocket, room.type);
-
-      // Listen for new messages based on room type
-      if (room.type == ChatRoomType.league) {
-        chatSocketClient.onLeagueMessage((message) {
-          print('[ChatRoomNotifier] Received league message from WebSocket, adding to state');
-          if (message.roomId == room.id) {
-            addMessage(message);
-          }
-        });
-      } else {
-        chatSocketClient.onDirectMessage((message) {
-          print('[ChatRoomNotifier] Received DM from WebSocket for room ${room.id}');
-          // For DMs, we don't check roomId since we join a specific conversation
-          // and the WebSocket will only send us messages for that conversation.
-          // The message roomId may differ from room.id due to sorted user IDs vs otherUserId.
-          // Instead, normalize the message roomId to match our convention (otherUserId)
-          final normalizedMessage = message.copyWith(roomId: room.id);
-          addMessage(normalizedMessage);
-        });
-      }
-
-      print('[ChatRoomNotifier] WebSocket setup complete for room ${room.id}');
-    } catch (e) {
-      // Log error but don't fail the initial load
-      print('[ChatRoomNotifier] Failed to set up WebSocket: $e');
-    }
-  }
-
-  Future<List<ChatMessage>> _fetchMessages(ChatRoom room, {int limit = 100}) async {
-    final repository = ref.read(chatRepositoryProvider);
-
-    if (room.type == ChatRoomType.league) {
-      return await repository.fetchLeagueMessages(room.id, limit: limit);
-    } else {
-      return await repository.fetchDirectMessages(room.id, limit: limit);
-    }
-  }
-
-  /// Refresh the chat messages
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchMessages(arg));
-  }
-
-  /// Send a new message
-  Future<void> sendMessage(String message, {String messageType = 'chat'}) async {
-    final repository = ref.read(chatRepositoryProvider);
-
-    try {
-      // Send the message via API
-      // The WebSocket will handle adding it to the local state
-      if (arg.type == ChatRoomType.league) {
-        await repository.sendLeagueMessage(
-          leagueId: arg.id,
-          message: message,
-          messageType: messageType,
-        );
-      } else {
-        await repository.sendDirectMessage(
-          receiverId: arg.id,
-          message: message,
-        );
-      }
-    } catch (e) {
-      // If sending fails, refresh to get the latest state
-      await refresh();
-      rethrow;
-    }
-  }
-
-  /// Add a message to the local state (e.g., from a real-time update)
-  void addMessage(ChatMessage message) {
-    state.whenData((messages) {
-      // Check if message already exists (avoid duplicates)
-      final exists = messages.any((m) => m.id == message.id);
-      if (!exists) {
-        state = AsyncValue.data([...messages, message]);
-      }
-    });
-  }
-
-  /// Leave the chat room
-  void leaveRoom() {
-    final socketClient = ref.read(chatSocketClientProvider);
-    socketClient.leaveRoom(arg.id, arg.type);
-
-    // Remove listeners
-    if (arg.type == ChatRoomType.league) {
-      socketClient.offLeagueMessage();
-    } else {
-      socketClient.offDirectMessage();
-    }
-  }
-
-  /// Get the current user's ID from auth state
-  Future<String> _getCurrentUserId() async {
-    final authState = ref.read(authProvider);
-    if (authState.user == null) {
-      throw Exception('User not authenticated');
-    }
-    return authState.user!.userId;
-  }
-
-  /// Create a consistent conversation ID from two user IDs (sorted)
-  String _createConversationId(String userId1, String userId2) {
-    final sorted = [userId1, userId2]..sort();
-    return sorted.join('_');
-  }
-}
+  // Use default event names for generic chat.
+  final args = ChatProviderArgs(roomName: activeRoomName);
+  return ref.watch(chatProvider(args));
+});

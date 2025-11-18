@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../chat/application/chat_room_notifier.dart';
-import '../../../chat/domain/chat_room.dart';
-import '../../../chat/presentation/widgets/chat_message_tile.dart';
+import '../../application/unified_dm_chat_provider.dart';
+import '../../../chat/application/chat_providers.dart';
+import '../../../chat/presentation/widgets/chat_message_bubble.dart';
+import '../../../chat/presentation/widgets/chat_input_bar.dart';
+import '../../../chat/presentation/widgets/chat_error_banner.dart';
 
-/// Widget displaying messages in a DM conversation
+/// Conversation view for a single direct message thread.
+///
+/// Assumptions:
+/// - `conversationId` is the same ID used to join the DM socket room
+///   (e.g. sorted `${userId}_${otherUserId}`).
+/// - `otherUserId` is the ID of the other participant.
+/// - Backend DM payloads have at least a `message` field, optionally
+///   `sender_id`, `sender_username`, etc.
 class DmConversationView extends ConsumerStatefulWidget {
+  final String conversationId;
   final String otherUserId;
-  final String otherUsername;
-  final VoidCallback onBack;
+  final String? otherUsername;
 
   const DmConversationView({
     super.key,
+    required this.conversationId,
     required this.otherUserId,
-    required this.otherUsername,
-    required this.onBack,
+    this.otherUsername,
   });
 
   @override
@@ -23,207 +32,131 @@ class DmConversationView extends ConsumerStatefulWidget {
 }
 
 class _DmConversationViewState extends ConsumerState<DmConversationView> {
-  final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _isSending = false;
 
   @override
   void dispose() {
-    _messageController.dispose();
+    _textController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
-    }
-  }
-
-  Future<void> _sendMessage() async {
-    final message = _messageController.text.trim();
-    if (message.isEmpty || _isSending) return;
-
-    setState(() {
-      _isSending = true;
-    });
-
-    try {
-      final chatRoom = ChatRoom(
-        id: widget.otherUserId,
-        type: ChatRoomType.directMessage,
-        displayName: widget.otherUsername,
-      );
-      await ref
-          .read(chatRoomProvider(chatRoom).notifier)
-          .sendMessage(message);
-      _messageController.clear();
-      _scrollToBottom();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final chatRoom = ChatRoom(
-      id: widget.otherUserId,
-      type: ChatRoomType.directMessage,
-      displayName: widget.otherUsername,
+    final args = UnifiedDmChatProviderArgs(
+      conversationId: widget.conversationId,
+      otherUserId: widget.otherUserId,
     );
-    final messagesState = ref.watch(chatRoomProvider(chatRoom));
+
+    final dmState = ref.watch(unifiedDmChatProvider(args));
+    final dmNotifier = ref.read(unifiedDmChatProvider(args).notifier);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(
+          _scrollController.position.maxScrollExtent,
+        );
+      }
+    });
+
+    final theme = Theme.of(context);
+    final isLoading = dmState.isConnecting && dmState.messages.isEmpty;
 
     return Column(
       children: [
-        // Conversation header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.secondaryContainer,
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
-                iconSize: 20,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 8),
-              CircleAvatar(
-                radius: 16,
-                child: Text(
-                  widget.otherUsername.isNotEmpty
-                      ? widget.otherUsername[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.otherUsername,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Messages
+        _buildHeader(theme),
+        const Divider(height: 1),
         Expanded(
-          child: messagesState.when(
-            data: (messages) {
-              if (messages.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No messages yet.\nStart the conversation!',
-                    style: TextStyle(color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-
-              WidgetsBinding.instance
-                  .addPostFrameCallback((_) => _scrollToBottom());
-
-              return ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(12),
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  return ChatMessageTile(message: messages[index]);
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Error loading messages',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      final chatRoom = ChatRoom(
-                        id: widget.otherUserId,
-                        type: ChatRoomType.directMessage,
-                        displayName: widget.otherUsername,
-                      );
-                      ref.refresh(chatRoomProvider(chatRoom));
-                    },
-                    child: const Text(
-                      'Retry',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildMessagesList(dmState),
         ),
-
-        // Message input
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _messageController,
-                  decoration: const InputDecoration(
-                    hintText: 'Type a message...',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _sendMessage,
-                icon: const Icon(Icons.send),
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            ],
-          ),
+        ChatErrorBanner(errorMessage: dmState.errorMessage),
+        ChatInputBar(
+          controller: _textController,
+          onSend: () => _handleSend(dmNotifier),
+          maxLines: 5,
         ),
       ],
     );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    final name = widget.otherUsername ?? 'Direct Message';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          CircleAvatar(
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            name,
+            style: theme.textTheme.titleMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessagesList(ChatState state) {
+    if (state.messages.isEmpty) {
+      return const Center(
+        child: Text(
+          'No messages yet. Say hi!',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      itemCount: state.messages.length,
+      itemBuilder: (context, index) {
+        final msg = state.messages[index];
+
+        // Expecting something like:
+        // {
+        //   "message": "Hello",
+        //   "sender_id": "...",
+        //   "sender_username": "...",
+        //   ...
+        // }
+        String text = '';
+        String? senderName;
+        bool isMe = false;
+
+        if (msg is Map) {
+          text = (msg['message'] ?? '').toString();
+
+          // If you have user context, you can detect "isMe"
+          // by comparing msg['sender_id'] to your auth userId.
+          // For now, we just show a generic bubble.
+          senderName = (msg['sender_username'] ?? '').toString();
+        } else {
+          text = msg.toString();
+        }
+
+        return ChatMessageBubble.user(
+          text: text,
+          username: senderName,
+          isMe: isMe,
+        );
+      },
+    );
+  }
+
+  void _handleSend(ChatNotifier dmNotifier) {
+    final ok = dmNotifier.sendMessage(message: _textController.text);
+    if (ok) {
+      _textController.clear();
+    }
   }
 }

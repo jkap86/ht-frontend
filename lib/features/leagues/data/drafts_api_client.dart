@@ -1,22 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import '../../../main.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../../auth/data/auth_storage.dart';
 
 /// API client for draft-related endpoints
 class DraftsApiClient {
-  final String _baseUrl = appConfig.apiBaseUrl;
-  final http.Client _client;
+  final ApiClient _apiClient;
   final AuthStorage _storage;
 
   DraftsApiClient({
-    http.Client? client,
+    required ApiClient apiClient,
     required AuthStorage storage,
-  })  : _client = client ?? http.Client(),
+  })  : _apiClient = apiClient,
         _storage = storage;
-
-  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   /// Get all drafts for a league
   Future<List<Map<String, dynamic>>> getLeagueDrafts(int leagueId) async {
@@ -25,12 +21,9 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.get(
-      _uri('/api/leagues/$leagueId/drafts'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.getJson(
+      '/api/leagues/$leagueId/drafts',
+      token: token,
     );
 
     if (response.statusCode == 200) {
@@ -51,13 +44,10 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.post(
-      _uri('/api/leagues/$leagueId/drafts'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(draftData),
+    final response = await _apiClient.postJson(
+      '/api/leagues/$leagueId/drafts',
+      token: token,
+      body: draftData,
     );
 
     if (response.statusCode == 201) {
@@ -78,13 +68,10 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.put(
-      _uri('/api/leagues/$leagueId/drafts/$draftId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(draftData),
+    final response = await _apiClient.putJson(
+      '/api/leagues/$leagueId/drafts/$draftId',
+      token: token,
+      body: draftData,
     );
 
     if (response.statusCode == 200) {
@@ -101,12 +88,9 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.delete(
-      _uri('/api/leagues/$leagueId/drafts/$draftId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.deleteJson(
+      '/api/leagues/$leagueId/drafts/$draftId',
+      token: token,
     );
 
     if (response.statusCode != 200) {
@@ -124,12 +108,9 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.get(
-      _uri('/api/leagues/$leagueId/drafts/$draftId/order'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.getJson(
+      '/api/leagues/$leagueId/drafts/$draftId/order',
+      token: token,
     );
 
     if (response.statusCode == 200) {
@@ -150,12 +131,10 @@ class DraftsApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.post(
-      _uri('/api/leagues/$leagueId/drafts/$draftId/randomize'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.postJson(
+      '/api/leagues/$leagueId/drafts/$draftId/randomize',
+      token: token,
+      body: {},
     );
 
     if (response.statusCode == 200) {

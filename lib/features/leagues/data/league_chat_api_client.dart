@@ -1,24 +1,20 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import '../../../main.dart';
+import '../../../core/infrastructure/api_client.dart';
 import 'dtos/chat_message_dto.dart';
 import '../../auth/data/auth_storage.dart';
 
 /// API client for league chat endpoints
 /// Handles HTTP communication and returns DTOs
 class LeagueChatApiClient {
-  final String _baseUrl = appConfig.apiBaseUrl;
-  final http.Client _client;
+  final ApiClient _apiClient;
   final AuthStorage _storage;
 
   LeagueChatApiClient({
-    http.Client? client,
+    required ApiClient apiClient,
     required AuthStorage storage,
-  })  : _client = client ?? http.Client(),
+  })  : _apiClient = apiClient,
         _storage = storage;
-
-  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   /// Get chat messages for a specific league
   Future<List<ChatMessageDto>> getChatMessages(int leagueId, {int limit = 100}) async {
@@ -27,12 +23,10 @@ class LeagueChatApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.get(
-      _uri('/api/leagues/$leagueId/chat?limit=$limit'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.getJson(
+      '/api/leagues/$leagueId/chat',
+      token: token,
+      queryParameters: {'limit': limit},
     );
 
     if (response.statusCode == 200) {
@@ -55,17 +49,14 @@ class LeagueChatApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.post(
-      _uri('/api/leagues/$leagueId/chat'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
+    final response = await _apiClient.postJson(
+      '/api/leagues/$leagueId/chat',
+      token: token,
+      body: {
         'message': message,
         'message_type': messageType,
         'metadata': metadata ?? {},
-      }),
+      },
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {

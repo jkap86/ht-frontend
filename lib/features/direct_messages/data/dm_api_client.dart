@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import '../../../main.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../../auth/data/auth_storage.dart';
 import 'dtos/conversation_dto.dart';
 import 'dtos/direct_message_dto.dart';
@@ -9,17 +8,14 @@ import 'dtos/direct_message_dto.dart';
 /// API client for direct message endpoints
 /// Handles HTTP communication and returns DTOs
 class DmApiClient {
-  final String _baseUrl = appConfig.apiBaseUrl;
-  final http.Client _client;
+  final ApiClient _apiClient;
   final AuthStorage _storage;
 
   DmApiClient({
-    http.Client? client,
+    required ApiClient apiClient,
     required AuthStorage storage,
-  })  : _client = client ?? http.Client(),
+  })  : _apiClient = apiClient,
         _storage = storage;
-
-  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   /// Get all conversations for the authenticated user
   Future<List<ConversationDto>> getConversations() async {
@@ -28,12 +24,9 @@ class DmApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.get(
-      _uri('/api/direct-messages/conversations'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.getJson(
+      '/api/direct-messages/conversations',
+      token: token,
     );
 
     if (response.statusCode == 200) {
@@ -51,12 +44,10 @@ class DmApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.get(
-      _uri('/api/direct-messages/$otherUserId?limit=$limit'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await _apiClient.getJson(
+      '/api/direct-messages/$otherUserId',
+      token: token,
+      queryParameters: {'limit': limit},
     );
 
     if (response.statusCode == 200) {
@@ -78,16 +69,13 @@ class DmApiClient {
       throw Exception('No authentication token found');
     }
 
-    final response = await _client.post(
-      _uri('/api/direct-messages/$receiverId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
+    final response = await _apiClient.postJson(
+      '/api/direct-messages/$receiverId',
+      token: token,
+      body: {
         'message': message,
         'metadata': metadata ?? {},
-      }),
+      },
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {

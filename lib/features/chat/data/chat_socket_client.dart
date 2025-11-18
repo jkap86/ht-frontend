@@ -1,91 +1,105 @@
-import '../../../core/services/socket/socket_service.dart';
-import '../domain/chat_message.dart';
-import '../domain/chat_room.dart';
+import 'dart:async';
 
-/// Shared socket client for both league and DM chat
+import '../../../core/services/socket/socket_service.dart';
+
+/// Generic chat client wrapper around [SocketService].
+///
+/// This is intentionally flexible so you can use it for:
+/// - Global chat rooms
+/// - League-specific chat channels
+/// - Any arbitrary room name
+///
+/// Defaults:
+/// - Room name: you pass it in (e.g. "global_chat", "league_123_general")
+/// - Incoming event: 'chat_message'
+/// - Outgoing event: 'send_chat_message'
+///
+/// If your backend uses different event names, change `_incomingEvent`/`_outgoingEvent`
+/// defaults or pass them explicitly from the caller.
 class ChatSocketClient {
   final SocketService _socketService;
+  final String _roomName;
+  final String _incomingEvent;
+  final String _outgoingEvent;
 
-  ChatSocketClient(this._socketService);
+  /// Stream of incoming chat messages for this room.
+  final _messagesController = StreamController<dynamic>.broadcast();
 
-  /// Join a chat room (league or DM)
-  void joinRoom(String roomId, ChatRoomType type) {
-    bool success;
-    if (type == ChatRoomType.league) {
-      print('[ChatSocketClient] Joining league chat: $roomId');
-      success = _socketService.tryJoinRoom(
-        'join_league',
-        {'leagueId': int.parse(roomId)},
-        'league_$roomId',
-      );
-    } else {
-      print('[ChatSocketClient] Joining DM conversation: $roomId');
-      success = _socketService.tryJoinRoom(
-        'join_dm',
-        {'conversationId': roomId},
-        'dm_$roomId',
-      );
-    }
+  VoidCallback? _messageListenerDisposer;
+  bool _joined = false;
 
-    if (!success) {
-      print('[ChatSocketClient] Failed to join room $roomId (socket not connected)');
-    }
+  ChatSocketClient({
+    required SocketService socketService,
+    required String roomName,
+    String incomingEvent = 'chat_message',
+    String outgoingEvent = 'send_chat_message',
+  })  : _socketService = socketService,
+        _roomName = roomName,
+        _incomingEvent = incomingEvent,
+        _outgoingEvent = outgoingEvent;
+
+  Stream<dynamic> get messages => _messagesController.stream;
+
+  /// Connects to the chat room and starts listening for messages.
+  Future<void> connect() async {
+    final joined = await _socketService.joinRoom(_roomName);
+    _joined = joined || _joined; // track intent even if not yet connected
+    _listenToMessages();
   }
 
-  /// Leave a chat room
-  void leaveRoom(String roomId, ChatRoomType type) {
-    bool success;
-    if (type == ChatRoomType.league) {
-      print('[ChatSocketClient] Leaving league chat: $roomId');
-      success = _socketService.tryLeaveRoom(
-        'leave_league',
-        {'leagueId': int.parse(roomId)},
-        'league_$roomId',
-      );
-    } else {
-      print('[ChatSocketClient] Leaving DM conversation: $roomId');
-      success = _socketService.tryLeaveRoom(
-        'leave_dm',
-        {'conversationId': roomId},
-        'dm_$roomId',
-      );
-    }
+  /// Leaves the chat room and stops listening for messages.
+  Future<void> disconnect() async {
+    _joined = false;
+    _messageListenerDisposer?.call();
+    _messageListenerDisposer = null;
 
-    if (!success) {
-      print('[ChatSocketClient] Failed to leave room $roomId (socket not connected)');
-    }
+    // Best-effort leave; it's OK if socket is down.
+    _socketService.leaveRoom(_roomName);
   }
 
-  /// Listen for league chat messages
-  void Function() onLeagueMessage(void Function(ChatMessage) callback) {
-    return _socketService.on('new_message', (data) {
-      try {
-        final message = ChatMessage.fromLeagueMessage(data as Map<String, dynamic>);
-        callback(message);
-      } catch (e) {
-        print('[ChatSocketClient] Error parsing league message: $e');
-      }
+  /// Sends a chat message to this room.
+  ///
+  /// Adjust payload keys to match your backend.
+  bool sendMessage({
+    required String message,
+    Map<String, dynamic>? metadata,
+  }) {
+    if (message.trim().isEmpty) {
+      return false;
+    }
+
+    final payload = <String, dynamic>{
+      'room': _roomName,
+      'message': message.trim(),
+      if (metadata != null) 'metadata': metadata,
+    };
+
+    // Emit using the configured outgoing event.
+    return _socketService.tryEmit(_outgoingEvent, payload);
+  }
+
+  void _listenToMessages() {
+    // Remove previous listener if any to avoid duplicates.
+    _messageListenerDisposer?.call();
+
+    _messageListenerDisposer = _socketService.on(_incomingEvent, (data) {
+      // If your backend includes a room field, you can filter:
+      //
+      // if (data is Map && data['room'] == _roomName) {
+      //   _messagesController.add(data);
+      // }
+      // else {
+      //   return;
+      // }
+      //
+      // For now, just forward everything:
+      _messagesController.add(data);
     });
   }
 
-  /// Listen for direct messages
-  void Function() onDirectMessage(void Function(ChatMessage) callback) {
-    return _socketService.on('new_dm', (data) {
-      try {
-        final message = ChatMessage.fromDirectMessage(data as Map<String, dynamic>);
-        callback(message);
-      } catch (e) {
-        print('[ChatSocketClient] Error parsing DM: $e');
-      }
-    });
-  }
-
-  /// Remove listeners
-  void offLeagueMessage() {
-    _socketService.off('new_message');
-  }
-
-  void offDirectMessage() {
-    _socketService.off('new_dm');
+  /// Clean up all resources.
+  Future<void> dispose() async {
+    await disconnect();
+    await _messagesController.close();
   }
 }

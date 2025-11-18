@@ -78,5 +78,40 @@ class ApiClient {
     return _client.get(uri, headers: headers);
   }
 
-  // You can add put/patch/delete later as needed.
+  Future<http.Response> putJson(
+    String path, {
+    required Map<String, dynamic> body,
+    String? token,
+    Map<String, String>? extraHeaders,
+  }) async {
+    final uri = _buildUri(path);
+    final headers = _buildHeaders(token: token, extraHeaders: extraHeaders);
+    final jsonBody = jsonEncode(body);
+
+    return _client.put(uri, headers: headers, body: jsonBody);
+  }
+
+  Future<http.Response> patchJson(
+    String path, {
+    required Map<String, dynamic> body,
+    String? token,
+    Map<String, String>? extraHeaders,
+  }) async {
+    final uri = _buildUri(path);
+    final headers = _buildHeaders(token: token, extraHeaders: extraHeaders);
+    final jsonBody = jsonEncode(body);
+
+    return _client.patch(uri, headers: headers, body: jsonBody);
+  }
+
+  Future<http.Response> deleteJson(
+    String path, {
+    String? token,
+    Map<String, String>? extraHeaders,
+  }) async {
+    final uri = _buildUri(path);
+    final headers = _buildHeaders(token: token, extraHeaders: extraHeaders);
+
+    return _client.delete(uri, headers: headers);
+  }
 }

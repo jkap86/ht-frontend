@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
-import '../../../main.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../domain/auth_exceptions.dart';
 import 'dtos/auth_result_dto.dart';
 import 'dtos/user_dto.dart';
@@ -11,17 +11,14 @@ import 'auth_storage.dart';
 /// API client for authentication endpoints
 /// Handles HTTP communication and returns DTOs
 class AuthApiClient {
-  final String _baseUrl = appConfig.apiBaseUrl;
-  final http.Client _client;
+  final ApiClient _apiClient;
   final AuthStorage _storage;
 
   AuthApiClient({
-    http.Client? client,
+    required ApiClient apiClient,
     required AuthStorage storage,
-  })  : _client = client ?? http.Client(),
+  })  : _apiClient = apiClient,
         _storage = storage;
-
-  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   /// Parse HTTP errors and throw appropriate exceptions
   Never _handleError(http.Response response, String operation) {
@@ -63,10 +60,9 @@ class AuthApiClient {
   /// Register a new user
   Future<AuthResultDto> register(String username, String password) async {
     try {
-      final response = await _client.post(
-        _uri('/api/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+      final response = await _apiClient.postJson(
+        '/api/auth/register',
+        body: {'username': username, 'password': password},
       );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -84,12 +80,9 @@ class AuthApiClient {
   /// Login with credentials
   Future<AuthResultDto> login(String username, String password) async {
     try {
-      final uri = _uri('/api/auth/login');
-
-      final response = await _client.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+      final response = await _apiClient.postJson(
+        '/api/auth/login',
+        body: {'username': username, 'password': password},
       );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -112,11 +105,9 @@ class AuthApiClient {
         throw const UnauthenticatedException('No authentication token found');
       }
 
-      final response = await _client.get(
-        _uri('/api/auth/me'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      final response = await _apiClient.getJson(
+        '/api/auth/me',
+        token: token,
       );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -146,10 +137,9 @@ class AuthApiClient {
         throw const TokenRefreshException('No refresh token available');
       }
 
-      final response = await _client.post(
-        _uri('/api/auth/refresh'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken}),
+      final response = await _apiClient.postJson(
+        '/api/auth/refresh',
+        body: {'refreshToken': refreshToken},
       );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -172,11 +162,10 @@ class AuthApiClient {
         throw const UnauthenticatedException('No authentication token found');
       }
 
-      final response = await _client.get(
-        _uri('/api/auth/users/search?q=${Uri.encodeComponent(query)}'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      final response = await _apiClient.getJson(
+        '/api/auth/users/search',
+        token: token,
+        queryParameters: {'q': query},
       );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {

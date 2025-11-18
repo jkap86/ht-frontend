@@ -11,10 +11,10 @@ class AuthRepository implements IAuthRepository {
   final AuthStorage _storage;
 
   AuthRepository({
-    AuthApiClient? apiClient,
+    required AuthApiClient apiClient,
     required AuthStorage storage,
   })  : _storage = storage,
-        _apiClient = apiClient ?? AuthApiClient(storage: storage);
+        _apiClient = apiClient;
 
   @override
   Future<AuthResult> register(String username, String password) async {

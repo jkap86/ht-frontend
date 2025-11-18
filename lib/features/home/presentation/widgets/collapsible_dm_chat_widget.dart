@@ -1,377 +1,181 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../leagues/presentation/widgets/chat_resize_handles.dart';
+import '../../../direct_messages/application/unified_dm_chat_provider.dart';
+import '../../../chat/application/chat_providers.dart';
 import 'dm_chat_content.dart';
 
-/// Collapsible DM chat widget that can be expanded to varying sizes or collapsed to an icon
+/// A collapsible DM chat widget that can be embedded in the home screen
+/// (e.g., bottom-right corner, similar to a floating messenger bubble).
+///
+/// It uses [dmChatProvider] + [DmChatContent] under the hood.
 class CollapsibleDmChatWidget extends ConsumerStatefulWidget {
-  const CollapsibleDmChatWidget({super.key});
+  /// The conversation ID, typically something like '${userId}_${otherUserId}'
+  /// sorted to ensure stable ordering, and used by the backend/socket room.
+  final String conversationId;
+
+  /// The ID of the other user in the DM.
+  final String otherUserId;
+
+  /// Optional display name for the other user.
+  final String? otherUsername;
+
+  /// Whether the widget should start expanded (open) or collapsed.
+  final bool startExpanded;
+
+  const CollapsibleDmChatWidget({
+    super.key,
+    required this.conversationId,
+    required this.otherUserId,
+    this.otherUsername,
+    this.startExpanded = false,
+  });
 
   @override
   ConsumerState<CollapsibleDmChatWidget> createState() =>
       _CollapsibleDmChatWidgetState();
 }
 
-class _CollapsibleDmChatWidgetState extends ConsumerState<CollapsibleDmChatWidget>
-    with SingleTickerProviderStateMixin {
-  // State
+class _CollapsibleDmChatWidgetState
+    extends ConsumerState<CollapsibleDmChatWidget> {
   bool _isExpanded = false;
-  double _height = 400;
-  double _width = 600;
-  double _left = 16;
-  double _bottom = 16;
-
-  // Resize state
-  String? _resizingEdge;
-  static const double _minWidth = 300.0;
-  static const double _minHeight = 200.0;
-
-  // Animation
-  late AnimationController _animationController;
-  late Animation<double> _sizeAnimation;
-  late Animation<double> _opacityAnimation;
-  double _targetHeight = 400;
-  double _targetWidth = 600;
-  double _targetLeft = 16;
-  double _targetBottom = 16;
-  double _initialLeft = 16;
-  double _initialBottom = 16;
-  final double _initialWidth = 56;
-  final double _initialHeight = 56;
-
-  // Remember last expanded state
-  double? _savedWidth;
-  double? _savedHeight;
-  double? _savedLeft;
-  double? _savedBottom;
 
   @override
   void initState() {
     super.initState();
-    _loadChatState();
-    _initAnimation();
-  }
-
-  void _initAnimation() {
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _sizeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOutCubic,
-    );
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
-      ),
-    );
-    _animationController.addListener(_onAnimationTick);
-  }
-
-  void _onAnimationTick() {
-    setState(() {
-      final currentWidth = _initialWidth + (_targetWidth - _initialWidth) * _sizeAnimation.value;
-      final currentHeight = _initialHeight + (_targetHeight - _initialHeight) * _sizeAnimation.value;
-      final currentLeft = _initialLeft + (_targetLeft - _initialLeft) * _sizeAnimation.value;
-      final currentBottom = _initialBottom + (_targetBottom - _initialBottom) * _sizeAnimation.value;
-
-      _width = currentWidth;
-      _height = currentHeight;
-      _left = currentLeft;
-      _bottom = currentBottom;
-    });
-  }
-
-  Future<void> _loadChatState() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _savedWidth = prefs.getDouble('dm_chat_width');
-      _savedHeight = prefs.getDouble('dm_chat_height');
-      _savedLeft = prefs.getDouble('dm_chat_left');
-      _savedBottom = prefs.getDouble('dm_chat_bottom');
-    });
-  }
-
-  Future<void> _saveChatState() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('dm_chat_width', _width);
-    await prefs.setDouble('dm_chat_height', _height);
-    await prefs.setDouble('dm_chat_left', _left);
-    await prefs.setDouble('dm_chat_bottom', _bottom);
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _startExpansion();
-      } else {
-        _startCollapse();
-      }
-    });
-  }
-
-  void _startExpansion() {
-    final screenSize = MediaQuery.of(context).size;
-    final appBarHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
-    final availableHeight = screenSize.height - appBarHeight;
-
-    final iconLeft = screenSize.width - _initialWidth - 16;
-    final iconBottom = 16.0;
-
-    // Default size: 600x400, positioned at bottom right
-    // Clamp to screen size to ensure it fits
-    final defaultWidth = 600.0.clamp(_minWidth, screenSize.width - 32);
-    final defaultHeight = 400.0.clamp(_minHeight, availableHeight - 32);
-
-    _targetWidth = defaultWidth;
-    _targetHeight = defaultHeight;
-    _targetLeft = (screenSize.width - defaultWidth - 16).clamp(0.0, screenSize.width - defaultWidth);
-    _targetBottom = 16;
-
-    // If we have saved state, use it instead
-    if (_savedWidth != null &&
-        _savedHeight != null &&
-        _savedLeft != null &&
-        _savedBottom != null &&
-        _savedWidth! >= _minWidth &&
-        _savedHeight! >= _minHeight) {
-      _targetWidth = _savedWidth!.clamp(_minWidth, screenSize.width);
-      _targetHeight = _savedHeight!.clamp(_minHeight, availableHeight);
-      _targetLeft = _savedLeft!;
-      _targetBottom = _savedBottom!;
-
-      // Ensure saved position is still valid
-      if (_targetLeft + _targetWidth > screenSize.width) {
-        _targetLeft = (screenSize.width - _targetWidth).clamp(0.0, screenSize.width - _minWidth);
-      }
-      if (_targetBottom + _targetHeight > availableHeight) {
-        _targetBottom = (availableHeight - _targetHeight).clamp(0.0, availableHeight - _minHeight);
-      }
-    }
-
-    _initialLeft = iconLeft;
-    _initialBottom = iconBottom;
-    _width = _initialWidth;
-    _height = _initialHeight;
-    _left = iconLeft;
-    _bottom = iconBottom;
-
-    _animationController.forward(from: 0);
-  }
-
-  void _startCollapse() {
-    _savedWidth = _width;
-    _savedHeight = _height;
-    _savedLeft = _left;
-    _savedBottom = _bottom;
-    _saveChatState();
-    _animationController.reset();
-  }
-
-  void _handleResize(DragUpdateDetails details) {
-    setState(() {
-      final screenSize = MediaQuery.of(context).size;
-      final delta = details.delta;
-      final appBarHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
-      final availableHeight = screenSize.height - appBarHeight;
-      final maxWidth = screenSize.width;
-
-      switch (_resizingEdge) {
-        case 'top':
-          _resizeTop(delta.dy, availableHeight);
-          break;
-        case 'bottom':
-          _resizeBottom(delta.dy);
-          break;
-        case 'left':
-          _resizeLeft(delta.dx, screenSize.width);
-          break;
-        case 'right':
-          _resizeRight(delta.dx, maxWidth);
-          break;
-        case 'top-left':
-          _resizeTop(delta.dy, availableHeight);
-          _resizeLeft(delta.dx, screenSize.width);
-          break;
-        case 'top-right':
-          _resizeTop(delta.dy, availableHeight);
-          _resizeRight(delta.dx, maxWidth);
-          break;
-        case 'bottom-left':
-          _resizeBottom(delta.dy);
-          _resizeLeft(delta.dx, screenSize.width);
-          break;
-        case 'bottom-right':
-          _resizeBottom(delta.dy);
-          _resizeRight(delta.dx, maxWidth);
-          break;
-      }
-
-      _ensureWithinBounds();
-    });
-  }
-
-  void _resizeTop(double dy, double availableHeight) {
-    final newHeight = _height - dy;
-    final maxHeightFromBottom = availableHeight - _bottom;
-    if (newHeight >= _minHeight && newHeight <= maxHeightFromBottom) {
-      _height = newHeight;
-    }
-  }
-
-  void _resizeBottom(double dy) {
-    final newBottom = _bottom - dy;
-    final newHeight = _height + dy;
-    if (newHeight >= _minHeight && newBottom >= 0) {
-      _height = newHeight;
-      _bottom = newBottom;
-    }
-  }
-
-  void _resizeLeft(double dx, double screenWidth) {
-    final newWidth = _width - dx;
-    final maxWidthFromLeft = screenWidth - _left;
-    if (newWidth >= _minWidth && newWidth <= maxWidthFromLeft) {
-      _width = newWidth;
-      _left = _left + dx;
-    }
-  }
-
-  void _resizeRight(double dx, double maxWidth) {
-    final newWidth = _width + dx;
-    final maxWidthFromLeft = maxWidth - _left;
-    if (maxWidthFromLeft >= _minWidth) {
-      _width = newWidth.clamp(_minWidth, maxWidthFromLeft);
-    } else {
-      _width = newWidth >= _minWidth ? newWidth : _minWidth;
-    }
-  }
-
-  void _ensureWithinBounds() {
-    final screenSize = MediaQuery.of(context).size;
-    final appBarHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
-    final availableHeight = screenSize.height - appBarHeight;
-
-    final maxAllowedWidth = screenSize.width;
-    if (_width > maxAllowedWidth) {
-      _width = maxAllowedWidth >= _minWidth ? maxAllowedWidth : _minWidth;
-    }
-
-    final maxAllowedHeight = availableHeight;
-    if (_height > maxAllowedHeight) {
-      _height = maxAllowedHeight >= _minHeight ? maxAllowedHeight : _minHeight;
-    }
-
-    if (_left + _width > screenSize.width) {
-      final newLeft = screenSize.width - _width;
-      _left = newLeft > 0 ? newLeft : 0;
-    }
-
-    if (_bottom + _height > availableHeight) {
-      final newBottom = availableHeight - _height;
-      _bottom = newBottom > 0 ? newBottom : 0;
-    }
-
-    if (_left < 0) _left = 0;
-    if (_bottom < 0) _bottom = 0;
+    _isExpanded = widget.startExpanded;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isExpanded) {
-      return _buildCollapsedButton();
-    }
-
-    return _buildExpandedChat();
-  }
-
-  Widget _buildCollapsedButton() {
-    return Positioned(
-      bottom: 16,
-      right: 16,
-      child: FloatingActionButton(
-        onPressed: _toggleExpanded,
-        tooltip: 'Direct Messages',
-        child: const Icon(Icons.message),
-      ),
+    final args = UnifiedDmChatProviderArgs(
+      conversationId: widget.conversationId,
+      otherUserId: widget.otherUserId,
     );
-  }
+    final dmState = ref.watch(unifiedDmChatProvider(args));
+    final unreadCount = _computeUnread(dmState); // TODO: wire real unread later
 
-  Widget _buildExpandedChat() {
-    return Positioned(
-      bottom: _bottom,
-      left: _left,
-      width: _width,
-      height: _height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          _buildChatContainer(),
-          ChatResizeHandles(
-            onResizeStart: (edge) => setState(() => _resizingEdge = edge),
-            onResizeUpdate: _handleResize,
-            onResizeEnd: () {
-              setState(() => _resizingEdge = null);
-              _saveChatState();
-            },
+    // Parent decides positioning (Align/Positioned). This just renders the card.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: 320,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
+        ],
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(
+            context,
+            unreadCount: unreadCount,
+            isExpanded: _isExpanded,
+          ),
+          if (_isExpanded) _buildExpandedBody(),
         ],
       ),
     );
   }
 
-  Widget _buildChatContainer() {
-    return GestureDetector(
-      onPanUpdate: (details) {
-        if (_resizingEdge == null) {
-          _handleDrag(details);
-        }
-      },
-      onPanEnd: (_) {
-        if (_resizingEdge == null) {
-          _saveChatState();
-        }
-      },
-      child: SizedBox.expand(
-        child: Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: DmChatContent(
-                opacity: _opacityAnimation.value,
-                onClose: _toggleExpanded,
+  Widget _buildHeader(
+    BuildContext context, {
+    required int unreadCount,
+    required bool isExpanded,
+  }) {
+    final name = widget.otherUsername ?? 'Direct Message';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: _toggleExpanded,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.grey.shade50,
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
+            if (unreadCount > 0)
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  unreadCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            Icon(
+              isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _handleDrag(DragUpdateDetails details) {
+  Widget _buildExpandedBody() {
+    // Fixed-height chat region; parent chooses overall placement.
+    return SizedBox(
+      height: 280,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(16),
+        ),
+        child: DmChatContent(
+          conversationId: widget.conversationId,
+          otherUserId: widget.otherUserId,
+          otherUsername: widget.otherUsername,
+        ),
+      ),
+    );
+  }
+
+  void _toggleExpanded() {
     setState(() {
-      final screenSize = MediaQuery.of(context).size;
-      final appBarHeight = kToolbarHeight + MediaQuery.of(context).padding.top;
-      final availableHeight = screenSize.height - appBarHeight;
-
-      _left = (_left + details.delta.dx).clamp(0.0, screenSize.width - _width);
-      _bottom = (_bottom - details.delta.dy).clamp(0.0, availableHeight - _height);
-
-      _ensureWithinBounds();
+      _isExpanded = !_isExpanded;
     });
+  }
+
+  /// Placeholder unread-count logic.
+  ///
+  /// For now this always returns 0. Once you have real unread tracking
+  /// (e.g., last read timestamp per conversation), wire that into
+  /// [ChatState] and compute it here.
+  int _computeUnread(ChatState state) {
+    // TODO: implement real unread logic.
+    return 0;
   }
 }

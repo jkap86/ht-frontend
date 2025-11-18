@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_config_provider.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../../auth/application/auth_notifier.dart';
 import '../../auth/application/auth_state.dart';
+import '../data/leagues_api_client.dart';
 import '../data/leagues_repository.dart';
 import '../domain/league.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
@@ -9,8 +12,13 @@ import '../domain/repositories/leagues_repository_interface.dart';
 /// Provider for the leagues repository
 /// Uses abstract interface for better decoupling
 final leaguesRepositoryProvider = Provider<ILeaguesRepository>((ref) {
+  final config = ref.watch(appConfigProvider);
   final storage = ref.watch(authStorageProvider);
-  return LeaguesRepository(storage: storage);
+
+  final apiClient = ApiClient(baseUrl: config.apiBaseUrl);
+  final leaguesApiClient = LeaguesApiClient(apiClient: apiClient, storage: storage);
+
+  return LeaguesRepository(apiClient: leaguesApiClient);
 });
 
 /// Provider for fetching user's leagues

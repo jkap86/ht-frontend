@@ -2,8 +2,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../config/app_config_provider.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../domain/repositories/auth_repository_interface.dart';
 import '../data/auth_repository.dart';
+import '../data/auth_api_client.dart';
 import '../data/auth_storage.dart';
 import 'auth_state.dart';
 
@@ -196,8 +199,13 @@ final authStorageProvider = Provider<AuthStorage>((ref) {
 
 /// Repository provider – exposes the concrete implementation
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
+  final config = ref.watch(appConfigProvider);
   final storage = ref.watch(authStorageProvider);
-  return AuthRepository(storage: storage);
+
+  final apiClient = ApiClient(baseUrl: config.apiBaseUrl);
+  final authApiClient = AuthApiClient(apiClient: apiClient, storage: storage);
+
+  return AuthRepository(apiClient: authApiClient, storage: storage);
 });
 
 /// Global auth provider
