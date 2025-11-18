@@ -2,38 +2,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'chat_providers.dart';
 
-/// Simple model representing a chat room.
-class ChatRoom {
+/// Simple model representing a chat room entry in the UI.
+class ChatRoomEntry {
   final String roomName;
   final String displayName;
   final int unreadCount;
   final bool isJoined;
 
-  const ChatRoom({
+  const ChatRoomEntry({
     required this.roomName,
     required this.displayName,
     this.unreadCount = 0,
     this.isJoined = false,
   });
 
-  ChatRoom copyWith({
+  ChatRoomEntry copyWith({
     String? roomName,
     String? displayName,
     int? unreadCount,
     bool? isJoined,
   }) {
-    return ChatRoom(
+    return ChatRoomEntry(
       roomName: roomName ?? this.roomName,
       displayName: displayName ?? this.displayName,
       unreadCount: unreadCount ?? this.unreadCount,
       isJoined: isJoined ?? this.isJoined,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ChatRoomEntry &&
+        other.roomName == roomName &&
+        other.displayName == displayName &&
+        other.unreadCount == unreadCount &&
+        other.isJoined == isJoined;
+  }
+
+  @override
+  int get hashCode =>
+      roomName.hashCode ^
+      displayName.hashCode ^
+      unreadCount.hashCode ^
+      isJoined.hashCode;
 }
 
 /// State for chat rooms: list of rooms + which one is currently active.
 class ChatRoomState {
-  final List<ChatRoom> rooms;
+  final List<ChatRoomEntry> rooms;
   final String? activeRoomName;
 
   const ChatRoomState({
@@ -47,7 +64,7 @@ class ChatRoomState {
       );
 
   ChatRoomState copyWith({
-    List<ChatRoom>? rooms,
+    List<ChatRoomEntry>? rooms,
     String? activeRoomName,
   }) {
     return ChatRoomState(
@@ -56,12 +73,9 @@ class ChatRoomState {
     );
   }
 
-  ChatRoom? get activeRoom => rooms.firstWhere(
-        (r) => r.roomName == activeRoomName,
-        orElse: () => const ChatRoom(
-          roomName: '',
-          displayName: '',
-        ),
+  ChatRoomEntry? get activeRoom => rooms.cast<ChatRoomEntry?>().firstWhere(
+        (r) => r?.roomName == activeRoomName,
+        orElse: () => null,
       );
 }
 
@@ -77,10 +91,10 @@ class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
   ///
   /// Example:
   ///   [
-  ///     ChatRoom(roomName: 'global_chat', displayName: 'Global'),
-  ///     ChatRoom(roomName: 'announcements', displayName: 'Announcements'),
+  ///     ChatRoomEntry(roomName: 'global_chat', displayName: 'Global'),
+  ///     ChatRoomEntry(roomName: 'announcements', displayName: 'Announcements'),
   ///   ]
-  void setInitialRooms(List<ChatRoom> rooms, {String? activeRoomName}) {
+  void setInitialRooms(List<ChatRoomEntry> rooms, {String? activeRoomName}) {
     state = ChatRoomState(
       rooms: rooms,
       activeRoomName:
@@ -97,11 +111,11 @@ class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
   }
 
   /// Add a new room to the list (or replace if it already exists).
-  void upsertRoom(ChatRoom room) {
+  void upsertRoom(ChatRoomEntry room) {
     final existingIndex =
         state.rooms.indexWhere((r) => r.roomName == room.roomName);
 
-    final updatedRooms = List<ChatRoom>.from(state.rooms);
+    final updatedRooms = List<ChatRoomEntry>.from(state.rooms);
     if (existingIndex == -1) {
       updatedRooms.add(room);
     } else {
