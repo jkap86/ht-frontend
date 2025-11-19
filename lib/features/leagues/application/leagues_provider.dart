@@ -90,6 +90,7 @@ class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
     int id, {
     String? name,
     String? description,
+    int? totalRosters,
     Map<String, dynamic>? settings,
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
@@ -101,6 +102,7 @@ class MyLeaguesNotifier extends AsyncNotifier<List<League>> {
       id: id,
       name: name,
       description: description,
+      totalRosters: totalRosters,
       settings: settings,
       scoringSettings: scoringSettings,
       rosterPositions: rosterPositions,

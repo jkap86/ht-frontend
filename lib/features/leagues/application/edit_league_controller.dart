@@ -69,6 +69,14 @@ class EditLeagueController extends StateNotifier<EditLeagueState> {
     );
   }
 
+  /// Update total rosters
+  void updateTotalRosters(int totalRosters) {
+    state = state.copyWith(
+      editedLeague: state.editedLeague.copyWith(totalRosters: totalRosters),
+      clearError: true,
+    );
+  }
+
   /// Update league settings
   void updateSettings(Map<String, dynamic> settings) {
     state = state.copyWith(
@@ -173,6 +181,7 @@ class EditLeagueController extends StateNotifier<EditLeagueState> {
               state.editedLeague.id,
               name: state.editedLeague.name,
               description: state.editedLeague.description,
+              totalRosters: state.editedLeague.totalRosters,
               settings: state.editedLeague.settings,
               scoringSettings: state.editedLeague.scoringSettings,
               rosterPositions: state.editedLeague.rosterPositions,

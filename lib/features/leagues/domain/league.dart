@@ -82,4 +82,52 @@ class League {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is League &&
+        other.id == id &&
+        other.name == name &&
+        other.description == description &&
+        other.totalRosters == totalRosters &&
+        other.status == status &&
+        other.draftType == draftType &&
+        other.draftDate == draftDate &&
+        other.commissionerRosterId == commissionerRosterId &&
+        other.userRosterId == userRosterId &&
+        other.season == season &&
+        other.seasonType == seasonType &&
+        _mapsEqual(other.settings, settings) &&
+        _mapsEqual(other.scoringSettings, scoringSettings) &&
+        _mapsEqual(other.rosterPositions, rosterPositions);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      name,
+      description,
+      totalRosters,
+      status,
+      draftType,
+      draftDate,
+      commissionerRosterId,
+      userRosterId,
+      season,
+      seasonType,
+    );
+  }
+
+  /// Helper method to compare maps for equality
+  static bool _mapsEqual(Map<String, dynamic>? a, Map<String, dynamic>? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || a[key] != b[key]) return false;
+    }
+    return true;
+  }
 }

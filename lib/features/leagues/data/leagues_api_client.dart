@@ -96,6 +96,7 @@ class LeaguesApiClient {
     required int id,
     String? name,
     String? description,
+    int? totalRosters,
     Map<String, dynamic>? settings,
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
@@ -109,6 +110,7 @@ class LeaguesApiClient {
     final Map<String, dynamic> body = {};
     if (name != null) body['name'] = name;
     if (description != null) body['description'] = description;
+    if (totalRosters != null) body['total_rosters'] = totalRosters;
     if (settings != null) body['settings'] = settings;
     if (scoringSettings != null) body['scoring_settings'] = scoringSettings;
     if (rosterPositions != null) body['roster_positions'] = rosterPositions;

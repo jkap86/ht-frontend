@@ -103,6 +103,8 @@ class EditLeagueSettingsModal extends ConsumerWidget {
                     _EditableBasicInfoSection(
                       league: state.editedLeague,
                       onNameChanged: controller.updateName,
+                      onTotalRostersChanged: controller.updateTotalRosters,
+                      onIsPublicChanged: (value) => controller.updateSetting('is_public', value),
                     ),
                     const SizedBox(height: 16),
 
@@ -257,14 +259,52 @@ class _SettingsHeader extends StatelessWidget {
 }
 
 /// Editable basic info section
-class _EditableBasicInfoSection extends StatelessWidget {
+class _EditableBasicInfoSection extends StatefulWidget {
   final League league;
   final Function(String) onNameChanged;
+  final Function(int) onTotalRostersChanged;
+  final Function(bool) onIsPublicChanged;
 
   const _EditableBasicInfoSection({
     required this.league,
     required this.onNameChanged,
+    required this.onTotalRostersChanged,
+    required this.onIsPublicChanged,
   });
+
+  @override
+  State<_EditableBasicInfoSection> createState() => _EditableBasicInfoSectionState();
+}
+
+class _EditableBasicInfoSectionState extends State<_EditableBasicInfoSection> {
+  late TextEditingController _nameController;
+  late TextEditingController _totalRostersController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.league.name);
+    _totalRostersController = TextEditingController(text: widget.league.totalRosters.toString());
+  }
+
+  @override
+  void didUpdateWidget(covariant _EditableBasicInfoSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update controllers if the league data changes externally
+    if (oldWidget.league.name != widget.league.name) {
+      _nameController.text = widget.league.name;
+    }
+    if (oldWidget.league.totalRosters != widget.league.totalRosters) {
+      _totalRostersController.text = widget.league.totalRosters.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _totalRostersController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,36 +323,56 @@ class _EditableBasicInfoSection extends StatelessWidget {
               children: [
                 // Editable League Name
                 TextFormField(
-                  initialValue: league.name,
+                  controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'League Name *',
                     border: OutlineInputBorder(),
                     helperText: 'Must be at least 3 characters',
                   ),
-                  onChanged: onNameChanged,
+                  onChanged: widget.onNameChanged,
                 ),
                 const SizedBox(height: 16),
 
-                // Read-only fields (matching view mode)
+                // Read-only fields
                 InfoRow(
                   label: 'Season',
-                  value: league.season,
+                  value: widget.league.season,
                 ),
                 InfoRow(
                   label: 'Season Type',
-                  value: _formatSeasonType(league.seasonType),
+                  value: _formatSeasonType(widget.league.seasonType),
                 ),
                 InfoRow(
                   label: 'Status',
-                  value: _formatStatus(league.status),
+                  value: _formatStatus(widget.league.status),
                 ),
-                InfoRow(
-                  label: 'Total Teams',
-                  value: '${league.totalRosters}',
+
+                // Editable Total Teams
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _totalRostersController,
+                  decoration: const InputDecoration(
+                    labelText: 'Total Teams *',
+                    border: OutlineInputBorder(),
+                    helperText: 'Number of teams in the league (2-20)',
+                  ),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null) {
+                      widget.onTotalRostersChanged(parsed);
+                    }
+                  },
                 ),
-                InfoRow(
-                  label: 'League Type',
-                  value: league.settings?['is_public'] == true ? 'Public' : 'Private',
+                const SizedBox(height: 16),
+
+                // Editable League Type (Public/Private)
+                SwitchListTile(
+                  title: const Text('Public League'),
+                  subtitle: const Text('Allow anyone to join'),
+                  value: widget.league.settings?['is_public'] == true,
+                  onChanged: widget.onIsPublicChanged,
+                  contentPadding: EdgeInsets.zero,
                 ),
               ],
             ),

@@ -26,6 +26,7 @@ abstract class ILeaguesRepository {
     required int id,
     String? name,
     String? description,
+    int? totalRosters,
     Map<String, dynamic>? settings,
     Map<String, dynamic>? scoringSettings,
     Map<String, dynamic>? rosterPositions,
