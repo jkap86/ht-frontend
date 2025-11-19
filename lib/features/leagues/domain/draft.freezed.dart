@@ -24,10 +24,10 @@ mixin _$Draft {
   int get leagueId => throw _privateConstructorUsedError;
   String get draftType => throw _privateConstructorUsedError;
   int get rounds => throw _privateConstructorUsedError;
-  int get pickTimeSeconds => throw _privateConstructorUsedError;
+  int? get pickTimeSeconds => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
-  int get currentPick => throw _privateConstructorUsedError;
-  int get currentRound => throw _privateConstructorUsedError;
+  int? get currentPick => throw _privateConstructorUsedError;
+  int? get currentRound => throw _privateConstructorUsedError;
   bool get thirdRoundReversal => throw _privateConstructorUsedError;
   int? get currentRosterId => throw _privateConstructorUsedError;
   DateTime? get pickDeadline => throw _privateConstructorUsedError;
@@ -56,10 +56,10 @@ abstract class $DraftCopyWith<$Res> {
       int leagueId,
       String draftType,
       int rounds,
-      int pickTimeSeconds,
+      int? pickTimeSeconds,
       String status,
-      int currentPick,
-      int currentRound,
+      int? currentPick,
+      int? currentRound,
       bool thirdRoundReversal,
       int? currentRosterId,
       DateTime? pickDeadline,
@@ -91,10 +91,10 @@ class _$DraftCopyWithImpl<$Res, $Val extends Draft>
     Object? leagueId = null,
     Object? draftType = null,
     Object? rounds = null,
-    Object? pickTimeSeconds = null,
+    Object? pickTimeSeconds = freezed,
     Object? status = null,
-    Object? currentPick = null,
-    Object? currentRound = null,
+    Object? currentPick = freezed,
+    Object? currentRound = freezed,
     Object? thirdRoundReversal = null,
     Object? currentRosterId = freezed,
     Object? pickDeadline = freezed,
@@ -121,22 +121,22 @@ class _$DraftCopyWithImpl<$Res, $Val extends Draft>
           ? _value.rounds
           : rounds // ignore: cast_nullable_to_non_nullable
               as int,
-      pickTimeSeconds: null == pickTimeSeconds
+      pickTimeSeconds: freezed == pickTimeSeconds
           ? _value.pickTimeSeconds
           : pickTimeSeconds // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      currentPick: null == currentPick
+      currentPick: freezed == currentPick
           ? _value.currentPick
           : currentPick // ignore: cast_nullable_to_non_nullable
-              as int,
-      currentRound: null == currentRound
+              as int?,
+      currentRound: freezed == currentRound
           ? _value.currentRound
           : currentRound // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       thirdRoundReversal: null == thirdRoundReversal
           ? _value.thirdRoundReversal
           : thirdRoundReversal // ignore: cast_nullable_to_non_nullable
@@ -199,10 +199,10 @@ abstract class _$$DraftImplCopyWith<$Res> implements $DraftCopyWith<$Res> {
       int leagueId,
       String draftType,
       int rounds,
-      int pickTimeSeconds,
+      int? pickTimeSeconds,
       String status,
-      int currentPick,
-      int currentRound,
+      int? currentPick,
+      int? currentRound,
       bool thirdRoundReversal,
       int? currentRosterId,
       DateTime? pickDeadline,
@@ -233,10 +233,10 @@ class __$$DraftImplCopyWithImpl<$Res>
     Object? leagueId = null,
     Object? draftType = null,
     Object? rounds = null,
-    Object? pickTimeSeconds = null,
+    Object? pickTimeSeconds = freezed,
     Object? status = null,
-    Object? currentPick = null,
-    Object? currentRound = null,
+    Object? currentPick = freezed,
+    Object? currentRound = freezed,
     Object? thirdRoundReversal = null,
     Object? currentRosterId = freezed,
     Object? pickDeadline = freezed,
@@ -263,22 +263,22 @@ class __$$DraftImplCopyWithImpl<$Res>
           ? _value.rounds
           : rounds // ignore: cast_nullable_to_non_nullable
               as int,
-      pickTimeSeconds: null == pickTimeSeconds
+      pickTimeSeconds: freezed == pickTimeSeconds
           ? _value.pickTimeSeconds
           : pickTimeSeconds // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      currentPick: null == currentPick
+      currentPick: freezed == currentPick
           ? _value.currentPick
           : currentPick // ignore: cast_nullable_to_non_nullable
-              as int,
-      currentRound: null == currentRound
+              as int?,
+      currentRound: freezed == currentRound
           ? _value.currentRound
           : currentRound // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       thirdRoundReversal: null == thirdRoundReversal
           ? _value.thirdRoundReversal
           : thirdRoundReversal // ignore: cast_nullable_to_non_nullable
@@ -323,10 +323,10 @@ class _$DraftImpl implements _Draft {
       required this.leagueId,
       required this.draftType,
       required this.rounds,
-      required this.pickTimeSeconds,
+      this.pickTimeSeconds,
       required this.status,
-      required this.currentPick,
-      required this.currentRound,
+      this.currentPick,
+      this.currentRound,
       this.thirdRoundReversal = false,
       this.currentRosterId,
       this.pickDeadline,
@@ -348,13 +348,13 @@ class _$DraftImpl implements _Draft {
   @override
   final int rounds;
   @override
-  final int pickTimeSeconds;
+  final int? pickTimeSeconds;
   @override
   final String status;
   @override
-  final int currentPick;
+  final int? currentPick;
   @override
-  final int currentRound;
+  final int? currentRound;
   @override
   @JsonKey()
   final bool thirdRoundReversal;
@@ -457,10 +457,10 @@ abstract class _Draft implements Draft {
       required final int leagueId,
       required final String draftType,
       required final int rounds,
-      required final int pickTimeSeconds,
+      final int? pickTimeSeconds,
       required final String status,
-      required final int currentPick,
-      required final int currentRound,
+      final int? currentPick,
+      final int? currentRound,
       final bool thirdRoundReversal,
       final int? currentRosterId,
       final DateTime? pickDeadline,
@@ -481,13 +481,13 @@ abstract class _Draft implements Draft {
   @override
   int get rounds;
   @override
-  int get pickTimeSeconds;
+  int? get pickTimeSeconds;
   @override
   String get status;
   @override
-  int get currentPick;
+  int? get currentPick;
   @override
-  int get currentRound;
+  int? get currentRound;
   @override
   bool get thirdRoundReversal;
   @override

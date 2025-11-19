@@ -94,7 +94,7 @@ class _DraftInfo extends StatelessWidget {
     final draftType = draft.draftType;
     final thirdRoundReversal = draft.thirdRoundReversal;
     final rounds = draft.rounds;
-    final pickTimeSeconds = draft.pickTimeSeconds;
+    final pickTimeSeconds = draft.pickTimeSeconds ?? 90;
     final settings = draft.settings;
     final playerPool = settings?.playerPool ?? 'all';
     final draftOrder = settings?.draftOrder ?? 'randomize';

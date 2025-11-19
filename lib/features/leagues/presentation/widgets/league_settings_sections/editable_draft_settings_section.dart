@@ -346,7 +346,7 @@ class _DraftSummaryCard extends StatelessWidget {
     final draftType = draft.draftType;
     final rounds = draft.rounds;
     final playerPool = settings?.playerPool;
-    final pickTimeSeconds = draft.pickTimeSeconds;
+    final pickTimeSeconds = draft.pickTimeSeconds ?? 90;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -11,10 +11,10 @@ _$DraftImpl _$$DraftImplFromJson(Map<String, dynamic> json) => _$DraftImpl(
       leagueId: (json['leagueId'] as num).toInt(),
       draftType: json['draftType'] as String,
       rounds: (json['rounds'] as num).toInt(),
-      pickTimeSeconds: (json['pickTimeSeconds'] as num).toInt(),
+      pickTimeSeconds: (json['pickTimeSeconds'] as num?)?.toInt(),
       status: json['status'] as String,
-      currentPick: (json['currentPick'] as num).toInt(),
-      currentRound: (json['currentRound'] as num).toInt(),
+      currentPick: (json['currentPick'] as num?)?.toInt(),
+      currentRound: (json['currentRound'] as num?)?.toInt(),
       thirdRoundReversal: json['thirdRoundReversal'] as bool? ?? false,
       currentRosterId: (json['currentRosterId'] as num?)?.toInt(),
       pickDeadline: json['pickDeadline'] == null
