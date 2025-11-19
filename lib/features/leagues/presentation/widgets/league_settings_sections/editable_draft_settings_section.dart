@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../domain/draft.dart';
 import '../../../application/drafts_provider.dart';
 
 /// Editable draft settings section that uses the drafts API
@@ -53,24 +54,21 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
     });
   }
 
-  void _editDraft(Map<String, dynamic> draft) {
+  void _editDraft(Draft draft) {
     setState(() {
       _isDraftMode = true;
-      _editingDraftId = draft['id'] as int;
-      final settings = draft['settings'] as Map<String, dynamic>? ?? {};
-      _localDraftType = draft['draft_type'] as String?;
-      _localThirdRoundReversal = draft['third_round_reversal'] as bool? ?? false;
-      _localDraftRounds = draft['rounds'] as int?;
-      _localPickTimeSeconds = draft['pick_time_seconds'] as int?;
-      _localPlayerPool = settings['player_pool'] as String? ?? 'all';
-      _localDraftOrder = settings['draft_order'] as String? ?? 'randomize';
-      _localTimerMode = settings['timer_mode'] as String? ?? 'per_pick';
+      _editingDraftId = draft.id;
+      final settings = draft.settings;
+      _localDraftType = draft.draftType;
+      _localThirdRoundReversal = draft.thirdRoundReversal;
+      _localDraftRounds = draft.rounds;
+      _localPickTimeSeconds = draft.pickTimeSeconds;
+      _localPlayerPool = settings?.playerPool ?? 'all';
+      _localDraftOrder = settings?.draftOrder ?? 'randomize';
+      _localTimerMode = 'per_pick'; // Default value - not in settings model yet
       _localUseRosterPositions = false; // Not stored in API yet
-
-      // Parse derby start time if present
-      final derbyStartTimeStr = settings['derby_start_time'] as String?;
-      _localDerbyStartTime = derbyStartTimeStr != null ? DateTime.tryParse(derbyStartTimeStr) : null;
-      _localAutoStartDerby = settings['auto_start_derby'] as bool? ?? false;
+      _localDerbyStartTime = settings?.derbyStartTime;
+      _localAutoStartDerby = false; // Default value - not in settings model yet
     });
   }
 
@@ -250,7 +248,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
                       draft: draft,
                       isCommissioner: widget.isCommissioner,
                       onEdit: () => _editDraft(draft),
-                      onDelete: () => _deleteDraft(draft['id'] as int),
+                      onDelete: () => _deleteDraft(draft.id),
                     );
                   }).toList(),
                 );
@@ -318,7 +316,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
 
 /// Draft summary card widget
 class _DraftSummaryCard extends StatelessWidget {
-  final Map<String, dynamic> draft;
+  final Draft draft;
   final bool isCommissioner;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -344,11 +342,11 @@ class _DraftSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = draft['settings'] as Map<String, dynamic>? ?? {};
-    final draftType = draft['draft_type'] as String?;
-    final rounds = draft['rounds'] as int? ?? 15;
-    final playerPool = settings['player_pool'] as String?;
-    final pickTimeSeconds = draft['pick_time_seconds'] as int? ?? 90;
+    final settings = draft.settings;
+    final draftType = draft.draftType;
+    final rounds = draft.rounds;
+    final playerPool = settings?.playerPool;
+    final pickTimeSeconds = draft.pickTimeSeconds;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -415,18 +413,11 @@ class _DraftSummaryCard extends StatelessWidget {
               _DetailRow(label: 'Pick Time', value: '$pickTimeSeconds seconds'),
               const SizedBox(height: 12),
               _DetailRow(label: 'Player Pool', value: _formatPlayerPool(playerPool)),
-              if (settings['draft_order'] != null) ...[
+              if (settings?.draftOrder != null) ...[
                 const SizedBox(height: 12),
                 _DetailRow(
                   label: 'Draft Order',
-                  value: settings['draft_order'] == 'randomize' ? 'Randomize' : 'Derby',
-                ),
-              ],
-              if (settings['timer_mode'] != null) ...[
-                const SizedBox(height: 12),
-                _DetailRow(
-                  label: 'Timer Mode',
-                  value: settings['timer_mode'] == 'per_pick' ? 'Per Pick' : 'Per Manager',
+                  value: settings!.draftOrder == 'randomize' ? 'Randomize' : 'Derby',
                 ),
               ],
             ],

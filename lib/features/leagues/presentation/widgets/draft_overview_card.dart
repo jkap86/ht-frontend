@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/league.dart';
+import '../../domain/draft.dart';
 import '../../application/drafts_provider.dart';
 import '../../../auth/application/auth_notifier.dart';
 import 'derby/derby_countdown_widget.dart';
@@ -96,7 +97,7 @@ class DraftOverviewCard extends ConsumerWidget {
 
 /// Individual draft card with collapsible sections
 class _DraftCard extends ConsumerStatefulWidget {
-  final Map<String, dynamic> draft;
+  final Draft draft;
   final int draftNumber;
   final int leagueId;
   final bool isCommissioner;
@@ -120,11 +121,10 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
 
   @override
   Widget build(BuildContext context) {
-    final draftType = widget.draft['draft_type'] as String? ?? 'snake';
-    final rounds = widget.draft['rounds'] as int? ?? 15;
-    final settings = widget.draft['settings'] as Map<String, dynamic>? ?? {};
-    final playerPool = settings['player_pool'] as String? ?? 'all';
-    final draftId = widget.draft['id'] as int;
+    final draftType = widget.draft.draftType;
+    final rounds = widget.draft.rounds;
+    final settings = widget.draft.settings;
+    final playerPool = settings?.playerPool ?? 'all';
 
     return Card(
       elevation: 2,
@@ -231,16 +231,14 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
   }
 
   Widget _buildDraftOrderContent() {
-    final settings = widget.draft['settings'] as Map<String, dynamic>? ?? {};
-    final draftOrder = settings['draft_order'] as String? ?? 'randomize';
-    final draftId = widget.draft['id'] as int;
+    final settings = widget.draft.settings;
+    final draftOrder = settings?.draftOrder ?? 'randomize';
+    final draftId = widget.draft.id;
 
     // Parse derby times and status
-    final derbyStartTimeStr = settings['derby_start_time'] as String?;
-    final derbyStartTime = derbyStartTimeStr != null ? DateTime.tryParse(derbyStartTimeStr) : null;
-    final derbyStatus = settings['derby_status'] as String?;
-    final pickDeadlineStr = settings['pick_deadline'] as String?;
-    final pickDeadline = pickDeadlineStr != null ? DateTime.tryParse(pickDeadlineStr) : null;
+    final derbyStartTime = settings?.derbyStartTime;
+    final derbyStatus = settings?.derbyStatus;
+    final pickDeadline = widget.draft.pickDeadline;
 
     // Watch the draft order provider
     final draftOrderState = ref.watch(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)));
@@ -475,7 +473,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
 
             // If derby is in progress or paused, show slot selection UI
             if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') && draftOrder.toLowerCase() == 'derby') {
-              final currentPickerIndex = settings['current_picker_index'] as int? ?? 0;
+              final currentPickerIndex = settings?.currentPickerIndex ?? 0;
               final currentPicker = order[currentPickerIndex];
               final currentPickerUserId = currentPicker['user_id'] as int?;
 
