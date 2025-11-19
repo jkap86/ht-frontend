@@ -21,7 +21,7 @@ class DraftHelpers {
 
   /// Check if the current user can pick a slot
   static bool canUserPickSlot(
-    int? currentUserId,
+    String? currentUserId,
     List<Map<String, dynamic>> draftOrder,
     int currentPickerIndex,
   ) {
@@ -29,7 +29,7 @@ class DraftHelpers {
     if (currentPickerIndex >= draftOrder.length) return false;
 
     final currentPicker = draftOrder[currentPickerIndex];
-    final pickerUserId = currentPicker['userId'] as int?;
+    final pickerUserId = currentPicker['userId']?.toString();
 
     return pickerUserId == currentUserId;
   }

@@ -502,11 +502,11 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') && draftOrder.toLowerCase() == 'derby') {
               final currentPickerIndex = settings?.currentPickerIndex ?? 0;
               final currentPicker = order[currentPickerIndex];
-              final currentPickerUserId = currentPicker['userId'] as int?;
+              final currentPickerUserId = currentPicker['userId']?.toString();
 
               // Get current user's ID to check if it's their turn
               final authState = ref.watch(authProvider);
-              final currentUserId = authState.user != null ? int.tryParse(authState.user!.userId) : null;
+              final currentUserId = authState.user?.userId;
               final isMyTurn = currentUserId != null && currentPickerUserId == currentUserId;
 
               // Create a map of taken positions
