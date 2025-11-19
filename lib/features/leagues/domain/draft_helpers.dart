@@ -10,7 +10,7 @@ class DraftHelpers {
     // Only mark positions as taken for users who have already picked
     for (int i = 0; i < currentPickerIndex; i++) {
       final item = draftOrder[i];
-      final position = item['draft_position'] as int?;
+      final position = item['draftPosition'] as int?;
       if (position != null) {
         takenPositions[position] = item;
       }
@@ -29,7 +29,7 @@ class DraftHelpers {
     if (currentPickerIndex >= draftOrder.length) return false;
 
     final currentPicker = draftOrder[currentPickerIndex];
-    final pickerUserId = currentPicker['user_id'] as int?;
+    final pickerUserId = currentPicker['userId'] as int?;
 
     return pickerUserId == currentUserId;
   }

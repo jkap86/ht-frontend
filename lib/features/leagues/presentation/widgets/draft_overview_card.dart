@@ -502,7 +502,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') && draftOrder.toLowerCase() == 'derby') {
               final currentPickerIndex = settings?.currentPickerIndex ?? 0;
               final currentPicker = order[currentPickerIndex];
-              final currentPickerUserId = currentPicker['user_id'] as int?;
+              final currentPickerUserId = currentPicker['userId'] as int?;
 
               // Get current user's ID to check if it's their turn
               final authState = ref.watch(authProvider);
@@ -514,7 +514,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               final takenPositions = <int, Map<String, dynamic>>{};
               for (int i = 0; i < currentPickerIndex; i++) {
                 final item = order[i];
-                final position = item['draft_position'] as int;
+                final position = item['draftPosition'] as int;
                 takenPositions[position] = item;
               }
 
@@ -547,7 +547,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                         ...order.asMap().entries.map((entry) {
                           final index = entry.key;
                           final item = entry.value;
-                          final username = item['username'] as String? ?? 'Team ${item['roster_number']}';
+                          final username = item['username'] as String? ?? 'Team ${item['rosterNumber']}';
                           final isCurrent = index == currentPickerIndex;
                           final hasPicked = index < currentPickerIndex;
 
@@ -689,8 +689,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             // Normal draft order display
             return Column(
               children: order.map((item) {
-                final position = item['draft_position'] as int;
-                final username = item['username'] as String? ?? 'Team ${item['roster_number']}';
+                final position = item['draftPosition'] as int;
+                final username = item['username'] as String? ?? 'Team ${item['rosterNumber']}';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
