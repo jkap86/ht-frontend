@@ -195,6 +195,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
 
   Widget _buildDraftOrderSection() {
     final isExpanded = _expandedSection == 'draft_order';
+    final settings = widget.draft.settings;
+    final draftOrder = settings?.draftOrder ?? 'randomize';
+    final draftOrderLabel = draftOrder.toLowerCase() == 'derby' ? 'Derby' : 'Randomize';
 
     return Column(
       children: [
@@ -206,13 +209,33 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text(
-                    'Draft Order',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Draft Order',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          draftOrderLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Icon(
