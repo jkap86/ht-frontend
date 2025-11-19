@@ -7,13 +7,13 @@ part 'draft_settings.g.dart';
 @freezed
 class DraftSettings with _$DraftSettings {
   const factory DraftSettings({
-    @Default('randomize') String draftOrder,
-    @Default('all') String playerPool,
-    int? currentPickerIndex,
-    List<Map<String, dynamic>>? draftOrderList,
+    @JsonKey(name: 'draft_order') @Default('randomize') String draftOrder,
+    @JsonKey(name: 'player_pool') @Default('all') String playerPool,
+    @JsonKey(name: 'current_picker_index') int? currentPickerIndex,
+    @JsonKey(name: 'draft_order_list') List<Map<String, dynamic>>? draftOrderList,
     // Derby-specific settings
-    DateTime? derbyStartTime,
-    String? derbyStatus,
+    @JsonKey(name: 'derby_start_time') DateTime? derbyStartTime,
+    @JsonKey(name: 'derby_status') String? derbyStatus,
   }) = _DraftSettings;
 
   factory DraftSettings.fromJson(Map<String, dynamic> json) =>

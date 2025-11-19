@@ -8,24 +8,24 @@ part of 'draft_settings.dart';
 
 _$DraftSettingsImpl _$$DraftSettingsImplFromJson(Map<String, dynamic> json) =>
     _$DraftSettingsImpl(
-      draftOrder: json['draftOrder'] as String? ?? 'randomize',
-      playerPool: json['playerPool'] as String? ?? 'all',
-      currentPickerIndex: (json['currentPickerIndex'] as num?)?.toInt(),
-      draftOrderList: (json['draftOrderList'] as List<dynamic>?)
+      draftOrder: json['draft_order'] as String? ?? 'randomize',
+      playerPool: json['player_pool'] as String? ?? 'all',
+      currentPickerIndex: (json['current_picker_index'] as num?)?.toInt(),
+      draftOrderList: (json['draft_order_list'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
-      derbyStartTime: json['derbyStartTime'] == null
+      derbyStartTime: json['derby_start_time'] == null
           ? null
-          : DateTime.parse(json['derbyStartTime'] as String),
-      derbyStatus: json['derbyStatus'] as String?,
+          : DateTime.parse(json['derby_start_time'] as String),
+      derbyStatus: json['derby_status'] as String?,
     );
 
 Map<String, dynamic> _$$DraftSettingsImplToJson(_$DraftSettingsImpl instance) =>
     <String, dynamic>{
-      'draftOrder': instance.draftOrder,
-      'playerPool': instance.playerPool,
-      'currentPickerIndex': instance.currentPickerIndex,
-      'draftOrderList': instance.draftOrderList,
-      'derbyStartTime': instance.derbyStartTime?.toIso8601String(),
-      'derbyStatus': instance.derbyStatus,
+      'draft_order': instance.draftOrder,
+      'player_pool': instance.playerPool,
+      'current_picker_index': instance.currentPickerIndex,
+      'draft_order_list': instance.draftOrderList,
+      'derby_start_time': instance.derbyStartTime?.toIso8601String(),
+      'derby_status': instance.derbyStatus,
     };

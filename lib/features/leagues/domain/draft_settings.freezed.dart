@@ -20,12 +20,18 @@ DraftSettings _$DraftSettingsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$DraftSettings {
+  @JsonKey(name: 'draft_order')
   String get draftOrder => throw _privateConstructorUsedError;
+  @JsonKey(name: 'player_pool')
   String get playerPool => throw _privateConstructorUsedError;
+  @JsonKey(name: 'current_picker_index')
   int? get currentPickerIndex => throw _privateConstructorUsedError;
+  @JsonKey(name: 'draft_order_list')
   List<Map<String, dynamic>>? get draftOrderList =>
       throw _privateConstructorUsedError; // Derby-specific settings
+  @JsonKey(name: 'derby_start_time')
   DateTime? get derbyStartTime => throw _privateConstructorUsedError;
+  @JsonKey(name: 'derby_status')
   String? get derbyStatus => throw _privateConstructorUsedError;
 
   /// Serializes this DraftSettings to a JSON map.
@@ -45,12 +51,13 @@ abstract class $DraftSettingsCopyWith<$Res> {
       _$DraftSettingsCopyWithImpl<$Res, DraftSettings>;
   @useResult
   $Res call(
-      {String draftOrder,
-      String playerPool,
-      int? currentPickerIndex,
+      {@JsonKey(name: 'draft_order') String draftOrder,
+      @JsonKey(name: 'player_pool') String playerPool,
+      @JsonKey(name: 'current_picker_index') int? currentPickerIndex,
+      @JsonKey(name: 'draft_order_list')
       List<Map<String, dynamic>>? draftOrderList,
-      DateTime? derbyStartTime,
-      String? derbyStatus});
+      @JsonKey(name: 'derby_start_time') DateTime? derbyStartTime,
+      @JsonKey(name: 'derby_status') String? derbyStatus});
 }
 
 /// @nodoc
@@ -113,12 +120,13 @@ abstract class _$$DraftSettingsImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String draftOrder,
-      String playerPool,
-      int? currentPickerIndex,
+      {@JsonKey(name: 'draft_order') String draftOrder,
+      @JsonKey(name: 'player_pool') String playerPool,
+      @JsonKey(name: 'current_picker_index') int? currentPickerIndex,
+      @JsonKey(name: 'draft_order_list')
       List<Map<String, dynamic>>? draftOrderList,
-      DateTime? derbyStartTime,
-      String? derbyStatus});
+      @JsonKey(name: 'derby_start_time') DateTime? derbyStartTime,
+      @JsonKey(name: 'derby_status') String? derbyStatus});
 }
 
 /// @nodoc
@@ -174,27 +182,30 @@ class __$$DraftSettingsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DraftSettingsImpl implements _DraftSettings {
   const _$DraftSettingsImpl(
-      {this.draftOrder = 'randomize',
-      this.playerPool = 'all',
-      this.currentPickerIndex,
+      {@JsonKey(name: 'draft_order') this.draftOrder = 'randomize',
+      @JsonKey(name: 'player_pool') this.playerPool = 'all',
+      @JsonKey(name: 'current_picker_index') this.currentPickerIndex,
+      @JsonKey(name: 'draft_order_list')
       final List<Map<String, dynamic>>? draftOrderList,
-      this.derbyStartTime,
-      this.derbyStatus})
+      @JsonKey(name: 'derby_start_time') this.derbyStartTime,
+      @JsonKey(name: 'derby_status') this.derbyStatus})
       : _draftOrderList = draftOrderList;
 
   factory _$DraftSettingsImpl.fromJson(Map<String, dynamic> json) =>
       _$$DraftSettingsImplFromJson(json);
 
   @override
-  @JsonKey()
+  @JsonKey(name: 'draft_order')
   final String draftOrder;
   @override
-  @JsonKey()
+  @JsonKey(name: 'player_pool')
   final String playerPool;
   @override
+  @JsonKey(name: 'current_picker_index')
   final int? currentPickerIndex;
   final List<Map<String, dynamic>>? _draftOrderList;
   @override
+  @JsonKey(name: 'draft_order_list')
   List<Map<String, dynamic>>? get draftOrderList {
     final value = _draftOrderList;
     if (value == null) return null;
@@ -205,8 +216,10 @@ class _$DraftSettingsImpl implements _DraftSettings {
 
 // Derby-specific settings
   @override
+  @JsonKey(name: 'derby_start_time')
   final DateTime? derbyStartTime;
   @override
+  @JsonKey(name: 'derby_status')
   final String? derbyStatus;
 
   @override
@@ -262,27 +275,35 @@ class _$DraftSettingsImpl implements _DraftSettings {
 
 abstract class _DraftSettings implements DraftSettings {
   const factory _DraftSettings(
-      {final String draftOrder,
-      final String playerPool,
-      final int? currentPickerIndex,
-      final List<Map<String, dynamic>>? draftOrderList,
-      final DateTime? derbyStartTime,
-      final String? derbyStatus}) = _$DraftSettingsImpl;
+          {@JsonKey(name: 'draft_order') final String draftOrder,
+          @JsonKey(name: 'player_pool') final String playerPool,
+          @JsonKey(name: 'current_picker_index') final int? currentPickerIndex,
+          @JsonKey(name: 'draft_order_list')
+          final List<Map<String, dynamic>>? draftOrderList,
+          @JsonKey(name: 'derby_start_time') final DateTime? derbyStartTime,
+          @JsonKey(name: 'derby_status') final String? derbyStatus}) =
+      _$DraftSettingsImpl;
 
   factory _DraftSettings.fromJson(Map<String, dynamic> json) =
       _$DraftSettingsImpl.fromJson;
 
   @override
+  @JsonKey(name: 'draft_order')
   String get draftOrder;
   @override
+  @JsonKey(name: 'player_pool')
   String get playerPool;
   @override
+  @JsonKey(name: 'current_picker_index')
   int? get currentPickerIndex;
   @override
+  @JsonKey(name: 'draft_order_list')
   List<Map<String, dynamic>>? get draftOrderList; // Derby-specific settings
   @override
+  @JsonKey(name: 'derby_start_time')
   DateTime? get derbyStartTime;
   @override
+  @JsonKey(name: 'derby_status')
   String? get derbyStatus;
 
   /// Create a copy of DraftSettings
