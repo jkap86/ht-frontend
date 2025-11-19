@@ -3,6 +3,7 @@ import '../../../config/app_config_provider.dart';
 import '../../../core/infrastructure/api_client.dart';
 import '../data/drafts_api_client.dart';
 import '../../auth/application/auth_notifier.dart';
+import '../domain/draft.dart';
 
 /// Provider for the DraftsApiClient
 final draftsApiClientProvider = Provider<DraftsApiClient>((ref) {
@@ -15,7 +16,7 @@ final draftsApiClientProvider = Provider<DraftsApiClient>((ref) {
 });
 
 /// Provider for fetching drafts for a specific league
-final leagueDraftsProvider = FutureProvider.family<List<Map<String, dynamic>>, int>(
+final leagueDraftsProvider = FutureProvider.family<List<Draft>, int>(
   (ref, leagueId) async {
     final apiClient = ref.watch(draftsApiClientProvider);
     return await apiClient.getLeagueDrafts(leagueId);
@@ -32,7 +33,7 @@ final draftOrderProvider = StateNotifierProvider.family<DraftOrderNotifier, Asyn
 );
 
 /// Notifier for managing draft operations (create, update, delete)
-class DraftsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
+class DraftsNotifier extends StateNotifier<AsyncValue<List<Draft>>> {
   final DraftsApiClient _apiClient;
   final int _leagueId;
 
@@ -86,7 +87,7 @@ class DraftsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>
 }
 
 /// Provider for the DraftsNotifier
-final draftsNotifierProvider = StateNotifierProvider.family<DraftsNotifier, AsyncValue<List<Map<String, dynamic>>>, int>(
+final draftsNotifierProvider = StateNotifierProvider.family<DraftsNotifier, AsyncValue<List<Draft>>, int>(
   (ref, leagueId) {
     final apiClient = ref.watch(draftsApiClientProvider);
     return DraftsNotifier(apiClient, leagueId);
@@ -121,6 +122,54 @@ class DraftOrderNotifier extends StateNotifier<AsyncValue<List<Map<String, dynam
     try {
       final draftOrder = await _apiClient.randomizeDraftOrder(_leagueId, _draftId);
       state = AsyncValue.data(draftOrder);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Start the derby
+  Future<void> startDerby() async {
+    try {
+      await _apiClient.startDerby(_leagueId, _draftId);
+      // Reload the draft order to get updated settings
+      await _loadDraftOrder();
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Pick a derby slot
+  Future<void> pickSlot(int slotNumber) async {
+    try {
+      await _apiClient.pickDerbySlot(_leagueId, _draftId, slotNumber);
+      // Reload the draft order to get updated state
+      await _loadDraftOrder();
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Pause the derby
+  Future<void> pauseDerby() async {
+    try {
+      await _apiClient.pauseDerby(_leagueId, _draftId);
+      // Reload the draft order to get updated state
+      await _loadDraftOrder();
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Resume the derby
+  Future<void> resumeDerby() async {
+    try {
+      await _apiClient.resumeDerby(_leagueId, _draftId);
+      // Reload the draft order to get updated state
+      await _loadDraftOrder();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
