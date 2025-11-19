@@ -35,9 +35,12 @@ abstract class BaseChatNotifier extends StateNotifier<ChatState> {
   /// Call once after construction to:
   /// - load initial messages
   /// - connect to the socket room
+  /// - attach socket listeners
   Future<void> initialize() async {
+    print('[Chat] Initializing chat for room: $_roomName');
     await _loadInitialMessages();
     await _connectSocket();
+    print('[Chat] Chat initialization complete');
   }
 
   Future<void> _loadInitialMessages() async {
@@ -59,6 +62,9 @@ abstract class BaseChatNotifier extends StateNotifier<ChatState> {
 
   Future<void> _connectSocket() async {
     try {
+      print('[Chat] Connecting to socket for room: $_roomName');
+      print('[Chat] Listening for incoming event: $_incomingEvent');
+
       final client = ChatSocketClient(
         socketService: socketService,
         roomName: _roomName,
@@ -67,12 +73,17 @@ abstract class BaseChatNotifier extends StateNotifier<ChatState> {
       );
 
       await client.connect();
+      print('[Chat] Socket connected and joined room: $_roomName');
 
       _client = client;
       _messagesSub = client.messagesStream.listen(_handleIncomingMessage);
+      print('[Chat] Socket listener attached for event: $_incomingEvent');
 
+      // Only mark as connected after listeners are fully attached - this is safe to send messages now
       state = state.copyWith(isConnected: true);
+      print('[Chat] Chat ready - can now send messages');
     } catch (e) {
+      print('[Chat] Failed to connect socket: $e');
       state = state.copyWith(
         isConnected: false,
         errorMessage: 'Failed to connect to chat: $e',
@@ -81,6 +92,7 @@ abstract class BaseChatNotifier extends StateNotifier<ChatState> {
   }
 
   void _handleIncomingMessage(Map<String, dynamic> message) {
+    print('[Chat] Received event $_incomingEvent with data: $message');
     onMessageReceived(message);
   }
 
@@ -97,11 +109,17 @@ abstract class BaseChatNotifier extends StateNotifier<ChatState> {
 
   /// Sends a message into this chat room.
   Future<void> sendMessage(Map<String, dynamic> payload) async {
-    if (_client == null) {
-      // Lazy connect if needed
-      await _connectSocket();
+    if (!state.isConnected) {
+      print('[Chat] Tried to send message before connected - ignoring');
+      return;
     }
 
+    if (_client == null) {
+      print('[Chat] Client is null, cannot send message');
+      return;
+    }
+
+    print('[Chat] Sending message via $_outgoingEvent: $payload');
     await _client?.sendMessage(payload);
   }
 

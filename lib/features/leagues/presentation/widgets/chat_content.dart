@@ -192,6 +192,7 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
         ChatInputBar(
           controller: _textController,
           onSend: () => _handleSend(notifier),
+          enabled: state.isConnected,
         ),
       ],
     );
@@ -490,6 +491,8 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
     final message = _textController.text.trim();
     if (message.isEmpty) return;
 
+    // The notifier's sendMessage already checks state.isConnected,
+    // but we can add an early return here as well for clarity
     // Socket payload expected by backend for league chat:
     // {
     //   room: "league_<id>",

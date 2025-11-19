@@ -10,6 +10,7 @@ class ChatInputBar extends StatelessWidget {
   final int minLines;
   final int maxLines;
   final Color? backgroundColor;
+  final bool enabled;
 
   const ChatInputBar({
     super.key,
@@ -19,6 +20,7 @@ class ChatInputBar extends StatelessWidget {
     this.minLines = 1,
     this.maxLines = 4,
     this.backgroundColor,
+    this.enabled = true,
   });
 
   @override
@@ -40,8 +42,9 @@ class ChatInputBar extends StatelessWidget {
                 controller: controller,
                 minLines: minLines,
                 maxLines: maxLines,
+                enabled: enabled,
                 decoration: InputDecoration(
-                  hintText: hintText,
+                  hintText: enabled ? hintText : 'Connecting...',
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => _handleSend(),
@@ -49,7 +52,7 @@ class ChatInputBar extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.send),
-              onPressed: _handleSend,
+              onPressed: enabled ? _handleSend : null,
             ),
           ],
         ),

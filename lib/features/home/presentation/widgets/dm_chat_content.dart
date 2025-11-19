@@ -81,6 +81,7 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
         ChatInputBar(
           controller: _textController,
           onSend: () => _handleSend(dmNotifier),
+          enabled: dmState.isConnected,
         ),
       ],
     );
@@ -150,6 +151,7 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
     final message = _textController.text.trim();
     if (message.isEmpty) return;
 
+    // The notifier's sendMessage already checks state.isConnected
     dmNotifier.sendMessage({
       'room': widget.conversationId,
       'message': message,

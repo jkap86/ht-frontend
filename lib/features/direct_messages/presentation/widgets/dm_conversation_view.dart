@@ -78,6 +78,7 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
           controller: _textController,
           onSend: () => _handleSend(dmNotifier),
           maxLines: 5,
+          enabled: dmState.isConnected,
         ),
       ],
     );
@@ -151,6 +152,7 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
     final trimmed = _textController.text.trim();
     if (trimmed.isEmpty) return;
 
+    // The notifier's sendMessage already checks state.isConnected
     // DM messages are sent via the socket "send_dm" event.
     // Payload shape expected by the backend SocketService:
     // {
