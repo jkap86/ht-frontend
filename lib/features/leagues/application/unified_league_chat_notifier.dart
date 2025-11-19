@@ -1,56 +1,81 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../config/app_config_provider.dart';
+import '../../../core/chat/base_chat_notifier.dart';
+import '../../../core/chat/chat_state.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../../../core/services/socket/socket_providers.dart';
 import '../../../core/services/socket/socket_service.dart';
-import '../../chat/application/chat_providers.dart';
+import '../../auth/application/auth_notifier.dart';
 import '../data/league_chat_api_client.dart';
 import '../data/league_chat_repository.dart';
-import '../../../core/infrastructure/api_client.dart';
-import '../../auth/data/auth_storage.dart';
-import '../../auth/application/auth_notifier.dart';
-import '../../../shared/providers/base_chat_notifier.dart';
-import '../../../config/app_config_provider.dart';
 
-/// Enhanced ChatNotifier for league chat that loads initial messages
+/// League-specific chat notifier that:
+/// - Loads initial league messages from the REST API
+/// - Connects to the league chat Socket.IO room
+/// - Listens for new league chat messages
 class LeagueChatNotifier extends BaseChatNotifier {
+  final int leagueId;
+
   LeagueChatNotifier({
     required SocketService socketService,
-    required int leagueId,
-    required LeagueChatApiClient apiClient,
+    required LeagueChatRepository repository,
+    required this.leagueId,
   }) : super(
           socketService: socketService,
-          repository: LeagueChatRepository(
-            apiClient: apiClient,
-            leagueId: leagueId,
-          ),
-        );
+          repository: repository,
+        ) {
+    // Kick off initial load + socket wiring
+    initialize();
+  }
+
+  @override
+  void onMessageReceived(Map<String, dynamic> message) {
+    // You can customize how league messages are merged here if needed.
+    // For now, just use the base behavior (append to list).
+    super.onMessageReceived(message);
+  }
 }
 
-/// Adapter provider that wraps the unified ChatNotifier for league chat
-/// This maintains backward compatibility with the LeagueChatState interface
-/// while using the unified chat system underneath.
+/// Family provider: one LeagueChatNotifier per leagueId.
 ///
-/// Usage: ref.watch(unifiedLeagueChatProvider(leagueId))
-final unifiedLeagueChatProvider = StateNotifierProvider.family<LeagueChatNotifier, ChatState, int>(
+/// Usage:
+///   final chatState = ref.watch(leagueChatNotifierProvider(leagueId));
+final leagueChatNotifierProvider =
+    StateNotifierProvider.family<LeagueChatNotifier, ChatState, int>(
   (ref, leagueId) {
-    final socketService = ref.read(socketServiceProvider);
-    final sharedPreferences = ref.read(sharedPreferencesProvider);
     final config = ref.watch(appConfigProvider);
+    final socketService = ref.read(socketServiceProvider);
 
-    // Create API client for loading initial messages
-    final apiClient = LeagueChatApiClient(
-      apiClient: ApiClient(baseUrl: config.apiBaseUrl),
-      storage: AuthStorage(preferences: sharedPreferences),
+    // SharedPreferences + AuthStorage wiring
+    final sharedPreferences = ref.read(sharedPreferencesProvider);
+    final authStorage = ref.read(authStorageProvider);
+
+    // Avoid "unused" hints for now – you might use these later for
+    // local caching, unread counts, etc.
+    final _ = sharedPreferences;
+
+    final apiClient = ApiClient(
+      baseUrl: config.apiBaseUrl,
+    );
+
+    final leagueApiClient = LeagueChatApiClient(
+      apiClient: apiClient,
+      storage: authStorage,
+    );
+
+    final repository = LeagueChatRepository(
+      apiClient: leagueApiClient,
+      leagueId: leagueId,
     );
 
     final notifier = LeagueChatNotifier(
       socketService: socketService,
+      repository: repository,
       leagueId: leagueId,
-      apiClient: apiClient,
     );
 
-    ref.onDispose(() {
-      notifier.dispose();
-    });
+    ref.onDispose(notifier.dispose);
 
     return notifier;
   },

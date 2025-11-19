@@ -1,3 +1,4 @@
+// lib/core/chat/chat_repository.dart
 import 'dart:async';
 
 /// Generic chat repository interface for loading and sending messages

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/unified_dm_chat_provider.dart';
-import '../../../chat/application/chat_providers.dart';
 import '../../../chat/presentation/widgets/chat_message_bubble.dart';
 import '../../../chat/presentation/widgets/chat_input_bar.dart';
 import '../../../chat/presentation/widgets/chat_error_banner.dart';
 import '../../../auth/application/auth_notifier.dart';
+import '../../../../core/chat/chat_state.dart';
 
 /// Conversation view for a single direct message thread.
 ///
@@ -147,10 +147,23 @@ class _DmConversationViewState extends ConsumerState<DmConversationView> {
     );
   }
 
-  void _handleSend(DmChatNotifier dmNotifier) {
-    final ok = dmNotifier.sendMessage(message: _textController.text);
-    if (ok) {
-      _textController.clear();
-    }
+  void _handleSend(UnifiedDmChatNotifier dmNotifier) {
+    final trimmed = _textController.text.trim();
+    if (trimmed.isEmpty) return;
+
+    // DM messages are sent via the socket "send_dm" event.
+    // Payload shape expected by the backend SocketService:
+    // {
+    //   conversationId: string,
+    //   message: string,
+    //   metadata: {...}
+    // }
+    dmNotifier.sendMessage({
+      'conversationId': widget.conversationId,
+      'message': trimmed,
+      'metadata': <String, dynamic>{},
+    });
+
+    _textController.clear();
   }
 }

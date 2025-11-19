@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../direct_messages/application/unified_dm_chat_provider.dart';
-import '../../../chat/application/chat_providers.dart';
 import 'dm_chat_content.dart';
+import '../../../../core/chat/chat_state.dart';
 
 /// A collapsible DM chat widget that can be embedded in the home screen
 /// (e.g., bottom-right corner, similar to a floating messenger bubble).

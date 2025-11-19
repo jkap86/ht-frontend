@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/unified_league_chat_notifier.dart';
-import '../../../chat/application/chat_providers.dart';
 import 'chat_content.dart';
 import '../../../../shared/widgets/collapsible/collapsible_widget.dart';
+import '../../../../core/chat/chat_state.dart';
 
 /// Collapsible league chat widget that can be expanded to varying sizes or collapsed to an icon
 class CollapsibleChatWidget extends CollapsibleWidget {
@@ -22,10 +22,11 @@ class CollapsibleChatWidget extends CollapsibleWidget {
       _CollapsibleChatWidgetState();
 }
 
-class _CollapsibleChatWidgetState extends CollapsibleWidgetState<CollapsibleChatWidget> {
+class _CollapsibleChatWidgetState
+    extends CollapsibleWidgetState<CollapsibleChatWidget> {
   @override
   Widget buildCollapsedIcon(BuildContext context) {
-    final chatState = ref.watch(unifiedLeagueChatProvider(widget.leagueId));
+    final chatState = ref.watch(leagueChatNotifierProvider(widget.leagueId));
     final unreadCount = _computeUnread(chatState);
 
     return InkWell(
@@ -125,7 +126,7 @@ class _CollapsibleChatWidgetState extends CollapsibleWidgetState<CollapsibleChat
 
   @override
   int getUnreadCount() {
-    final chatState = ref.watch(unifiedLeagueChatProvider(widget.leagueId));
+    final chatState = ref.watch(leagueChatNotifierProvider(widget.leagueId));
     return _computeUnread(chatState);
   }
 

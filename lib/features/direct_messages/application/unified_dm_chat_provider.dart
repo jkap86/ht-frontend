@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../config/app_config_provider.dart';
+import '../../../core/chat/base_chat_notifier.dart';
+import '../../../core/chat/chat_state.dart';
+import '../../../core/infrastructure/api_client.dart';
 import '../../../core/services/socket/socket_providers.dart';
 import '../../../core/services/socket/socket_service.dart';
-import '../../chat/application/chat_providers.dart';
+import '../../auth/application/auth_notifier.dart';
 import '../data/dm_api_client.dart';
 import '../data/dm_chat_repository.dart';
-import '../../../core/infrastructure/api_client.dart';
-import '../../auth/data/auth_storage.dart';
-import '../../auth/application/auth_notifier.dart';
-import '../../../shared/providers/base_chat_notifier.dart';
 
 /// Arguments for [unifiedDmChatProvider].
 class UnifiedDmChatProviderArgs {
@@ -30,57 +31,90 @@ class UnifiedDmChatProviderArgs {
   int get hashCode => Object.hash(conversationId, otherUserId);
 }
 
-/// Enhanced ChatNotifier for DM chat that loads initial messages
-class DmChatNotifier extends BaseChatNotifier {
-  DmChatNotifier({
+/// DM-specific chat notifier built on top of [BaseChatNotifier].
+///
+/// Responsibilities:
+/// - Load initial DM conversation messages
+/// - Join the DM socket room
+/// - Stream new messages in real time
+class UnifiedDmChatNotifier extends BaseChatNotifier {
+  final String conversationId;
+  final String otherUserId;
+  final String currentUserId;
+
+  UnifiedDmChatNotifier({
     required SocketService socketService,
-    required String conversationId,
-    required String otherUserId,
-    required DmApiClient apiClient,
-    String? currentUserId, // Not used but kept for API compatibility
+    required DmChatRepository repository,
+    required this.conversationId,
+    required this.otherUserId,
+    required this.currentUserId,
   }) : super(
           socketService: socketService,
-          repository: DmChatRepository(
-            apiClient: apiClient,
-            conversationId: conversationId,
-            otherUserId: otherUserId,
-          ),
-        );
+          repository: repository,
+        ) {
+    initialize();
+  }
+
+  @override
+  void onMessageReceived(Map<String, dynamic> message) {
+    // If you want to tag messages as "mine" vs "theirs" you can
+    // inspect [currentUserId] and message payload here.
+    //
+    // For now, just use the default behavior.
+    super.onMessageReceived(message);
+  }
 }
 
-/// Adapter provider that wraps the unified ChatNotifier for direct messages
-/// This maintains backward compatibility with the DmChatState interface
-/// while using the unified chat system underneath.
+/// Adapter provider that wires everything up for a DM conversation.
 ///
-/// Usage: ref.watch(unifiedDmChatProvider(UnifiedDmChatProviderArgs(...)))
-final unifiedDmChatProvider = StateNotifierProvider.family<DmChatNotifier, ChatState, UnifiedDmChatProviderArgs>(
+/// Usage:
+///   ref.watch(
+///     unifiedDmChatProvider(
+///       const UnifiedDmChatProviderArgs(
+///         conversationId: 'conv_123',
+///         otherUserId: 'user_456',
+///       ),
+///     ),
+///   );
+final unifiedDmChatProvider = StateNotifierProvider.family<
+    UnifiedDmChatNotifier, ChatState, UnifiedDmChatProviderArgs>(
   (ref, args) {
+    final config = ref.watch(appConfigProvider);
     final socketService = ref.read(socketServiceProvider);
+
+    // SharedPreferences + Auth wiring
     final sharedPreferences = ref.read(sharedPreferencesProvider);
+    final authStorage = ref.read(authStorageProvider);
     final authState = ref.read(authProvider);
+    final currentUserId = authState.user?.userId ?? '';
 
-    final currentUserId = authState.user?.userId;
-    if (currentUserId == null) {
-      throw Exception('User not authenticated');
-    }
+    // Avoid "unused" hints for now – hook these up later if needed.
+    final _ = sharedPreferences;
 
-    // Create API client for loading initial messages
-    final apiClient = DmApiClient(
-      apiClient: ApiClient(baseUrl: 'http://localhost:5000'),
-      storage: AuthStorage(preferences: sharedPreferences),
+    final apiClient = ApiClient(
+      baseUrl: config.apiBaseUrl,
     );
 
-    final notifier = DmChatNotifier(
-      socketService: socketService,
+    final dmApiClient = DmApiClient(
+      apiClient: apiClient,
+      storage: authStorage,
+    );
+
+    final repository = DmChatRepository(
+      apiClient: dmApiClient,
       conversationId: args.conversationId,
       otherUserId: args.otherUserId,
-      apiClient: apiClient,
+    );
+
+    final notifier = UnifiedDmChatNotifier(
+      socketService: socketService,
+      repository: repository,
+      conversationId: args.conversationId,
+      otherUserId: args.otherUserId,
       currentUserId: currentUserId,
     );
 
-    ref.onDispose(() {
-      notifier.dispose();
-    });
+    ref.onDispose(notifier.dispose);
 
     return notifier;
   },

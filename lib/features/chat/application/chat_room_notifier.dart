@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'chat_providers.dart';
+import '../../../core/chat/chat_state.dart';
+import '../../../core/chat/chat_provider_args.dart';
 
 /// Simple model representing a chat room entry in the UI.
 class ChatRoomEntry {

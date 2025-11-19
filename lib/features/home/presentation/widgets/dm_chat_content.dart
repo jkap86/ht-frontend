@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/application/auth_notifier.dart';
 import '../../../direct_messages/application/unified_dm_chat_provider.dart';
-import '../../../chat/application/chat_providers.dart';
 import '../../../chat/presentation/widgets/chat_message_bubble.dart';
 import '../../../chat/presentation/widgets/chat_input_bar.dart';
 import '../../../chat/presentation/widgets/chat_error_banner.dart';
+import '../../../../core/chat/chat_state.dart';
 
 /// Embeddable DM chat content widget (no AppBar / Scaffold).
 ///
@@ -146,10 +146,16 @@ class _DmChatContentState extends ConsumerState<DmChatContent> {
     );
   }
 
-  void _handleSend(DmChatNotifier dmNotifier) {
-    final ok = dmNotifier.sendMessage(message: _textController.text);
-    if (ok) {
-      _textController.clear();
-    }
+  void _handleSend(UnifiedDmChatNotifier dmNotifier) {
+    final message = _textController.text.trim();
+    if (message.isEmpty) return;
+
+    dmNotifier.sendMessage({
+      'room': widget.conversationId,
+      'message': message,
+      'metadata': <String, dynamic>{},
+    });
+
+    _textController.clear();
   }
 }

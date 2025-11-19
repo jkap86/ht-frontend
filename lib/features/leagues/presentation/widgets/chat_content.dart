@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/unified_league_chat_notifier.dart';
 import '../../../auth/application/auth_notifier.dart';
 import '../../../auth/application/users_search_provider.dart';
-import '../../../chat/application/chat_providers.dart';
 import '../../../chat/presentation/widgets/chat_message_bubble.dart';
 import '../../../chat/presentation/widgets/chat_input_bar.dart';
 import '../../../chat/presentation/widgets/chat_error_banner.dart';
 import '../../../direct_messages/presentation/dm_screen.dart';
 import '../../../home/presentation/widgets/dm_chat_content.dart';
+import '../../../../core/chat/chat_state.dart';
 
 /// Embeddable league chat content widget (no AppBar / Scaffold).
 ///
@@ -144,7 +144,9 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.textTheme.bodyMedium?.color,
             ),
             const SizedBox(width: 6),
             Text(
@@ -152,7 +154,9 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
-                color: isSelected ? theme.colorScheme.onPrimary : theme.textTheme.bodyMedium?.color,
+                color: isSelected
+                    ? theme.colorScheme.onPrimary
+                    : theme.textTheme.bodyMedium?.color,
               ),
             ),
           ],
@@ -162,8 +166,9 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
   }
 
   Widget _buildLeagueChat() {
-    final state = ref.watch(unifiedLeagueChatProvider(widget.leagueId));
-    final notifier = ref.read(unifiedLeagueChatProvider(widget.leagueId).notifier);
+    final state = ref.watch(leagueChatNotifierProvider(widget.leagueId));
+    final notifier =
+        ref.read(leagueChatNotifierProvider(widget.leagueId).notifier);
 
     // Auto-scroll to bottom when new messages arrive.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -266,11 +271,16 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final convo = conversations[index];
-                        final conversationId = (convo['conversationId'] ?? '').toString();
-                        final otherUserId = (convo['otherUserId'] ?? '').toString();
-                        final otherUsername = (convo['otherUsername'])?.toString();
+                        final conversationId =
+                            (convo['conversationId'] ?? '').toString();
+                        final otherUserId =
+                            (convo['otherUserId'] ?? '').toString();
+                        final otherUsername =
+                            (convo['otherUsername'])?.toString();
                         final lastMessage = convo['lastMessage']?.toString();
-                        final unreadCount = int.tryParse(convo['unreadCount']?.toString() ?? '0') ?? 0;
+                        final unreadCount = int.tryParse(
+                                convo['unreadCount']?.toString() ?? '0') ??
+                            0;
 
                         return ListTile(
                           leading: CircleAvatar(
@@ -282,20 +292,24 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
                           ),
                           title: Text(otherUsername ?? 'Unknown'),
                           subtitle: Text(
-                            lastMessage?.isNotEmpty == true ? lastMessage! : 'No messages yet',
+                            lastMessage?.isNotEmpty == true
+                                ? lastMessage!
+                                : 'No messages yet',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: unreadCount > 0
                               ? Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: Colors.redAccent,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
                                     unreadCount.toString(),
-                                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 11),
                                   ),
                                 )
                               : null,
@@ -355,7 +369,8 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -472,9 +487,21 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
   }
 
   void _handleSend(LeagueChatNotifier notifier) {
-    final ok = notifier.sendMessage(message: _textController.text);
-    if (ok) {
-      _textController.clear();
-    }
+    final message = _textController.text.trim();
+    if (message.isEmpty) return;
+
+    // Socket payload expected by backend for league chat:
+    // {
+    //   room: "league_<id>",
+    //   message: string,
+    //   metadata: { ... } // optional
+    // }
+    notifier.sendMessage({
+      'room': 'league_${widget.leagueId}',
+      'message': message,
+      'metadata': <String, dynamic>{},
+    });
+
+    _textController.clear();
   }
 }

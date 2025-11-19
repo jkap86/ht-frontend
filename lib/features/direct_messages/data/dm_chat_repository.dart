@@ -1,4 +1,4 @@
-import '../../../shared/repositories/chat_repository.dart';
+import '../../../core/chat/chat_repository.dart';
 import 'dm_api_client.dart';
 
 /// Repository for direct message chat
@@ -18,17 +18,19 @@ class DmChatRepository implements ChatRepository {
     final messages = await apiClient.getMessages(otherUserId, limit: limit);
 
     // Convert DTOs to Map format that the UI expects
-    return messages.map((dto) => {
-      'id': dto.id,
-      'sender_id': dto.senderId,
-      'receiver_id': dto.receiverId,
-      'sender_username': dto.senderUsername,
-      'receiver_username': dto.receiverUsername,
-      'message': dto.message,
-      'metadata': dto.metadata,
-      'read': dto.read,
-      'created_at': dto.createdAt.toIso8601String(),
-    }).toList();
+    return messages
+        .map((dto) => {
+              'id': dto.id,
+              'sender_id': dto.senderId,
+              'receiver_id': dto.receiverId,
+              'sender_username': dto.senderUsername,
+              'receiver_username': dto.receiverUsername,
+              'message': dto.message,
+              'metadata': dto.metadata,
+              'read': dto.read,
+              'created_at': dto.createdAt.toIso8601String(),
+            })
+        .toList();
   }
 
   @override

@@ -2,182 +2,107 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/chat/chat_provider_args.dart';
+import '../../../core/chat/chat_socket_client.dart';
+import '../../../core/chat/chat_state.dart';
 import '../../../core/services/socket/socket_providers.dart';
 import '../../../core/services/socket/socket_service.dart';
-import '../data/chat_socket_client.dart';
 
-/// Simple state model for a generic chat room.
-class ChatState {
-  final bool isConnecting;
-  final bool isConnected;
-  final List<Map<String, dynamic>> messages;
-  final String? errorMessage;
-
-  const ChatState({
-    required this.isConnecting,
-    required this.isConnected,
-    required this.messages,
-    this.errorMessage,
-  });
-
-  factory ChatState.initial() => const ChatState(
-        isConnecting: false,
-        isConnected: false,
-        messages: [],
-        errorMessage: null,
-      );
-
-  ChatState copyWith({
-    bool? isConnecting,
-    bool? isConnected,
-    List<Map<String, dynamic>>? messages,
-    String? errorMessage,
-  }) {
-    return ChatState(
-      isConnecting: isConnecting ?? this.isConnecting,
-      isConnected: isConnected ?? this.isConnected,
-      messages: messages ?? this.messages,
-      errorMessage: errorMessage,
-    );
-  }
-}
-
-/// Notifier that manages a generic chat room via [ChatSocketClient].
+/// Simple notifier that manages a generic chat room using [ChatSocketClient].
+///
+/// This is deliberately lightweight and does **not** know about leagues or DMs.
+/// Those should use their own notifiers (e.g. LeagueChatNotifier,
+/// UnifiedDmChatNotifier) built on top of [BaseChatNotifier].
 class ChatNotifier extends StateNotifier<ChatState> {
-  final SocketService _socketService;
-  final String _roomName;
-  final String _incomingEvent;
-  final String _outgoingEvent;
+  final SocketService socketService;
+  final ChatSocketClient _client;
 
-  ChatSocketClient? _client;
-  StreamSubscription<dynamic>? _messagesSub;
+  StreamSubscription<Map<String, dynamic>>? _sub;
 
   ChatNotifier({
-    required SocketService socketService,
+    required this.socketService,
     required String roomName,
     String incomingEvent = 'chat_message',
     String outgoingEvent = 'send_chat_message',
-  })  : _socketService = socketService,
-        _roomName = roomName,
-        _incomingEvent = incomingEvent,
-        _outgoingEvent = outgoingEvent,
+  })  : _client = ChatSocketClient(
+          socketService: socketService,
+          roomName: roomName,
+          incomingEvent: incomingEvent,
+          outgoingEvent: outgoingEvent,
+        ),
         super(ChatState.initial()) {
     _init();
   }
 
   Future<void> _init() async {
-    state = state.copyWith(isConnecting: true, errorMessage: null);
-
     try {
-      _client = ChatSocketClient(
-        socketService: _socketService,
-        roomName: _roomName,
-        incomingEvent: _incomingEvent,
-        outgoingEvent: _outgoingEvent,
-      );
+      state = state.copyWith(isConnecting: true, errorMessage: null);
 
-      await _client!.connect();
+      await _client.connect();
 
-      _messagesSub = _client!.messages.listen(
-        (msg) {
-          final updated = List<Map<String, dynamic>>.from(state.messages)..add(msg);
-          state = state.copyWith(messages: updated);
-        },
-        onError: (err, stack) {
-          state = state.copyWith(
-            errorMessage: 'Error receiving chat messages',
-          );
-        },
-      );
+      _sub = _client.messagesStream.listen((message) {
+        final updated = List<Map<String, dynamic>>.from(state.messages)
+          ..add(message);
+        state = state.copyWith(
+          isConnecting: false,
+          isConnected: true,
+          messages: updated,
+        );
+      });
 
       state = state.copyWith(
         isConnecting: false,
-        isConnected: _socketService.isConnected,
+        isConnected: true,
       );
     } catch (e) {
       state = state.copyWith(
         isConnecting: false,
         isConnected: false,
-        errorMessage: 'Failed to connect to chat',
+        errorMessage: 'Failed to connect: $e',
       );
     }
   }
 
-  /// Sends a message to this chat room.
-  ///
-  /// Returns true if successfully passed to the socket layer.
-  bool sendMessage({
-    required String message,
-    Map<String, dynamic>? metadata,
-  }) {
-    if (_client == null) return false;
-    return _client!.sendMessage(
-      message: message,
-      metadata: metadata,
-    );
-  }
-
-  /// Clears messages in local state (does not affect server).
-  void clearMessages() {
-    state = state.copyWith(messages: []);
+  Future<void> sendMessage(Map<String, dynamic> payload) async {
+    try {
+      await _client.sendMessage(payload);
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: 'Failed to send message: $e',
+      );
+    }
   }
 
   @override
   void dispose() {
-    _messagesSub?.cancel();
-    _client?.dispose();
+    _sub?.cancel();
+    _client.dispose();
     super.dispose();
   }
 }
 
-/// Arguments for [chatProvider].
-class ChatProviderArgs {
-  final String roomName;
-  final String incomingEvent;
-  final String outgoingEvent;
-
-  const ChatProviderArgs({
-    required this.roomName,
-    this.incomingEvent = 'chat_message',
-    this.outgoingEvent = 'send_chat_message',
-  });
-
-  @override
-  bool operator ==(Object other) {
-    return other is ChatProviderArgs &&
-        other.roomName == roomName &&
-        other.incomingEvent == incomingEvent &&
-        other.outgoingEvent == outgoingEvent;
-  }
-
-  @override
-  int get hashCode => Object.hash(roomName, incomingEvent, outgoingEvent);
-}
-
-/// Family provider: one chat state per [ChatProviderArgs].
+/// Family provider: one [ChatNotifier] per [ChatProviderArgs].
 ///
-/// Example usage:
-/// ```dart
-/// final state = ref.watch(
-///   chatProvider(
-///     const ChatProviderArgs(roomName: 'global_chat'),
-///   ),
-/// );
-/// ```
+/// Example:
+///   final state = ref.watch(
+///     chatProvider(
+///       const ChatProviderArgs(roomName: 'global_chat'),
+///     ),
+///   );
 final chatProvider =
     StateNotifierProvider.family<ChatNotifier, ChatState, ChatProviderArgs>(
-        (ref, args) {
-  final socketService = ref.read(socketServiceProvider);
-  final notifier = ChatNotifier(
-    socketService: socketService,
-    roomName: args.roomName,
-    incomingEvent: args.incomingEvent,
-    outgoingEvent: args.outgoingEvent,
-  );
+  (ref, args) {
+    final socketService = ref.read(socketServiceProvider);
 
-  ref.onDispose(() {
-    notifier.dispose();
-  });
+    final notifier = ChatNotifier(
+      socketService: socketService,
+      roomName: args.roomName,
+      incomingEvent: args.incomingEvent,
+      outgoingEvent: args.outgoingEvent,
+    );
 
-  return notifier;
-});
+    ref.onDispose(notifier.dispose);
+
+    return notifier;
+  },
+);

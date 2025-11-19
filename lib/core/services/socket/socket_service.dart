@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'token_provider.dart';
 
@@ -29,15 +30,15 @@ class SocketService {
       return false;
     }
 
+    // We'll resolve this when the socket actually connects or fails.
+    final completer = Completer<bool>();
+
     // Clean up previous socket instance (if any)
     _socket?.dispose();
 
     _socket = IO.io(
       _baseUrl,
-      IO.OptionBuilder()
-          .enableAutoConnect()
-          .setAuth({'token': token})
-          .build(),
+      IO.OptionBuilder().enableAutoConnect().setAuth({'token': token}).build(),
     );
 
     _socket!.onConnect((_) {
@@ -48,6 +49,10 @@ class SocketService {
         print('[SocketService] Rejoining room: $room');
         _emitJoinRoom(room);
       }
+
+      if (!completer.isCompleted) {
+        completer.complete(true);
+      }
     });
 
     _socket!.onDisconnect((_) {
@@ -56,13 +61,20 @@ class SocketService {
 
     _socket!.onConnectError((error) {
       print('[SocketService] Connect error: $error');
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
     });
 
     _socket!.onError((error) {
       print('[SocketService] Socket error: $error');
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
     });
 
-    return true;
+    // Wait until we actually connect or fail.
+    return completer.future;
   }
 
   /// Internal low-level join-room emit (does NOT track or guard).
@@ -75,17 +87,32 @@ class SocketService {
   }
 
   /// Join a room safely and remember it.
+  ///
+  /// This will:
+  /// - ensure a socket instance exists (via [connect])
+  /// - track the room in [_joinedRooms]
+  /// - attempt to emit the join immediately if a socket is present
+  ///
+  /// Even if the socket is still handshaking, the emit may be buffered,
+  /// and the onConnect callback will also re-emit joins for all
+  /// rooms in [_joinedRooms].
   Future<bool> joinRoom(
     String roomName, {
     Map<String, dynamic>? data,
   }) async {
+    // Ensure a socket exists and is configured
     final connected = await connect();
-    if (!connected || _socket == null || !_socket!.connected) {
-      print('[SocketService] joinRoom failed, socket not connected');
-      _joinedRooms.add(roomName); // still track it
+
+    if (!connected || _socket == null) {
+      print('[SocketService] joinRoom failed, socket not ready');
+      // Still track desired room so onConnect can re-join it later
+      _joinedRooms.add(roomName);
       return false;
     }
 
+    // Track the room and emit join. If the underlying socket_io_client
+    // isn't fully connected yet, the emit will be buffered, and your
+    // onConnect handler will re-emit based on _joinedRooms.
     _joinedRooms.add(roomName);
     _emitJoinRoom(roomName, data);
     return true;

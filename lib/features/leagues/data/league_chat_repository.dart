@@ -1,4 +1,4 @@
-import '../../../shared/repositories/chat_repository.dart';
+import '../../../core/chat/chat_repository.dart';
 import 'league_chat_api_client.dart';
 
 /// Repository for league chat messages
@@ -16,15 +16,17 @@ class LeagueChatRepository implements ChatRepository {
     final messages = await apiClient.getChatMessages(leagueId, limit: limit);
 
     // Convert DTOs to Map format that the UI expects
-    return messages.map((dto) => {
-      'id': dto.id,
-      'user_id': dto.userId,
-      'username': dto.username,
-      'message': dto.message,
-      'message_type': dto.messageType,
-      'metadata': dto.metadata,
-      'created_at': dto.createdAt.toIso8601String(),
-    }).toList();
+    return messages
+        .map((dto) => {
+              'id': dto.id,
+              'user_id': dto.userId,
+              'username': dto.username,
+              'message': dto.message,
+              'message_type': dto.messageType,
+              'metadata': dto.metadata,
+              'created_at': dto.createdAt.toIso8601String(),
+            })
+        .toList();
   }
 
   @override
