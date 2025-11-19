@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/league.dart';
 import '../../application/drafts_provider.dart';
-import '../../../../config/app_config.dart';
+import '../../../auth/application/auth_notifier.dart';
+import 'derby/derby_countdown_widget.dart';
 
 /// Card showing draft overview with draft details
 class DraftOverviewCard extends ConsumerWidget {
@@ -65,6 +65,7 @@ class DraftOverviewCard extends ConsumerWidget {
                         draftNumber: index + 1,
                         leagueId: league.id,
                         isCommissioner: league.isCommissioner,
+                        league: league,
                       ),
                     );
                   }).toList(),
@@ -99,12 +100,14 @@ class _DraftCard extends ConsumerStatefulWidget {
   final int draftNumber;
   final int leagueId;
   final bool isCommissioner;
+  final League league;
 
   const _DraftCard({
     required this.draft,
     required this.draftNumber,
     required this.leagueId,
     required this.isCommissioner,
+    required this.league,
   });
 
   @override
@@ -232,9 +235,12 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
     final draftOrder = settings['draft_order'] as String? ?? 'randomize';
     final draftId = widget.draft['id'] as int;
 
-    // Parse derby start time if present
+    // Parse derby times and status
     final derbyStartTimeStr = settings['derby_start_time'] as String?;
     final derbyStartTime = derbyStartTimeStr != null ? DateTime.tryParse(derbyStartTimeStr) : null;
+    final derbyStatus = settings['derby_status'] as String?;
+    final pickDeadlineStr = settings['pick_deadline'] as String?;
+    final pickDeadline = pickDeadlineStr != null ? DateTime.tryParse(pickDeadlineStr) : null;
 
     // Watch the draft order provider
     final draftOrderState = ref.watch(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)));
@@ -244,7 +250,47 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
       children: [
         // Derby countdown or notification (shown when derby order is selected)
         if (draftOrder.toLowerCase() == 'derby') ...[
-          if (derbyStartTime != null)
+          // If derby is in progress, show pick timer
+          if (derbyStatus == 'in_progress' && pickDeadline != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.timer,
+                    color: Theme.of(context).colorScheme.secondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Time to pick:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        DerbyCountdownWidget(targetTime: pickDeadline),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          // If derby hasn't started yet, show start countdown
+          else if (derbyStartTime != null && derbyStatus != 'completed')
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
@@ -275,14 +321,14 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        _DerbyCountdown(targetTime: derbyStartTime),
+                        DerbyCountdownWidget(targetTime: derbyStartTime),
                       ],
                     ),
                   ),
                 ],
               ),
             )
-          else
+          else if (derbyStatus != 'completed' && derbyStatus != 'in_progress')
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
@@ -316,37 +362,100 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             ),
         ],
 
-        // Randomize button (only for commissioners)
-        if (widget.isCommissioner) ...[
-          FilledButton.icon(
-            onPressed: draftOrderState.isLoading
-                ? null
-                : () async {
-                    try {
-                      await ref
-                          .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
-                          .randomize();
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error randomizing draft order: $e'),
-                            backgroundColor: Theme.of(context).colorScheme.error,
-                          ),
-                        );
-                      }
-                    }
-                  },
-            icon: const Icon(Icons.shuffle),
-            label: Text(
-              draftOrder.toLowerCase() == 'derby'
-                  ? 'Randomize Derby Order'
-                  : 'Randomize Draft Order',
+        // Randomize/Start Derby button (only for commissioners)
+        if (widget.isCommissioner && derbyStatus != 'in_progress') ...[
+          draftOrderState.when(
+            data: (order) {
+              // Show "Start Derby" button if order is randomized and draft type is derby
+              if (order.isNotEmpty && draftOrder.toLowerCase() == 'derby') {
+                return Column(
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () async {
+                        try {
+                          await ref
+                              .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                              .startDerby();
+                          // Refresh the drafts to get updated settings
+                          ref.invalidate(leagueDraftsProvider(widget.leagueId));
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Derby started! Users can now select their draft positions.'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error starting derby: $e'),
+                                backgroundColor: Theme.of(context).colorScheme.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Start Derby'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }
+
+              // Show "Randomize" button if order is not randomized or not derby
+              return Column(
+                children: [
+                  FilledButton.icon(
+                    onPressed: draftOrderState.isLoading
+                        ? null
+                        : () async {
+                            try {
+                              await ref
+                                  .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                                  .randomize();
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error randomizing draft order: $e'),
+                                    backgroundColor: Theme.of(context).colorScheme.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: const Icon(Icons.shuffle),
+                    label: Text(
+                      draftOrder.toLowerCase() == 'derby'
+                          ? 'Randomize Derby Order'
+                          : 'Randomize Draft Order',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
+            loading: () => const Column(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+              ],
+            ),
+            error: (_, __) => Column(
+              children: [
+                FilledButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.shuffle),
+                  label: const Text('Randomize Draft Order'),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
         ],
-        // Draft order list
+        // Draft order list or slot selection
         draftOrderState.when(
           data: (order) {
             if (order.isEmpty) {
@@ -364,10 +473,266 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               );
             }
 
+            // If derby is in progress or paused, show slot selection UI
+            if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') && draftOrder.toLowerCase() == 'derby') {
+              final currentPickerIndex = settings['current_picker_index'] as int? ?? 0;
+              final currentPicker = order[currentPickerIndex];
+              final currentPickerUserId = currentPicker['user_id'] as int?;
+
+              // Get current user's ID to check if it's their turn
+              final authState = ref.watch(authProvider);
+              final currentUserId = authState.user != null ? int.tryParse(authState.user!.userId) : null;
+              final isMyTurn = currentUserId != null && currentPickerUserId == currentUserId;
+
+              // Create a map of taken positions
+              // Only include positions from users who have already picked (before current picker)
+              final takenPositions = <int, Map<String, dynamic>>{};
+              for (int i = 0; i < currentPickerIndex; i++) {
+                final item = order[i];
+                final position = item['draft_position'] as int;
+                takenPositions[position] = item;
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Derby pick order
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Derby Pick Order',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...order.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final item = entry.value;
+                          final username = item['username'] as String? ?? 'Team ${item['roster_number']}';
+                          final isCurrent = index == currentPickerIndex;
+                          final hasPicked = index < currentPickerIndex;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: isCurrent
+                                        ? Theme.of(context).colorScheme.primary
+                                        : hasPicked
+                                            ? Theme.of(context).colorScheme.primaryContainer
+                                            : Theme.of(context).colorScheme.surfaceContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: isCurrent
+                                            ? Theme.of(context).colorScheme.onPrimary
+                                            : hasPicked
+                                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    username,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+                                      color: isCurrent
+                                          ? Theme.of(context).colorScheme.primary
+                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                                if (hasPicked)
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+
+                  // Current picker info
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: isMyTurn
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isMyTurn ? Icons.touch_app : Icons.person,
+                          size: 20,
+                          color: isMyTurn
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            isMyTurn
+                                ? 'Your turn to pick a slot!'
+                                : 'Waiting for ${currentPicker['username'] ?? 'player'} to pick...',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: isMyTurn
+                                  ? Theme.of(context).colorScheme.onPrimaryContainer
+                                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Commissioner pause/resume button
+                  if (widget.isCommissioner) ...[
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        try {
+                          if (derbyStatus == 'in_progress') {
+                            // Pause the derby
+                            await ref
+                                .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                                .pauseDerby();
+                          } else if (derbyStatus == 'paused') {
+                            // Resume the derby
+                            await ref
+                                .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                                .resumeDerby();
+                          }
+                          // Refresh the drafts to get updated settings
+                          ref.invalidate(leagueDraftsProvider(widget.leagueId));
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: $e'),
+                                backgroundColor: Theme.of(context).colorScheme.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: Icon(derbyStatus == 'paused' ? Icons.play_arrow : Icons.pause),
+                      label: Text(derbyStatus == 'paused' ? 'Resume Derby' : 'Pause Derby'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Slot selection grid
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(order.length, (index) {
+                      final slotNumber = index + 1;
+                      final slotData = takenPositions[slotNumber];
+                      final isTaken = slotData != null && slotData['username'] != null;
+
+                      return SizedBox(
+                        width: (MediaQuery.of(context).size.width - 80) / 4, // 4 columns
+                        child: OutlinedButton(
+                          onPressed: (!isTaken && isMyTurn && derbyStatus == 'in_progress')
+                              ? () async {
+                                  try {
+                                    await ref
+                                        .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                                        .pickSlot(slotNumber);
+                                    // Refresh the drafts to get updated settings
+                                    ref.invalidate(leagueDraftsProvider(widget.leagueId));
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error picking slot: $e'),
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: isTaken
+                                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                                : (isMyTurn ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3) : null),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Slot $slotNumber',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: isTaken
+                                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                                      : (isMyTurn ? Theme.of(context).colorScheme.primary : null),
+                                ),
+                              ),
+                              if (isTaken) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  slotData['username'] ?? 'Taken',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              );
+            }
+
+            // Normal draft order display
             return Column(
               children: order.map((item) {
                 final position = item['draft_position'] as int;
-                final username = item['username'] as String? ?? 'Unknown';
+                final username = item['username'] as String? ?? 'Team ${item['roster_number']}';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -489,94 +854,3 @@ class _SummaryChip extends StatelessWidget {
   }
 }
 
-/// Derby countdown widget - shows time remaining until derby start
-class _DerbyCountdown extends StatefulWidget {
-  final DateTime targetTime;
-
-  const _DerbyCountdown({required this.targetTime});
-
-  @override
-  State<_DerbyCountdown> createState() => _DerbyCountdownState();
-}
-
-class _DerbyCountdownState extends State<_DerbyCountdown> {
-  late Duration _remaining;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateRemaining();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        _updateRemaining();
-      }
-    });
-  }
-
-  @override
-  void didUpdateWidget(_DerbyCountdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.targetTime != oldWidget.targetTime) {
-      _updateRemaining();
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _updateRemaining() {
-    setState(() {
-      _remaining = widget.targetTime.difference(DateTime.now());
-    });
-  }
-
-  String _formatDuration(Duration duration) {
-    if (duration.isNegative) {
-      return 'Started ${_formatPositiveDuration(duration.abs())} ago';
-    }
-    return _formatPositiveDuration(duration);
-  }
-
-  String _formatPositiveDuration(Duration duration) {
-    final days = duration.inDays;
-    final hours = duration.inHours % 24;
-    final minutes = duration.inMinutes % 60;
-    final seconds = duration.inSeconds % 60;
-
-    if (days > 0) {
-      return '$days day${days != 1 ? 's' : ''}, ${hours}h ${minutes}m';
-    } else if (hours > 0) {
-      return '${hours}h ${minutes}m ${seconds}s';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
-  }
-
-  Color _getTextColor() {
-    if (_remaining.isNegative) {
-      return Colors.red;
-    } else if (_remaining.inHours < 1) {
-      return Colors.orange;
-    } else {
-      return Theme.of(context).colorScheme.primary;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      _formatDuration(_remaining),
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: _getTextColor(),
-      ),
-    );
-  }
-}

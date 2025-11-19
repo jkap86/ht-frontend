@@ -8,6 +8,7 @@ import '../../../core/infrastructure/api_client.dart';
 import '../../auth/data/auth_storage.dart';
 import '../../auth/application/auth_notifier.dart';
 import '../../../shared/providers/base_chat_notifier.dart';
+import '../../../config/app_config_provider.dart';
 
 /// Enhanced ChatNotifier for league chat that loads initial messages
 class LeagueChatNotifier extends BaseChatNotifier {
@@ -33,10 +34,11 @@ final unifiedLeagueChatProvider = StateNotifierProvider.family<LeagueChatNotifie
   (ref, leagueId) {
     final socketService = ref.read(socketServiceProvider);
     final sharedPreferences = ref.read(sharedPreferencesProvider);
+    final config = ref.watch(appConfigProvider);
 
     // Create API client for loading initial messages
     final apiClient = LeagueChatApiClient(
-      apiClient: ApiClient(baseUrl: 'http://localhost:5000'),
+      apiClient: ApiClient(baseUrl: config.apiBaseUrl),
       storage: AuthStorage(preferences: sharedPreferences),
     );
 
