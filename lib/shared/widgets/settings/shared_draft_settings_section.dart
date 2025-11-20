@@ -325,7 +325,7 @@ class SharedDraftSettingsSection extends StatelessWidget {
 
   static String _formatDateTime(String isoString) {
     try {
-      final dateTime = DateTime.parse(isoString);
+      final dateTime = DateTime.parse(isoString).toLocal();
       return '${dateTime.month}/${dateTime.day}/${dateTime.year} at ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return isoString;

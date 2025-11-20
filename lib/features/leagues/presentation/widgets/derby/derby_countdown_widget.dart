@@ -52,7 +52,8 @@ class _DerbyCountdownWidgetState extends State<DerbyCountdownWidget> {
 
   void _updateRemaining() {
     setState(() {
-      _remaining = widget.targetTime.difference(DateTime.now());
+      // Convert target time to local timezone before comparing with DateTime.now()
+      _remaining = widget.targetTime.toLocal().difference(DateTime.now());
     });
   }
 
