@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/league.dart';
+import '../../../domain/league.dart';
 import '../../domain/draft.dart';
 import '../../domain/draft_helpers.dart';
 import '../../application/drafts_provider.dart';
-import '../../../auth/application/auth_notifier.dart';
-import '../../../../core/services/socket/socket_providers.dart';
+import '../../../../auth/application/auth_notifier.dart';
+import '../../../../../core/services/socket/socket_providers.dart';
 import 'derby/derby_countdown_widget.dart';
 import 'derby/derby_slot_grid.dart';
 import 'derby/derby_status_banner.dart';

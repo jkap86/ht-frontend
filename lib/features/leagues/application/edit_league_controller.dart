@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league.dart';
 import 'leagues_provider.dart';
-import 'league_members_provider.dart';
+import '../dues_payouts/application/league_members_provider.dart';
 
 /// State for editing league settings
 class EditLeagueState {

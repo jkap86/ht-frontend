@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/league.dart';
-import '../../../domain/draft.dart';
-import '../../../application/drafts_provider.dart';
-import 'info_row.dart';
+import '../../domain/draft.dart';
+import '../../application/drafts_provider.dart';
+import '../../../presentation/widgets/league_settings_sections/info_row.dart';
 
 /// Read-only widget displaying draft settings
 class DraftSettingsSection extends ConsumerWidget {

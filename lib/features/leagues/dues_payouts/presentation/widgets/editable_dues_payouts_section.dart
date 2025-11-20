@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/league.dart';
-import '../../../application/league_members_provider.dart';
+import '../../application/league_members_provider.dart';
 import '../../../application/edit_league_controller.dart';
 
 /// Editable dues and payouts section

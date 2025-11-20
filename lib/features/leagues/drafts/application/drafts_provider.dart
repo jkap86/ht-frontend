@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../config/app_config_provider.dart';
-import '../../../core/infrastructure/api_client.dart';
+import '../../../../config/app_config_provider.dart';
+import '../../../../core/infrastructure/api_client.dart';
 import '../data/drafts_api_client.dart';
-import '../../auth/application/auth_notifier.dart';
+import '../../../auth/application/auth_notifier.dart';
 import '../domain/draft.dart';
 
 /// Provider for the DraftsApiClient

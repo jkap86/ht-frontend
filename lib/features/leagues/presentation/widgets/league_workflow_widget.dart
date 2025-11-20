@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/league.dart';
-import '../../application/league_members_provider.dart';
+import '../../dues_payouts/application/league_members_provider.dart';
 
 /// Horizontal workflow showing league stages
 class LeagueWorkflowWidget extends ConsumerStatefulWidget {

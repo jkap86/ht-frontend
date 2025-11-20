@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/unified_league_chat_notifier.dart';
-import '../../../auth/application/auth_notifier.dart';
-import '../../../auth/application/users_search_provider.dart';
-import '../../../chat/presentation/widgets/chat_message_bubble.dart';
-import '../../../chat/presentation/widgets/chat_input_bar.dart';
-import '../../../chat/presentation/widgets/chat_error_banner.dart';
-import '../../../direct_messages/presentation/dm_screen.dart';
-import '../../../home/presentation/widgets/dm_chat_content.dart';
-import '../../../../core/chat/chat_state.dart';
+import '../../../../auth/application/auth_notifier.dart';
+import '../../../../auth/application/users_search_provider.dart';
+import '../../../../chat/presentation/widgets/chat_message_bubble.dart';
+import '../../../../chat/presentation/widgets/chat_input_bar.dart';
+import '../../../../chat/presentation/widgets/chat_error_banner.dart';
+import '../../../../direct_messages/presentation/dm_screen.dart';
+import '../../../../home/presentation/widgets/dm_chat_content.dart';
+import '../../../../../core/chat/chat_state.dart';
 
 /// Embeddable league chat content widget (no AppBar / Scaffold).
 ///

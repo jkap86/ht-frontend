@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import '../../../core/infrastructure/api_client.dart';
-import '../../auth/data/auth_storage.dart';
+import '../../../../core/infrastructure/api_client.dart';
+import '../../../auth/data/auth_storage.dart';
 import '../domain/draft.dart';
 
 /// API client for draft-related endpoints

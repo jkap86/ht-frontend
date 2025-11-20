@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'info_row.dart';
+import '../../../presentation/widgets/league_settings_sections/info_row.dart';
 
 /// Dumb widget displaying dues and payouts
 class DuesPayoutsSection extends StatelessWidget {

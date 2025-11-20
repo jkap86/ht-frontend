@@ -1,4 +1,4 @@
-import '../../../core/chat/chat_repository.dart';
+import '../../../../core/chat/chat_repository.dart';
 import 'league_chat_api_client.dart';
 
 /// Repository for league chat messages

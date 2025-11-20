@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league_member.dart';
-import 'leagues_provider.dart';
+import '../../application/leagues_provider.dart';
 
 /// Provider for league members with payment status
 /// Family provider that takes leagueId as parameter

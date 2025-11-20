@@ -1,5 +1,5 @@
 import '../league.dart';
-import '../league_member.dart';
+import '../../dues_payouts/domain/league_member.dart';
 
 /// Abstract interface for leagues repository
 /// Defines contract for data operations without implementation details

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/draft.dart';
-import '../../../application/drafts_provider.dart';
+import '../../domain/draft.dart';
+import '../../application/drafts_provider.dart';
 
 /// Editable draft settings section that uses the drafts API
 class EditableDraftSettingsSection extends ConsumerStatefulWidget {

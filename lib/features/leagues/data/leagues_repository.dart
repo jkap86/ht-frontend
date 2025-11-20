@@ -1,5 +1,5 @@
 import '../domain/league.dart';
-import '../domain/league_member.dart';
+import '../dues_payouts/domain/league_member.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
 import 'leagues_api_client.dart';
 

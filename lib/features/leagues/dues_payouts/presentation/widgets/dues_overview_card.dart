@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/league.dart';
+import '../../../domain/league.dart';
 import '../../application/league_members_provider.dart';
 
 /// Card showing dues overview with managers, paid status, and buy-in

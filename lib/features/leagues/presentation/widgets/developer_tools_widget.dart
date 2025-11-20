@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/socket/socket_providers.dart';
 import '../../../auth/application/auth_notifier.dart';
-import '../../application/league_members_provider.dart';
+import '../../dues_payouts/application/league_members_provider.dart';
 import '../../application/leagues_provider.dart';
 
 /// Developer tools widget - only visible in debug/dev mode

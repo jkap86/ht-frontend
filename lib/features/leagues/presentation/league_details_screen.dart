@@ -6,11 +6,11 @@ import 'widgets/league_settings_modal.dart';
 import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
 import 'widgets/league_workflow_widget.dart';
-import 'widgets/dues_overview_card.dart';
-import 'widgets/draft_overview_card.dart';
-import 'widgets/collapsible_chat_widget.dart';
+import '../dues_payouts/presentation/widgets/dues_overview_card.dart';
+import '../drafts/presentation/widgets/draft_overview_card.dart';
+import '../chat/presentation/widgets/collapsible_chat_widget.dart';
 import 'widgets/developer_tools_widget.dart';
-import '../application/league_members_provider.dart';
+import '../dues_payouts/application/league_members_provider.dart';
 
 class LeagueDetailsScreen extends ConsumerStatefulWidget {
   final int leagueId;

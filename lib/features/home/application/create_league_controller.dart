@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/league_creation_data.dart';
 import '../../leagues/application/leagues_provider.dart';
-import '../../leagues/application/drafts_provider.dart';
+import '../../leagues/drafts/application/drafts_provider.dart';
 
 /// State for the create league form
 class CreateLeagueState {

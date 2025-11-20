@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/league.dart';
 import 'league_settings_sections/basic_info_section.dart';
-import 'league_settings_sections/dues_payouts_section.dart';
-import 'league_settings_sections/draft_settings_section.dart';
+import '../../dues_payouts/presentation/widgets/dues_payouts_section.dart';
+import '../../drafts/presentation/widgets/draft_settings_section.dart';
 import 'league_settings_sections/danger_zone_section.dart';
 import '../../../../shared/models/settings_mode.dart';
 import '../../../../shared/widgets/settings/shared_schedule_section.dart';

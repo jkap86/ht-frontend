@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../features/leagues/presentation/widgets/chat_resize_handles.dart';
+import '../../../features/leagues/chat/presentation/widgets/chat_resize_handles.dart';
 
 /// Base class for collapsible widgets that can expand/collapse with animation
 /// and support drag/resize functionality

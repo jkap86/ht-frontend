@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import '../../../core/infrastructure/api_client.dart';
+import '../../../../core/infrastructure/api_client.dart';
 import 'dtos/chat_message_dto.dart';
-import '../../auth/data/auth_storage.dart';
+import '../../../auth/data/auth_storage.dart';
 
 /// API client for league chat endpoints
 /// Handles HTTP communication and returns DTOs

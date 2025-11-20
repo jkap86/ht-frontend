@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_config_provider.dart';
-import '../../../core/chat/base_chat_notifier.dart';
-import '../../../core/chat/chat_state.dart';
-import '../../../core/infrastructure/api_client.dart';
-import '../../../core/services/socket/socket_providers.dart';
-import '../../../core/services/socket/socket_service.dart';
-import '../../auth/application/auth_notifier.dart';
+import '../../../../config/app_config_provider.dart';
+import '../../../../core/chat/base_chat_notifier.dart';
+import '../../../../core/chat/chat_state.dart';
+import '../../../../core/infrastructure/api_client.dart';
+import '../../../../core/services/socket/socket_providers.dart';
+import '../../../../core/services/socket/socket_service.dart';
+import '../../../auth/application/auth_notifier.dart';
 import '../data/league_chat_api_client.dart';
 import '../data/league_chat_repository.dart';
 
