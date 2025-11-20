@@ -14,6 +14,8 @@ class DraftSettings with _$DraftSettings {
     // Derby-specific settings
     @JsonKey(name: 'derby_start_time') DateTime? derbyStartTime,
     @JsonKey(name: 'derby_status') String? derbyStatus,
+    @JsonKey(name: 'derby_timer_seconds') int? derbyTimerSeconds,
+    @JsonKey(name: 'derby_on_timeout') String? derbyOnTimeout,
   }) = _DraftSettings;
 
   factory DraftSettings.fromJson(Map<String, dynamic> json) =>

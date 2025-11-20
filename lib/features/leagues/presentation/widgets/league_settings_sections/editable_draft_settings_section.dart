@@ -33,6 +33,10 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
   bool? _localUseRosterPositions;
   DateTime? _localDerbyStartTime;
   bool? _localAutoStartDerby;
+  int? _localDerbyTimerHours;
+  int? _localDerbyTimerMinutes;
+  int? _localDerbyTimerSeconds;
+  String? _localDerbyOnTimeout;
   bool _isDraftMode = false;
   int? _editingDraftId; // Track which draft ID is being edited
 
@@ -51,6 +55,10 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localUseRosterPositions = false;
       _localDerbyStartTime = null;
       _localAutoStartDerby = false;
+      _localDerbyTimerHours = 0;
+      _localDerbyTimerMinutes = 5;
+      _localDerbyTimerSeconds = 0;
+      _localDerbyOnTimeout = 'skip';
     });
   }
 
@@ -69,6 +77,13 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localUseRosterPositions = false; // Not stored in API yet
       _localDerbyStartTime = settings?.derbyStartTime;
       _localAutoStartDerby = false; // Default value - not in settings model yet
+
+      // Derby timer fields
+      final derbyTimerSeconds = settings?.derbyTimerSeconds ?? 300; // Default 5 minutes
+      _localDerbyTimerHours = derbyTimerSeconds ~/ 3600;
+      _localDerbyTimerMinutes = (derbyTimerSeconds % 3600) ~/ 60;
+      _localDerbyTimerSeconds = derbyTimerSeconds % 60;
+      _localDerbyOnTimeout = settings?.derbyOnTimeout ?? 'skip';
     });
   }
 
@@ -91,6 +106,13 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
         draftData['derby_start_time'] = _localDerbyStartTime!.toIso8601String();
       }
       draftData['auto_start_derby'] = _localAutoStartDerby ?? false;
+
+      // Calculate total derby timer in seconds
+      final totalSeconds = (_localDerbyTimerHours ?? 0) * 3600 +
+                          (_localDerbyTimerMinutes ?? 0) * 60 +
+                          (_localDerbyTimerSeconds ?? 0);
+      draftData['derby_timer_seconds'] = totalSeconds;
+      draftData['derby_on_timeout'] = _localDerbyOnTimeout ?? 'skip';
     }
 
     try {
@@ -142,6 +164,10 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localUseRosterPositions = null;
       _localDerbyStartTime = null;
       _localAutoStartDerby = null;
+      _localDerbyTimerHours = null;
+      _localDerbyTimerMinutes = null;
+      _localDerbyTimerSeconds = null;
+      _localDerbyOnTimeout = null;
     });
   }
 
@@ -279,6 +305,10 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
               useRosterPositions: _localUseRosterPositions ?? false,
               derbyStartTime: _localDerbyStartTime,
               autoStartDerby: _localAutoStartDerby ?? false,
+              derbyTimerHours: _localDerbyTimerHours ?? 0,
+              derbyTimerMinutes: _localDerbyTimerMinutes ?? 5,
+              derbyTimerSeconds: _localDerbyTimerSeconds ?? 0,
+              derbyOnTimeout: _localDerbyOnTimeout ?? 'skip',
               rosterPositions: widget.rosterPositions,
               isCommissioner: widget.isCommissioner,
               onDraftTypeChanged: (value) => setState(() => _localDraftType = value),
@@ -292,11 +322,19 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
                 if (value != 'derby') {
                   _localDerbyStartTime = null;
                   _localAutoStartDerby = false;
+                  _localDerbyTimerHours = 0;
+                  _localDerbyTimerMinutes = 5;
+                  _localDerbyTimerSeconds = 0;
+                  _localDerbyOnTimeout = 'skip';
                 }
               }),
               onTimerModeChanged: (value) => setState(() => _localTimerMode = value),
               onDerbyStartTimeChanged: (value) => setState(() => _localDerbyStartTime = value),
               onAutoStartDerbyChanged: (value) => setState(() => _localAutoStartDerby = value),
+              onDerbyTimerHoursChanged: (value) => setState(() => _localDerbyTimerHours = value),
+              onDerbyTimerMinutesChanged: (value) => setState(() => _localDerbyTimerMinutes = value),
+              onDerbyTimerSecondsChanged: (value) => setState(() => _localDerbyTimerSeconds = value),
+              onDerbyOnTimeoutChanged: (value) => setState(() => _localDerbyOnTimeout = value),
               onUseRosterPositionsChanged: (value) {
                 setState(() {
                   _localUseRosterPositions = value;
@@ -464,6 +502,10 @@ class _DraftConfigurationForm extends StatelessWidget {
   final bool useRosterPositions;
   final DateTime? derbyStartTime;
   final bool autoStartDerby;
+  final int derbyTimerHours;
+  final int derbyTimerMinutes;
+  final int derbyTimerSeconds;
+  final String derbyOnTimeout;
   final Map<String, dynamic>? rosterPositions;
   final bool isCommissioner;
   final Function(String) onDraftTypeChanged;
@@ -476,6 +518,10 @@ class _DraftConfigurationForm extends StatelessWidget {
   final Function(bool) onUseRosterPositionsChanged;
   final Function(DateTime?) onDerbyStartTimeChanged;
   final Function(bool) onAutoStartDerbyChanged;
+  final Function(int) onDerbyTimerHoursChanged;
+  final Function(int) onDerbyTimerMinutesChanged;
+  final Function(int) onDerbyTimerSecondsChanged;
+  final Function(String) onDerbyOnTimeoutChanged;
   final VoidCallback onSaveDraft;
   final VoidCallback onCancelDraft;
 
@@ -490,6 +536,10 @@ class _DraftConfigurationForm extends StatelessWidget {
     required this.useRosterPositions,
     required this.derbyStartTime,
     required this.autoStartDerby,
+    required this.derbyTimerHours,
+    required this.derbyTimerMinutes,
+    required this.derbyTimerSeconds,
+    required this.derbyOnTimeout,
     this.rosterPositions,
     required this.isCommissioner,
     required this.onDraftTypeChanged,
@@ -502,6 +552,10 @@ class _DraftConfigurationForm extends StatelessWidget {
     required this.onUseRosterPositionsChanged,
     required this.onDerbyStartTimeChanged,
     required this.onAutoStartDerbyChanged,
+    required this.onDerbyTimerHoursChanged,
+    required this.onDerbyTimerMinutesChanged,
+    required this.onDerbyTimerSecondsChanged,
+    required this.onDerbyOnTimeoutChanged,
     required this.onSaveDraft,
     required this.onCancelDraft,
   });
@@ -569,41 +623,49 @@ class _DraftConfigurationForm extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Draft Rounds
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  key: ValueKey('draft_rounds_$useRosterPositions'),
-                  initialValue: draftRounds.toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Draft Rounds',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  enabled: isCommissioner && !useRosterPositions,
-                  onChanged: (value) {
-                    final rounds = int.tryParse(value);
-                    if (rounds != null) onDraftRoundsChanged(rounds);
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  initialValue: pickTimeSeconds.toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Pick Time (seconds)',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  enabled: isCommissioner,
-                  onChanged: (value) {
-                    final seconds = int.tryParse(value);
-                    if (seconds != null) onPickTimeSecondsChanged(seconds);
-                  },
-                ),
-              ),
+          TextFormField(
+            key: ValueKey('draft_rounds_$useRosterPositions'),
+            initialValue: draftRounds.toString(),
+            decoration: const InputDecoration(
+              labelText: 'Draft Rounds',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            enabled: isCommissioner && !useRosterPositions,
+            onChanged: (value) {
+              final rounds = int.tryParse(value);
+              if (rounds != null) onDraftRoundsChanged(rounds);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Timer Mode
+          DropdownButtonFormField<String>(
+            value: timerMode,
+            decoration: const InputDecoration(labelText: 'Timer Mode', border: OutlineInputBorder()),
+            items: const [
+              DropdownMenuItem(value: 'per_pick', child: Text('Per Pick')),
+              DropdownMenuItem(value: 'per_manager', child: Text('Per Manager')),
             ],
+            onChanged: isCommissioner ? (value) {
+              if (value != null) onTimerModeChanged(value);
+            } : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Pick Time
+          TextFormField(
+            initialValue: pickTimeSeconds.toString(),
+            decoration: const InputDecoration(
+              labelText: 'Pick Time (seconds)',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            enabled: isCommissioner,
+            onChanged: (value) {
+              final seconds = int.tryParse(value);
+              if (seconds != null) onPickTimeSecondsChanged(seconds);
+            },
           ),
           const SizedBox(height: 16),
 
@@ -637,6 +699,88 @@ class _DraftConfigurationForm extends StatelessWidget {
 
           // Derby countdown or notification (shown when derby order is selected)
           if (draftOrder == 'derby') ...[
+            const SizedBox(height: 16),
+
+            // Derby Timer
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Derby Timer',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: derbyTimerHours.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Hours',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        enabled: isCommissioner,
+                        onChanged: (value) {
+                          final hours = int.tryParse(value) ?? 0;
+                          onDerbyTimerHoursChanged(hours);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: derbyTimerMinutes.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Minutes',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        enabled: isCommissioner,
+                        onChanged: (value) {
+                          final minutes = int.tryParse(value) ?? 0;
+                          onDerbyTimerMinutesChanged(minutes);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: derbyTimerSeconds.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Seconds',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        enabled: isCommissioner,
+                        onChanged: (value) {
+                          final seconds = int.tryParse(value) ?? 0;
+                          onDerbyTimerSecondsChanged(seconds);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // On Timeout
+            DropdownButtonFormField<String>(
+              value: derbyOnTimeout,
+              decoration: const InputDecoration(
+                labelText: 'On Timeout',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'skip', child: Text('Skip')),
+                DropdownMenuItem(value: 'auto', child: Text('Auto')),
+              ],
+              onChanged: isCommissioner ? (value) {
+                if (value != null) onDerbyOnTimeoutChanged(value);
+              } : null,
+            ),
+
             const SizedBox(height: 12),
             if (derbyStartTime != null)
               Container(
@@ -707,21 +851,6 @@ class _DraftConfigurationForm extends StatelessWidget {
                 ),
               ),
           ],
-
-          const SizedBox(height: 16),
-
-          // Timer Mode
-          DropdownButtonFormField<String>(
-            value: timerMode,
-            decoration: const InputDecoration(labelText: 'Timer Mode', border: OutlineInputBorder()),
-            items: const [
-              DropdownMenuItem(value: 'per_pick', child: Text('Per Pick')),
-              DropdownMenuItem(value: 'per_manager', child: Text('Per Manager')),
-            ],
-            onChanged: isCommissioner ? (value) {
-              if (value != null) onTimerModeChanged(value);
-            } : null,
-          ),
 
           // Derby-specific fields (only shown when derby order is selected)
           if (draftOrder == 'derby') ...[

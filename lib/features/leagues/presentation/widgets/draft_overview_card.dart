@@ -197,7 +197,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
     final isExpanded = _expandedSection == 'draft_order';
     final settings = widget.draft.settings;
     final draftOrder = settings?.draftOrder ?? 'randomize';
-    final draftOrderLabel = draftOrder.toLowerCase() == 'derby' ? 'Derby' : 'Randomize';
+    final draftOrderLabel =
+        draftOrder.toLowerCase() == 'derby' ? 'Derby' : 'Randomize';
 
     return Column(
       children: [
@@ -221,7 +222,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -231,7 +233,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
                           ),
                         ),
                       ),
@@ -268,7 +272,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
     final pickDeadline = widget.draft.pickDeadline;
 
     // Watch the draft order provider
-    final draftOrderState = ref.watch(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)));
+    final draftOrderState = ref.watch(
+        draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -284,7 +289,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                 color: Theme.of(context).colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                  color:
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                 ),
               ),
               child: Row(
@@ -303,7 +309,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           'Time to pick:',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSecondaryContainer,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -315,7 +323,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               ),
             )
           // If derby hasn't started yet, show start countdown
-          else if (derbyStartTime != null && derbyStatus != 'completed')
+          else if (derbyStartTime != null && derbyStatus != 'completed' && derbyStatus != 'in_progress')
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
@@ -342,7 +350,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           'Derby starts in:',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -358,7 +368,10 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .errorContainer
+                    .withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.error.withOpacity(0.3),
@@ -392,33 +405,37 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
           draftOrderState.when(
             data: (order) {
               // Show "Start Derby" button if order is randomized and draft type is derby
-              if (order.isNotEmpty && draftOrder.toLowerCase() == 'derby') {
+              if (order.isNotEmpty &&
+                  draftOrder.toLowerCase() == 'derby' &&
+                  derbyStatus != 'completed') {
                 return Column(
                   children: [
                     FilledButton.icon(
                       onPressed: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
                         try {
                           await ref
-                              .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                              .read(draftOrderProvider((
+                                leagueId: widget.leagueId,
+                                draftId: draftId
+                              )).notifier)
                               .startDerby();
                           // Refresh the drafts to get updated settings
                           ref.invalidate(leagueDraftsProvider(widget.leagueId));
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Derby started! Users can now select their draft positions.'),
-                              ),
-                            );
-                          }
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Derby started! Users can now select their draft positions.'),
+                            ),
+                          );
                         } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error starting derby: $e'),
-                                backgroundColor: Theme.of(context).colorScheme.error,
-                              ),
-                            );
-                          }
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Error starting derby: $e'),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                            ),
+                          );
                         }
                       },
                       icon: const Icon(Icons.play_arrow),
@@ -438,14 +455,19 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                         : () async {
                             try {
                               await ref
-                                  .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                                  .read(draftOrderProvider((
+                                    leagueId: widget.leagueId,
+                                    draftId: draftId
+                                  )).notifier)
                                   .randomize();
                             } catch (e) {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Error randomizing draft order: $e'),
-                                    backgroundColor: Theme.of(context).colorScheme.error,
+                                    content: Text(
+                                        'Error randomizing draft order: $e'),
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.error,
                                   ),
                                 );
                               }
@@ -499,7 +521,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             }
 
             // If derby is in progress or paused, show slot selection UI
-            if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') && draftOrder.toLowerCase() == 'derby') {
+            if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') &&
+                draftOrder.toLowerCase() == 'derby') {
               final currentPickerIndex = settings?.currentPickerIndex ?? 0;
               final currentPicker = order[currentPickerIndex];
               final currentPickerUserId = currentPicker['userId']?.toString();
@@ -507,7 +530,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               // Get current user's ID to check if it's their turn
               final authState = ref.watch(authProvider);
               final currentUserId = authState.user?.userId;
-              final isMyTurn = currentUserId != null && currentPickerUserId == currentUserId;
+              final isMyTurn =
+                  currentUserId != null && currentPickerUserId == currentUserId;
 
               // Create a map of taken positions
               // Only include positions from users who have already picked (before current picker)
@@ -526,10 +550,14 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.3),
                       ),
                     ),
                     child: Column(
@@ -540,14 +568,16 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 8),
                         ...order.asMap().entries.map((entry) {
                           final index = entry.key;
                           final item = entry.value;
-                          final username = item['username'] as String? ?? 'Team ${item['rosterNumber']}';
+                          final username = item['username'] as String? ??
+                              'Team ${item['rosterNumber']}';
                           final isCurrent = index == currentPickerIndex;
                           final hasPicked = index < currentPickerIndex;
 
@@ -562,8 +592,12 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                                     color: isCurrent
                                         ? Theme.of(context).colorScheme.primary
                                         : hasPicked
-                                            ? Theme.of(context).colorScheme.primaryContainer
-                                            : Theme.of(context).colorScheme.surfaceContainer,
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainer,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
@@ -573,10 +607,16 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                         color: isCurrent
-                                            ? Theme.of(context).colorScheme.onPrimary
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary
                                             : hasPicked
-                                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryContainer
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -587,10 +627,16 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                                     username,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+                                      fontWeight: isCurrent
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
                                       color: isCurrent
-                                          ? Theme.of(context).colorScheme.primary
-                                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                     ),
                                   ),
                                 ),
@@ -598,7 +644,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                                   Icon(
                                     Icons.check_circle,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                   ),
                               ],
                             ),
@@ -622,7 +669,10 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                       onPause: () async {
                         try {
                           await ref
-                              .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                              .read(draftOrderProvider((
+                                leagueId: widget.leagueId,
+                                draftId: draftId
+                              )).notifier)
                               .pauseDerby();
                           ref.invalidate(leagueDraftsProvider(widget.leagueId));
                         } catch (e) {
@@ -630,7 +680,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Error: $e'),
-                                backgroundColor: Theme.of(context).colorScheme.error,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
                               ),
                             );
                           }
@@ -639,7 +690,10 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                       onResume: () async {
                         try {
                           await ref
-                              .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                              .read(draftOrderProvider((
+                                leagueId: widget.leagueId,
+                                draftId: draftId
+                              )).notifier)
                               .resumeDerby();
                           ref.invalidate(leagueDraftsProvider(widget.leagueId));
                         } catch (e) {
@@ -647,7 +701,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Error: $e'),
-                                backgroundColor: Theme.of(context).colorScheme.error,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
                               ),
                             );
                           }
@@ -667,7 +722,10 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                     onSlotSelected: (slotNumber) async {
                       try {
                         await ref
-                            .read(draftOrderProvider((leagueId: widget.leagueId, draftId: draftId)).notifier)
+                            .read(draftOrderProvider((
+                              leagueId: widget.leagueId,
+                              draftId: draftId
+                            )).notifier)
                             .pickSlot(slotNumber);
                         ref.invalidate(leagueDraftsProvider(widget.leagueId));
                       } catch (e) {
@@ -675,7 +733,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Error picking slot: $e'),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
                             ),
                           );
                         }
@@ -690,7 +749,8 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             return Column(
               children: order.map((item) {
                 final position = item['draftPosition'] as int;
-                final username = item['username'] as String? ?? 'Team ${item['rosterNumber']}';
+                final username = item['username'] as String? ??
+                    'Team ${item['rosterNumber']}';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -708,7 +768,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                             '$position',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
                             ),
                           ),
                         ),
@@ -787,4 +849,3 @@ class _SummaryChip extends StatelessWidget {
     );
   }
 }
-
