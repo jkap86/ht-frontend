@@ -6,6 +6,7 @@ import '../../domain/draft.dart';
 import '../../domain/draft_helpers.dart';
 import '../../application/drafts_provider.dart';
 import '../../../auth/application/auth_notifier.dart';
+import '../../../../core/services/socket/socket_providers.dart';
 import 'derby/derby_countdown_widget.dart';
 import 'derby/derby_slot_grid.dart';
 import 'derby/derby_status_banner.dart';
@@ -122,6 +123,41 @@ class _DraftCard extends ConsumerStatefulWidget {
 class _DraftCardState extends ConsumerState<_DraftCard> {
   bool _isExpanded = false;
   String? _expandedSection; // Track which section is expanded
+  void Function()? _derbyUpdateListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupDerbyUpdateListener();
+  }
+
+  @override
+  void dispose() {
+    _derbyUpdateListener?.call();
+    super.dispose();
+  }
+
+  void _setupDerbyUpdateListener() {
+    // Get the socket service and listen for derby updates
+    final socketService = ref.read(socketServiceProvider);
+
+    _derbyUpdateListener = socketService.on('derby_updated', (data) {
+      if (data is Map<String, dynamic>) {
+        final draftId = data['draft_id'];
+
+        // Only refresh if this event is for our draft
+        if (draftId == widget.draft.id) {
+          print('[DraftOverviewCard] Derby updated for draft ${widget.draft.id}, refreshing...');
+
+          // Refresh the draft order provider
+          ref.invalidate(draftOrderProvider((leagueId: widget.leagueId, draftId: widget.draft.id)));
+
+          // Also refresh the drafts list to get updated settings
+          ref.invalidate(leagueDraftsProvider(widget.leagueId));
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
