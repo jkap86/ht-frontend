@@ -120,7 +120,7 @@ class DraftsApiClient {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-      return data.cast<Map<String, dynamic>>();
+      return data.map((item) => item as Map<String, dynamic>).toList();
     } else {
       throw Exception('Failed to get draft order: ${response.statusCode} - ${response.body}');
     }
@@ -144,7 +144,7 @@ class DraftsApiClient {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
-      return data.cast<Map<String, dynamic>>();
+      return data.map((item) => item as Map<String, dynamic>).toList();
     } else {
       throw Exception('Failed to randomize draft order: ${response.statusCode} - ${response.body}');
     }
