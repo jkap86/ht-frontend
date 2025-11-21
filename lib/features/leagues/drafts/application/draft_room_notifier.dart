@@ -50,9 +50,11 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
       final orderData = results[3] as List<Map<String, dynamic>>;
 
       // Parse draft order entries
+      print('Draft order raw data: $orderData');
       final draftOrder = orderData
           .map((json) => DraftOrderEntry.fromJson(json))
           .toList();
+      print('Parsed draft order: ${draftOrder.length} entries');
 
       state = state.copyWith(
         draft: draft,
@@ -64,6 +66,7 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
         pickDeadline: draft.pickDeadline,
       );
     } catch (e) {
+      print('Error loading draft room: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

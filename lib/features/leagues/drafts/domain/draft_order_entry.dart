@@ -8,7 +8,7 @@ class DraftOrderEntry with _$DraftOrderEntry {
     required int id,
     required int draftId,
     required int rosterId,
-    required int draftPosition,
+    int? draftPosition,
     String? userId,
     String? username,
     String? teamName,
@@ -17,12 +17,12 @@ class DraftOrderEntry with _$DraftOrderEntry {
   factory DraftOrderEntry.fromJson(Map<String, dynamic> json) {
     return DraftOrderEntry(
       id: json['id'] as int,
-      draftId: json['draft_id'] as int,
-      rosterId: json['roster_id'] as int,
-      draftPosition: json['draft_position'] as int,
-      userId: json['user_id'] as String?,
+      draftId: json['draftId'] as int,
+      rosterId: json['rosterId'] as int,
+      draftPosition: json['draftPosition'] as int?,
+      userId: json['userId'] as String?,
       username: json['username'] as String?,
-      teamName: json['team_name'] as String?,
+      teamName: json['teamName'] as String?,
     );
   }
 }

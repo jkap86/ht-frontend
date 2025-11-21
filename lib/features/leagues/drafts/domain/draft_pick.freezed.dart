@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-DraftPick _$DraftPickFromJson(Map<String, dynamic> json) {
-  return _DraftPick.fromJson(json);
-}
-
 /// @nodoc
 mixin _$DraftPick {
   int get id => throw _privateConstructorUsedError;
@@ -31,9 +27,6 @@ mixin _$DraftPick {
   String? get playerTeam => throw _privateConstructorUsedError;
   DateTime get pickedAt => throw _privateConstructorUsedError;
   bool? get wasAutoPick => throw _privateConstructorUsedError;
-
-  /// Serializes this DraftPick to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.
@@ -234,7 +227,7 @@ class __$$DraftPickImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$DraftPickImpl implements _DraftPick {
   const _$DraftPickImpl(
       {required this.id,
@@ -248,9 +241,6 @@ class _$DraftPickImpl implements _DraftPick {
       this.playerTeam,
       required this.pickedAt,
       this.wasAutoPick});
-
-  factory _$DraftPickImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DraftPickImplFromJson(json);
 
   @override
   final int id;
@@ -307,7 +297,6 @@ class _$DraftPickImpl implements _DraftPick {
                 other.wasAutoPick == wasAutoPick));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -330,13 +319,6 @@ class _$DraftPickImpl implements _DraftPick {
   @pragma('vm:prefer-inline')
   _$$DraftPickImplCopyWith<_$DraftPickImpl> get copyWith =>
       __$$DraftPickImplCopyWithImpl<_$DraftPickImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DraftPickImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _DraftPick implements DraftPick {
@@ -352,9 +334,6 @@ abstract class _DraftPick implements DraftPick {
       final String? playerTeam,
       required final DateTime pickedAt,
       final bool? wasAutoPick}) = _$DraftPickImpl;
-
-  factory _DraftPick.fromJson(Map<String, dynamic> json) =
-      _$DraftPickImpl.fromJson;
 
   @override
   int get id;

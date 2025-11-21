@@ -197,8 +197,8 @@ class PlayerCard extends StatelessWidget {
         subtitle: Row(
           children: [
             Text('${player.displayTeam} • '),
-            Text('${player.age}yo • '),
-            Text('${player.yearsExp} yrs exp'),
+            Text('${player.age ?? 0}yo • '),
+            Text('${player.yearsExp ?? 0} yrs exp'),
             if (player.isRookie) ...[
               const SizedBox(width: 8),
               Container(

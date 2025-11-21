@@ -9,9 +9,9 @@ part of 'player.dart';
 _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       id: (json['id'] as num).toInt(),
       sleeperId: json['sleeperId'] as String,
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      fantasyPositions: (json['fantasy_positions'] as List<dynamic>)
+      firstName: json['firstName'] as String?,
+      lastName: json['lastName'] as String?,
+      fantasyPositions: (json['fantasyPositions'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
       yearsExp: (json['yearsExp'] as num?)?.toInt(),
@@ -30,7 +30,7 @@ Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
       'sleeperId': instance.sleeperId,
       'firstName': instance.firstName,
       'lastName': instance.lastName,
-      'fantasy_positions': instance.fantasyPositions,
+      'fantasyPositions': instance.fantasyPositions,
       'yearsExp': instance.yearsExp,
       'age': instance.age,
       'team': instance.team,

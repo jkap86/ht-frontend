@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-Draft _$DraftFromJson(Map<String, dynamic> json) {
-  return _Draft.fromJson(json);
-}
-
 /// @nodoc
 mixin _$Draft {
   int get id => throw _privateConstructorUsedError;
@@ -39,9 +35,6 @@ mixin _$Draft {
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   DraftSettings? get settings => throw _privateConstructorUsedError;
-
-  /// Serializes this Draft to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Draft
   /// with the given fields replaced by the non-null parameter values.
@@ -355,7 +348,7 @@ class __$$DraftImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$DraftImpl extends _Draft {
   const _$DraftImpl(
       {required this.id,
@@ -378,9 +371,6 @@ class _$DraftImpl extends _Draft {
       this.updatedAt,
       this.settings})
       : super._();
-
-  factory _$DraftImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DraftImplFromJson(json);
 
   @override
   final int id;
@@ -469,7 +459,6 @@ class _$DraftImpl extends _Draft {
                 other.settings == settings));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -501,13 +490,6 @@ class _$DraftImpl extends _Draft {
   @pragma('vm:prefer-inline')
   _$$DraftImplCopyWith<_$DraftImpl> get copyWith =>
       __$$DraftImplCopyWithImpl<_$DraftImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DraftImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _Draft extends Draft {
@@ -532,8 +514,6 @@ abstract class _Draft extends Draft {
       final DateTime? updatedAt,
       final DraftSettings? settings}) = _$DraftImpl;
   const _Draft._() : super._();
-
-  factory _Draft.fromJson(Map<String, dynamic> json) = _$DraftImpl.fromJson;
 
   @override
   int get id;

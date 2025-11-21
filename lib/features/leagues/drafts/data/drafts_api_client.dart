@@ -265,7 +265,9 @@ class DraftsApiClient {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return Draft.fromJson(json);
+      // Extract the draft property from the response
+      final draftJson = json['draft'] as Map<String, dynamic>;
+      return Draft.fromJson(draftJson);
     } else {
       throw Exception('Failed to get draft state: ${response.statusCode} - ${response.body}');
     }

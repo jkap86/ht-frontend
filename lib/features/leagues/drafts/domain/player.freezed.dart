@@ -21,17 +21,22 @@ Player _$PlayerFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Player {
   int get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sleeperId')
   String get sleeperId => throw _privateConstructorUsedError;
-  String get firstName => throw _privateConstructorUsedError;
-  String get lastName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'fantasy_positions')
+  @JsonKey(name: 'firstName')
+  String? get firstName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'lastName')
+  String? get lastName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'fantasyPositions')
   List<String> get fantasyPositions => throw _privateConstructorUsedError;
+  @JsonKey(name: 'yearsExp')
   int? get yearsExp => throw _privateConstructorUsedError;
   int? get age => throw _privateConstructorUsedError;
   String? get team => throw _privateConstructorUsedError;
   String? get position => throw _privateConstructorUsedError;
   int? get number => throw _privateConstructorUsedError;
   String? get status => throw _privateConstructorUsedError;
+  @JsonKey(name: 'injuryStatus')
   String? get injuryStatus => throw _privateConstructorUsedError;
   bool? get active => throw _privateConstructorUsedError;
 
@@ -51,17 +56,17 @@ abstract class $PlayerCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      String sleeperId,
-      String firstName,
-      String lastName,
-      @JsonKey(name: 'fantasy_positions') List<String> fantasyPositions,
-      int? yearsExp,
+      @JsonKey(name: 'sleeperId') String sleeperId,
+      @JsonKey(name: 'firstName') String? firstName,
+      @JsonKey(name: 'lastName') String? lastName,
+      @JsonKey(name: 'fantasyPositions') List<String> fantasyPositions,
+      @JsonKey(name: 'yearsExp') int? yearsExp,
       int? age,
       String? team,
       String? position,
       int? number,
       String? status,
-      String? injuryStatus,
+      @JsonKey(name: 'injuryStatus') String? injuryStatus,
       bool? active});
 }
 
@@ -82,8 +87,8 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
   $Res call({
     Object? id = null,
     Object? sleeperId = null,
-    Object? firstName = null,
-    Object? lastName = null,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
     Object? fantasyPositions = null,
     Object? yearsExp = freezed,
     Object? age = freezed,
@@ -103,14 +108,14 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
           ? _value.sleeperId
           : sleeperId // ignore: cast_nullable_to_non_nullable
               as String,
-      firstName: null == firstName
+      firstName: freezed == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
-              as String,
-      lastName: null == lastName
+              as String?,
+      lastName: freezed == lastName
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       fantasyPositions: null == fantasyPositions
           ? _value.fantasyPositions
           : fantasyPositions // ignore: cast_nullable_to_non_nullable
@@ -160,17 +165,17 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      String sleeperId,
-      String firstName,
-      String lastName,
-      @JsonKey(name: 'fantasy_positions') List<String> fantasyPositions,
-      int? yearsExp,
+      @JsonKey(name: 'sleeperId') String sleeperId,
+      @JsonKey(name: 'firstName') String? firstName,
+      @JsonKey(name: 'lastName') String? lastName,
+      @JsonKey(name: 'fantasyPositions') List<String> fantasyPositions,
+      @JsonKey(name: 'yearsExp') int? yearsExp,
       int? age,
       String? team,
       String? position,
       int? number,
       String? status,
-      String? injuryStatus,
+      @JsonKey(name: 'injuryStatus') String? injuryStatus,
       bool? active});
 }
 
@@ -189,8 +194,8 @@ class __$$PlayerImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? sleeperId = null,
-    Object? firstName = null,
-    Object? lastName = null,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
     Object? fantasyPositions = null,
     Object? yearsExp = freezed,
     Object? age = freezed,
@@ -210,14 +215,14 @@ class __$$PlayerImplCopyWithImpl<$Res>
           ? _value.sleeperId
           : sleeperId // ignore: cast_nullable_to_non_nullable
               as String,
-      firstName: null == firstName
+      firstName: freezed == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
-              as String,
-      lastName: null == lastName
+              as String?,
+      lastName: freezed == lastName
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       fantasyPositions: null == fantasyPositions
           ? _value._fantasyPositions
           : fantasyPositions // ignore: cast_nullable_to_non_nullable
@@ -263,18 +268,18 @@ class __$$PlayerImplCopyWithImpl<$Res>
 class _$PlayerImpl implements _Player {
   const _$PlayerImpl(
       {required this.id,
-      required this.sleeperId,
-      required this.firstName,
-      required this.lastName,
-      @JsonKey(name: 'fantasy_positions')
+      @JsonKey(name: 'sleeperId') required this.sleeperId,
+      @JsonKey(name: 'firstName') this.firstName,
+      @JsonKey(name: 'lastName') this.lastName,
+      @JsonKey(name: 'fantasyPositions')
       required final List<String> fantasyPositions,
-      this.yearsExp,
+      @JsonKey(name: 'yearsExp') this.yearsExp,
       this.age,
       this.team,
       this.position,
       this.number,
       this.status,
-      this.injuryStatus,
+      @JsonKey(name: 'injuryStatus') this.injuryStatus,
       this.active})
       : _fantasyPositions = fantasyPositions;
 
@@ -284,14 +289,17 @@ class _$PlayerImpl implements _Player {
   @override
   final int id;
   @override
+  @JsonKey(name: 'sleeperId')
   final String sleeperId;
   @override
-  final String firstName;
+  @JsonKey(name: 'firstName')
+  final String? firstName;
   @override
-  final String lastName;
+  @JsonKey(name: 'lastName')
+  final String? lastName;
   final List<String> _fantasyPositions;
   @override
-  @JsonKey(name: 'fantasy_positions')
+  @JsonKey(name: 'fantasyPositions')
   List<String> get fantasyPositions {
     if (_fantasyPositions is EqualUnmodifiableListView)
       return _fantasyPositions;
@@ -300,6 +308,7 @@ class _$PlayerImpl implements _Player {
   }
 
   @override
+  @JsonKey(name: 'yearsExp')
   final int? yearsExp;
   @override
   final int? age;
@@ -312,6 +321,7 @@ class _$PlayerImpl implements _Player {
   @override
   final String? status;
   @override
+  @JsonKey(name: 'injuryStatus')
   final String? injuryStatus;
   @override
   final bool? active;
@@ -385,18 +395,18 @@ class _$PlayerImpl implements _Player {
 abstract class _Player implements Player {
   const factory _Player(
       {required final int id,
-      required final String sleeperId,
-      required final String firstName,
-      required final String lastName,
-      @JsonKey(name: 'fantasy_positions')
+      @JsonKey(name: 'sleeperId') required final String sleeperId,
+      @JsonKey(name: 'firstName') final String? firstName,
+      @JsonKey(name: 'lastName') final String? lastName,
+      @JsonKey(name: 'fantasyPositions')
       required final List<String> fantasyPositions,
-      final int? yearsExp,
+      @JsonKey(name: 'yearsExp') final int? yearsExp,
       final int? age,
       final String? team,
       final String? position,
       final int? number,
       final String? status,
-      final String? injuryStatus,
+      @JsonKey(name: 'injuryStatus') final String? injuryStatus,
       final bool? active}) = _$PlayerImpl;
 
   factory _Player.fromJson(Map<String, dynamic> json) = _$PlayerImpl.fromJson;
@@ -404,15 +414,19 @@ abstract class _Player implements Player {
   @override
   int get id;
   @override
+  @JsonKey(name: 'sleeperId')
   String get sleeperId;
   @override
-  String get firstName;
+  @JsonKey(name: 'firstName')
+  String? get firstName;
   @override
-  String get lastName;
+  @JsonKey(name: 'lastName')
+  String? get lastName;
   @override
-  @JsonKey(name: 'fantasy_positions')
+  @JsonKey(name: 'fantasyPositions')
   List<String> get fantasyPositions;
   @override
+  @JsonKey(name: 'yearsExp')
   int? get yearsExp;
   @override
   int? get age;
@@ -425,6 +439,7 @@ abstract class _Player implements Player {
   @override
   String? get status;
   @override
+  @JsonKey(name: 'injuryStatus')
   String? get injuryStatus;
   @override
   bool? get active;

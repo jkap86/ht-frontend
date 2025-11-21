@@ -7,17 +7,17 @@ part 'player.g.dart';
 class Player with _$Player {
   const factory Player({
     required int id,
-    required String sleeperId,
-    required String firstName,
-    required String lastName,
-    @JsonKey(name: 'fantasy_positions') required List<String> fantasyPositions,
-    int? yearsExp,
+    @JsonKey(name: 'sleeperId') required String sleeperId,
+    @JsonKey(name: 'firstName') String? firstName,
+    @JsonKey(name: 'lastName') String? lastName,
+    @JsonKey(name: 'fantasyPositions') required List<String> fantasyPositions,
+    @JsonKey(name: 'yearsExp') int? yearsExp,
     int? age,
     String? team,
     String? position,
     int? number,
     String? status,
-    String? injuryStatus,
+    @JsonKey(name: 'injuryStatus') String? injuryStatus,
     bool? active,
   }) = _Player;
 
@@ -25,7 +25,7 @@ class Player with _$Player {
 }
 
 extension PlayerExtension on Player {
-  String get fullName => '$firstName $lastName';
+  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
 
   String get displayPosition => fantasyPositions.isNotEmpty
       ? fantasyPositions.first

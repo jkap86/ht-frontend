@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'draft_pick.freezed.dart';
-part 'draft_pick.g.dart';
 
 @freezed
 class DraftPick with _$DraftPick {
@@ -19,8 +18,21 @@ class DraftPick with _$DraftPick {
     bool? wasAutoPick,
   }) = _DraftPick;
 
-  factory DraftPick.fromJson(Map<String, dynamic> json) =>
-      _$DraftPickFromJson(json);
+  factory DraftPick.fromJson(Map<String, dynamic> json) {
+    return DraftPick(
+      id: json['id'] as int,
+      draftId: json['draft_id'] as int,
+      pickNumber: json['pick_number'] as int,
+      roundNumber: json['round'] as int,
+      rosterId: json['roster_id'] as int,
+      playerId: json['player_id'] as int?,
+      playerName: json['player_name'] as String?,
+      playerPosition: json['player_position'] as String?,
+      playerTeam: json['player_team'] as String?,
+      pickedAt: DateTime.parse(json['picked_at'] as String),
+      wasAutoPick: json['is_auto_pick'] as bool?,
+    );
+  }
 }
 
 extension DraftPickExtension on DraftPick {

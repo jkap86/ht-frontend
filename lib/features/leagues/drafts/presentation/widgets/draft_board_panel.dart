@@ -265,7 +265,7 @@ class _DraftGrid extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '#${manager.draftPosition}',
+                      manager.draftPosition != null ? '#${manager.draftPosition}' : 'TBD',
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).textTheme.bodySmall?.color,

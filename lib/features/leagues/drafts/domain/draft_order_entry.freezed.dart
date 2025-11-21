@@ -19,7 +19,7 @@ mixin _$DraftOrderEntry {
   int get id => throw _privateConstructorUsedError;
   int get draftId => throw _privateConstructorUsedError;
   int get rosterId => throw _privateConstructorUsedError;
-  int get draftPosition => throw _privateConstructorUsedError;
+  int? get draftPosition => throw _privateConstructorUsedError;
   String? get userId => throw _privateConstructorUsedError;
   String? get username => throw _privateConstructorUsedError;
   String? get teamName => throw _privateConstructorUsedError;
@@ -41,7 +41,7 @@ abstract class $DraftOrderEntryCopyWith<$Res> {
       {int id,
       int draftId,
       int rosterId,
-      int draftPosition,
+      int? draftPosition,
       String? userId,
       String? username,
       String? teamName});
@@ -65,7 +65,7 @@ class _$DraftOrderEntryCopyWithImpl<$Res, $Val extends DraftOrderEntry>
     Object? id = null,
     Object? draftId = null,
     Object? rosterId = null,
-    Object? draftPosition = null,
+    Object? draftPosition = freezed,
     Object? userId = freezed,
     Object? username = freezed,
     Object? teamName = freezed,
@@ -83,10 +83,10 @@ class _$DraftOrderEntryCopyWithImpl<$Res, $Val extends DraftOrderEntry>
           ? _value.rosterId
           : rosterId // ignore: cast_nullable_to_non_nullable
               as int,
-      draftPosition: null == draftPosition
+      draftPosition: freezed == draftPosition
           ? _value.draftPosition
           : draftPosition // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       userId: freezed == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -115,7 +115,7 @@ abstract class _$$DraftOrderEntryImplCopyWith<$Res>
       {int id,
       int draftId,
       int rosterId,
-      int draftPosition,
+      int? draftPosition,
       String? userId,
       String? username,
       String? teamName});
@@ -137,7 +137,7 @@ class __$$DraftOrderEntryImplCopyWithImpl<$Res>
     Object? id = null,
     Object? draftId = null,
     Object? rosterId = null,
-    Object? draftPosition = null,
+    Object? draftPosition = freezed,
     Object? userId = freezed,
     Object? username = freezed,
     Object? teamName = freezed,
@@ -155,10 +155,10 @@ class __$$DraftOrderEntryImplCopyWithImpl<$Res>
           ? _value.rosterId
           : rosterId // ignore: cast_nullable_to_non_nullable
               as int,
-      draftPosition: null == draftPosition
+      draftPosition: freezed == draftPosition
           ? _value.draftPosition
           : draftPosition // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       userId: freezed == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -182,7 +182,7 @@ class _$DraftOrderEntryImpl implements _DraftOrderEntry {
       {required this.id,
       required this.draftId,
       required this.rosterId,
-      required this.draftPosition,
+      this.draftPosition,
       this.userId,
       this.username,
       this.teamName});
@@ -194,7 +194,7 @@ class _$DraftOrderEntryImpl implements _DraftOrderEntry {
   @override
   final int rosterId;
   @override
-  final int draftPosition;
+  final int? draftPosition;
   @override
   final String? userId;
   @override
@@ -244,7 +244,7 @@ abstract class _DraftOrderEntry implements DraftOrderEntry {
       {required final int id,
       required final int draftId,
       required final int rosterId,
-      required final int draftPosition,
+      final int? draftPosition,
       final String? userId,
       final String? username,
       final String? teamName}) = _$DraftOrderEntryImpl;
@@ -256,7 +256,7 @@ abstract class _DraftOrderEntry implements DraftOrderEntry {
   @override
   int get rosterId;
   @override
-  int get draftPosition;
+  int? get draftPosition;
   @override
   String? get userId;
   @override
