@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'draft.dart';
 import 'player.dart';
 import 'draft_pick.dart';
+import 'draft_order_entry.dart';
 
 part 'draft_room_state.freezed.dart';
 
@@ -13,6 +14,7 @@ class DraftRoomState with _$DraftRoomState {
     required Draft draft,
     @Default([]) List<Player> availablePlayers,
     @Default([]) List<DraftPick> picks,
+    @Default([]) List<DraftOrderEntry> draftOrder,
     @Default(false) bool isLoading,
     @Default(false) bool isConnected,
     String? error,

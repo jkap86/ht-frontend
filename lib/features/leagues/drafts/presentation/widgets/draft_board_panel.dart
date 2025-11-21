@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/draft_room_provider.dart';
 import '../../domain/draft.dart';
 import '../../domain/draft_pick.dart';
+import '../../domain/draft_order_entry.dart';
 
-class DraftBoardPanel extends ConsumerStatefulWidget {
+class DraftBoardPanel extends ConsumerWidget {
   final int leagueId;
   final int draftId;
   final Draft draft;
@@ -17,19 +18,12 @@ class DraftBoardPanel extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<DraftBoardPanel> createState() => _DraftBoardPanelState();
-}
-
-class _DraftBoardPanelState extends ConsumerState<DraftBoardPanel> {
-  int _currentRoundView = 1;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final draftRoomState = ref.watch(
       draftRoomProvider((
-        leagueId: widget.leagueId,
-        draftId: widget.draftId,
-        draft: widget.draft,
+        leagueId: leagueId,
+        draftId: draftId,
+        draft: draft,
       )),
     );
 
@@ -43,43 +37,15 @@ class _DraftBoardPanelState extends ConsumerState<DraftBoardPanel> {
           pickDeadline: draftRoomState.pickDeadline,
         ),
 
-        // Round selector
-        SizedBox(
-          height: 50,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: widget.draft.rounds,
-            itemBuilder: (context, index) {
-              final round = index + 1;
-              final isSelected = round == _currentRoundView;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: ChoiceChip(
-                  label: Text('Round $round'),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _currentRoundView = round;
-                      });
-                    }
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-
         const Divider(height: 1),
 
-        // Draft board grid
+        // Draft board grid with managers on X-axis and rounds on Y-axis
         Expanded(
           child: _DraftGrid(
-            leagueId: widget.leagueId,
-            draftId: widget.draftId,
-            draft: widget.draft,
+            draft: draft,
             picks: draftRoomState.picks,
-            round: _currentRoundView,
+            draftOrder: draftRoomState.draftOrder,
+            currentPick: draftRoomState.currentPick,
           ),
         ),
       ],
@@ -194,67 +160,134 @@ class _PickTimerState extends State<_PickTimer> {
 }
 
 class _DraftGrid extends StatelessWidget {
-  final int leagueId;
-  final int draftId;
   final Draft draft;
   final List<DraftPick> picks;
-  final int round;
+  final List<DraftOrderEntry> draftOrder;
+  final int currentPick;
 
   const _DraftGrid({
-    required this.leagueId,
-    required this.draftId,
     required this.draft,
     required this.picks,
-    required this.round,
+    required this.draftOrder,
+    required this.currentPick,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Get picks for this round
-    final roundPicks = picks
-        .where((pick) => pick.roundNumber == round)
-        .toList()
-      ..sort((a, b) => a.pickNumber.compareTo(b.pickNumber));
+    if (draftOrder.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16.0),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: _calculateColumns(context),
-        childAspectRatio: 3 / 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: draft.totalRosters,
-      itemBuilder: (context, index) {
-        // Calculate pick number for this slot
-        final isSnakeRound = _isSnakeRound(round);
-        final slotIndex = isSnakeRound ? (draft.totalRosters - 1 - index) : index;
-        final pickNumber = ((round - 1) * draft.totalRosters) + slotIndex + 1;
+    // Create a table with managers on X-axis and rounds on Y-axis
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Table(
+            defaultColumnWidth: const FixedColumnWidth(150),
+            border: TableBorder.all(
+              color: Theme.of(context).dividerColor,
+              width: 1,
+            ),
+            children: [
+              // Header row with manager names
+              TableRow(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+                children: [
+                  // First cell - "Round" label
+                  const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: Text(
+                      'Round',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // Manager names
+                  ...draftOrder.map((manager) => Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              manager.username ?? 'Manager',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '#${manager.draftPosition}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).textTheme.bodySmall?.color,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ),
+              // Rows for each round
+              ...List.generate(draft.rounds, (roundIndex) {
+                final round = roundIndex + 1;
+                final isSnakeRound = _isSnakeRound(round);
 
-        // Find the pick for this slot
-        final pick = roundPicks.firstWhere(
-          (p) => p.pickNumber == pickNumber,
-          orElse: () => DraftPick(
-            id: 0,
-            draftId: draftId,
-            pickNumber: pickNumber,
-            roundNumber: round,
-            rosterId: 0,
-            pickedAt: DateTime.now(),
+                return TableRow(
+                  children: [
+                    // Round number cell
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: Center(
+                        child: Text(
+                          '$round',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    // Pick cells for each manager
+                    ...List.generate(draftOrder.length, (managerIndex) {
+                      // Calculate the pick position for this manager in this round
+                      final positionInRound = isSnakeRound
+                          ? (draftOrder.length - 1 - managerIndex)
+                          : managerIndex;
+                      final pickNumber = ((round - 1) * draftOrder.length) + positionInRound + 1;
+
+                      // Find the pick for this slot
+                      final pick = picks.firstWhere(
+                        (p) => p.pickNumber == pickNumber,
+                        orElse: () => DraftPick(
+                          id: 0,
+                          draftId: draft.id,
+                          pickNumber: pickNumber,
+                          roundNumber: round,
+                          rosterId: draftOrder[managerIndex].rosterId,
+                          pickedAt: DateTime.now(),
+                        ),
+                      );
+
+                      final hasPick = pick.playerId != null;
+                      final isFuturePick = pickNumber > currentPick;
+                      final isCurrentPick = pickNumber == currentPick;
+
+                      return _PickCell(
+                        pick: pick,
+                        hasPick: hasPick,
+                        isCurrent: isCurrentPick,
+                        isFuture: isFuturePick,
+                      );
+                    }),
+                  ],
+                );
+              }),
+            ],
           ),
-        );
-
-        final hasPick = pick.playerId != null;
-        final isFuturePick = pickNumber > picks.length;
-        final isCurrentPick = !hasPick && pickNumber == picks.length + 1;
-
-        return _PickSlot(
-          pick: pick,
-          hasPick: hasPick,
-          isCurrent: isCurrentPick,
-          isFuture: isFuturePick,
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -263,23 +296,15 @@ class _DraftGrid extends StatelessWidget {
     if (draft.thirdRoundReversal && round == 3) return true;
     return round % 2 == 0;
   }
-
-  int _calculateColumns(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1200) return 6;
-    if (width > 800) return 4;
-    if (width > 600) return 3;
-    return 2;
-  }
 }
 
-class _PickSlot extends StatelessWidget {
+class _PickCell extends StatelessWidget {
   final DraftPick pick;
   final bool hasPick;
   final bool isCurrent;
   final bool isFuture;
 
-  const _PickSlot({
+  const _PickCell({
     required this.pick,
     required this.hasPick,
     required this.isCurrent,
@@ -288,84 +313,69 @@ class _PickSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: isCurrent
-          ? Theme.of(context).colorScheme.primaryContainer
-          : isFuture
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-              : null,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Pick ${pick.pickNumber}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (pick.wasAutoPick == true)
-                  const Icon(Icons.auto_mode, size: 16, color: Colors.orange),
-              ],
+    Color? bgColor;
+    if (isCurrent) {
+      bgColor = Theme.of(context).colorScheme.primaryContainer;
+    } else if (isFuture) {
+      bgColor = Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      height: 80,
+      color: bgColor,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (hasPick) ...[
+            Text(
+              pick.playerName ?? 'Unknown',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${pick.playerPosition ?? ''} - ${pick.playerTeam ?? ''}',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (pick.wasAutoPick == true)
+              const Icon(Icons.auto_mode, size: 12, color: Colors.orange),
+          ] else if (isCurrent) ...[
+            Icon(
+              Icons.access_time,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 4),
-            if (hasPick) ...[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      pick.playerName ?? 'Unknown',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${pick.playerPosition ?? ''} ${pick.playerTeam ?? ''}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
-                ),
+            Text(
+              'On Clock',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
-            ] else if (isCurrent) ...[
-              const Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.access_time, size: 24),
-                      SizedBox(height: 4),
-                      Text(
-                        'On the clock',
-                        style: TextStyle(fontSize: 11),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ] else if (isFuture) ...[
-              const Expanded(
-                child: Center(
-                  child: Icon(Icons.lock_outline, size: 24, color: Colors.grey),
-                ),
-              ),
-            ],
+              textAlign: TextAlign.center,
+            ),
+          ] else if (isFuture) ...[
+            Icon(
+              Icons.lock_outline,
+              size: 20,
+              color: Colors.grey.shade600,
+            ),
+          ] else ...[
+            const SizedBox.shrink(),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -4,6 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../features/leagues/chat/presentation/widgets/chat_resize_handles.dart';
 
+/// Position for the collapsible widget when collapsed
+enum CollapsiblePosition {
+  bottomLeft,
+  bottomRight,
+}
+
 /// Base class for collapsible widgets that can expand/collapse with animation
 /// and support drag/resize functionality
 abstract class CollapsibleWidget extends ConsumerStatefulWidget {
@@ -19,12 +25,16 @@ abstract class CollapsibleWidget extends ConsumerStatefulWidget {
   /// Minimum size constraints
   final Size minSize;
 
+  /// Position when collapsed
+  final CollapsiblePosition position;
+
   const CollapsibleWidget({
     super.key,
     required this.stateKey,
     this.collapsedSize = 56.0,
     this.defaultExpandedSize = const Size(600, 400),
     this.minSize = const Size(300, 200),
+    this.position = CollapsiblePosition.bottomRight,
   });
 }
 
@@ -75,14 +85,18 @@ abstract class CollapsibleWidgetState<T extends CollapsibleWidget>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Position collapsed icon in bottom right on FIRST build only
+    // Position collapsed icon based on position parameter on FIRST build only
     if (!_hasInitializedPosition) {
       _hasInitializedPosition = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_isExpanded && mounted) {
           final screenWidth = MediaQuery.of(context).size.width;
           setState(() {
-            _left = screenWidth - widget.collapsedSize - 16;
+            if (widget.position == CollapsiblePosition.bottomLeft) {
+              _left = 16;
+            } else {
+              _left = screenWidth - widget.collapsedSize - 16;
+            }
             _targetLeft = _left;
             _initialLeft = _left;
           });
@@ -172,9 +186,13 @@ abstract class CollapsibleWidgetState<T extends CollapsibleWidget>
     _savedLeft = _left;
     _savedBottom = _bottom;
 
-    // Animate to bottom-right collapsed position
+    // Animate to collapsed position based on widget position
     final screenWidth = MediaQuery.of(context).size.width;
-    _initialLeft = screenWidth - widget.collapsedSize - 16;
+    if (widget.position == CollapsiblePosition.bottomLeft) {
+      _initialLeft = 16;
+    } else {
+      _initialLeft = screenWidth - widget.collapsedSize - 16;
+    }
     _initialBottom = 16;
     _initialWidth = widget.collapsedSize;
     _initialHeight = widget.collapsedSize;
@@ -204,8 +222,13 @@ abstract class CollapsibleWidgetState<T extends CollapsibleWidget>
     _targetWidth = expandedWidth.clamp(widget.minSize.width, screenSize.width - 32);
     _targetHeight = expandedHeight.clamp(widget.minSize.height, availableHeight - 32);
 
-    // Position at bottom-right or use saved position
-    final defaultLeft = screenSize.width - _targetWidth - 16;
+    // Position based on widget position or use saved position
+    final double defaultLeft;
+    if (widget.position == CollapsiblePosition.bottomLeft) {
+      defaultLeft = 16;
+    } else {
+      defaultLeft = screenSize.width - _targetWidth - 16;
+    }
     _targetLeft = (_savedLeft ?? defaultLeft).clamp(16.0, screenSize.width - _targetWidth - 16);
     _targetBottom = (_savedBottom ?? 16).clamp(16.0, availableHeight - _targetHeight);
 

@@ -4,6 +4,7 @@ import '../domain/draft_room_state.dart';
 import '../domain/draft.dart';
 import '../domain/player.dart';
 import '../domain/draft_pick.dart';
+import '../domain/draft_order_entry.dart';
 import '../../../../core/services/socket/socket_service.dart';
 
 class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
@@ -40,16 +41,24 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
         _apiClient.getDraftState(_leagueId, _draftId),
         _apiClient.getAvailablePlayers(_leagueId, _draftId),
         _apiClient.getDraftPicks(_leagueId, _draftId),
+        _apiClient.getDraftOrder(_leagueId, _draftId),
       ]);
 
       final draft = results[0] as Draft;
       final players = results[1] as List<Player>;
       final picks = results[2] as List<DraftPick>;
+      final orderData = results[3] as List<Map<String, dynamic>>;
+
+      // Parse draft order entries
+      final draftOrder = orderData
+          .map((json) => DraftOrderEntry.fromJson(json))
+          .toList();
 
       state = state.copyWith(
         draft: draft,
         availablePlayers: players,
         picks: picks,
+        draftOrder: draftOrder,
         isLoading: false,
         currentPickerRosterId: draft.currentRosterId,
         pickDeadline: draft.pickDeadline,

@@ -19,6 +19,7 @@ mixin _$DraftRoomState {
   Draft get draft => throw _privateConstructorUsedError;
   List<Player> get availablePlayers => throw _privateConstructorUsedError;
   List<DraftPick> get picks => throw _privateConstructorUsedError;
+  List<DraftOrderEntry> get draftOrder => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   bool get isConnected => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
@@ -44,6 +45,7 @@ abstract class $DraftRoomStateCopyWith<$Res> {
       {Draft draft,
       List<Player> availablePlayers,
       List<DraftPick> picks,
+      List<DraftOrderEntry> draftOrder,
       bool isLoading,
       bool isConnected,
       String? error,
@@ -73,6 +75,7 @@ class _$DraftRoomStateCopyWithImpl<$Res, $Val extends DraftRoomState>
     Object? draft = null,
     Object? availablePlayers = null,
     Object? picks = null,
+    Object? draftOrder = null,
     Object? isLoading = null,
     Object? isConnected = null,
     Object? error = freezed,
@@ -94,6 +97,10 @@ class _$DraftRoomStateCopyWithImpl<$Res, $Val extends DraftRoomState>
           ? _value.picks
           : picks // ignore: cast_nullable_to_non_nullable
               as List<DraftPick>,
+      draftOrder: null == draftOrder
+          ? _value.draftOrder
+          : draftOrder // ignore: cast_nullable_to_non_nullable
+              as List<DraftOrderEntry>,
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
@@ -148,6 +155,7 @@ abstract class _$$DraftRoomStateImplCopyWith<$Res>
       {Draft draft,
       List<Player> availablePlayers,
       List<DraftPick> picks,
+      List<DraftOrderEntry> draftOrder,
       bool isLoading,
       bool isConnected,
       String? error,
@@ -176,6 +184,7 @@ class __$$DraftRoomStateImplCopyWithImpl<$Res>
     Object? draft = null,
     Object? availablePlayers = null,
     Object? picks = null,
+    Object? draftOrder = null,
     Object? isLoading = null,
     Object? isConnected = null,
     Object? error = freezed,
@@ -197,6 +206,10 @@ class __$$DraftRoomStateImplCopyWithImpl<$Res>
           ? _value._picks
           : picks // ignore: cast_nullable_to_non_nullable
               as List<DraftPick>,
+      draftOrder: null == draftOrder
+          ? _value._draftOrder
+          : draftOrder // ignore: cast_nullable_to_non_nullable
+              as List<DraftOrderEntry>,
       isLoading: null == isLoading
           ? _value.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
@@ -236,6 +249,7 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
       {required this.draft,
       final List<Player> availablePlayers = const [],
       final List<DraftPick> picks = const [],
+      final List<DraftOrderEntry> draftOrder = const [],
       this.isLoading = false,
       this.isConnected = false,
       this.error,
@@ -245,6 +259,7 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
       final List<String> positionFilters = const []})
       : _availablePlayers = availablePlayers,
         _picks = picks,
+        _draftOrder = draftOrder,
         _positionFilters = positionFilters,
         super._();
 
@@ -267,6 +282,15 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
     if (_picks is EqualUnmodifiableListView) return _picks;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_picks);
+  }
+
+  final List<DraftOrderEntry> _draftOrder;
+  @override
+  @JsonKey()
+  List<DraftOrderEntry> get draftOrder {
+    if (_draftOrder is EqualUnmodifiableListView) return _draftOrder;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_draftOrder);
   }
 
   @override
@@ -294,7 +318,7 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
 
   @override
   String toString() {
-    return 'DraftRoomState(draft: $draft, availablePlayers: $availablePlayers, picks: $picks, isLoading: $isLoading, isConnected: $isConnected, error: $error, currentPickerRosterId: $currentPickerRosterId, pickDeadline: $pickDeadline, searchQuery: $searchQuery, positionFilters: $positionFilters)';
+    return 'DraftRoomState(draft: $draft, availablePlayers: $availablePlayers, picks: $picks, draftOrder: $draftOrder, isLoading: $isLoading, isConnected: $isConnected, error: $error, currentPickerRosterId: $currentPickerRosterId, pickDeadline: $pickDeadline, searchQuery: $searchQuery, positionFilters: $positionFilters)';
   }
 
   @override
@@ -306,6 +330,8 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
             const DeepCollectionEquality()
                 .equals(other._availablePlayers, _availablePlayers) &&
             const DeepCollectionEquality().equals(other._picks, _picks) &&
+            const DeepCollectionEquality()
+                .equals(other._draftOrder, _draftOrder) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.isConnected, isConnected) ||
@@ -327,6 +353,7 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
       draft,
       const DeepCollectionEquality().hash(_availablePlayers),
       const DeepCollectionEquality().hash(_picks),
+      const DeepCollectionEquality().hash(_draftOrder),
       isLoading,
       isConnected,
       error,
@@ -350,6 +377,7 @@ abstract class _DraftRoomState extends DraftRoomState {
       {required final Draft draft,
       final List<Player> availablePlayers,
       final List<DraftPick> picks,
+      final List<DraftOrderEntry> draftOrder,
       final bool isLoading,
       final bool isConnected,
       final String? error,
@@ -365,6 +393,8 @@ abstract class _DraftRoomState extends DraftRoomState {
   List<Player> get availablePlayers;
   @override
   List<DraftPick> get picks;
+  @override
+  List<DraftOrderEntry> get draftOrder;
   @override
   bool get isLoading;
   @override
