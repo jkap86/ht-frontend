@@ -12,6 +12,7 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/leagues/presentation/league_details_screen.dart';
+import 'features/leagues/drafts/presentation/draft_room_screen.dart';
 import 'features/direct_messages/presentation/dm_screen.dart';
 
 late final AppConfig appConfig;
@@ -105,6 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           final leagueId = int.parse(state.pathParameters['leagueId']!);
           return LeagueDetailsScreen(leagueId: leagueId);
         },
+        routes: [
+          GoRoute(
+            path: 'draft/:draftId/room',
+            name: 'draft-room',
+            builder: (context, state) {
+              final leagueId = int.parse(state.pathParameters['leagueId']!);
+              final draftId = int.parse(state.pathParameters['draftId']!);
+              return DraftRoomScreen(
+                leagueId: leagueId,
+                draftId: draftId,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/messages',

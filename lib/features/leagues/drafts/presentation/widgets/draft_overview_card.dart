@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../domain/league.dart';
 import '../../domain/draft.dart';
@@ -437,7 +438,9 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
         ],
 
         // Randomize/Start Derby button (only for commissioners)
-        if (widget.isCommissioner && derbyStatus != 'in_progress') ...[
+        if (widget.isCommissioner &&
+            derbyStatus != 'in_progress' &&
+            derbyStatus != 'completed') ...[
           draftOrderState.when(
             data: (order) {
               // Show "Start Derby" button if order is randomized and draft type is derby
@@ -560,6 +563,15 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
             if ((derbyStatus == 'in_progress' || derbyStatus == 'paused') &&
                 draftOrder.toLowerCase() == 'derby') {
               final currentPickerIndex = settings?.currentPickerIndex ?? 0;
+
+              // Validate that currentPickerIndex is within bounds
+              if (order.isEmpty || currentPickerIndex >= order.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('Invalid draft state. Please refresh.'),
+                );
+              }
+
               final currentPicker = order[currentPickerIndex];
               final currentPickerUserId = currentPicker['userId']?.toString();
 
@@ -570,12 +582,14 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                   currentUserId != null && currentPickerUserId == currentUserId;
 
               // Create a map of taken positions
-              // Only include positions from users who have already picked (before current picker)
+              // Include all users who have picked a slot (draftPosition is not null)
               final takenPositions = <int, Map<String, dynamic>>{};
-              for (int i = 0; i < currentPickerIndex; i++) {
+              for (int i = 0; i < order.length; i++) {
                 final item = order[i];
-                final position = item['draftPosition'] as int;
-                takenPositions[position] = item;
+                final position = item['draftPosition'] as int?;
+                if (position != null) {
+                  takenPositions[position] = item;
+                }
               }
 
               return Column(
@@ -593,7 +607,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                         color: Theme.of(context)
                             .colorScheme
                             .outline
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -616,6 +630,7 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                               'Team ${item['rosterNumber']}';
                           final isCurrent = index == currentPickerIndex;
                           final hasPicked = index < currentPickerIndex;
+                          final slotNumber = item['draftPosition'] as int?;
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 4),
@@ -676,12 +691,26 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
                                     ),
                                   ),
                                 ),
-                                if (hasPicked)
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 16,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                                if (slotNumber != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      'Slot $slotNumber',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer,
+                                      ),
+                                    ),
                                   ),
                               ],
                             ),
@@ -781,10 +810,356 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
               );
             }
 
+            // If derby is completed, show final order sorted by derby slots
+            if (draftOrder.toLowerCase() == 'derby' &&
+                derbyStatus == 'completed' &&
+                order.isNotEmpty) {
+              bool sortByDraftOrder = true; // Closure variable
+
+              return StatefulBuilder(
+                builder: (context, setBuilderState) {
+                  // Create a map of original picking order (index + 1) for each user
+                  final pickingOrderMap = <String, int>{};
+                  for (int i = 0; i < order.length; i++) {
+                    final rosterId = order[i]['rosterId']?.toString() ?? '';
+                    if (rosterId.isNotEmpty) {
+                      pickingOrderMap[rosterId] = i + 1;
+                    }
+                  }
+
+                  // Sort based on selected option
+                  final sortedOrder = List<Map<String, dynamic>>.from(order);
+                  if (sortByDraftOrder) {
+                    // Sort by draft order (draft_position)
+                    sortedOrder.sort((a, b) {
+                      final posA = (a['draftPosition'] as int?) ?? 999;
+                      final posB = (b['draftPosition'] as int?) ?? 999;
+                      return posA.compareTo(posB);
+                    });
+                  } else {
+                    // Sort by derby slot (original picking order)
+                    sortedOrder.sort((a, b) {
+                      final rosterIdA = a['rosterId']?.toString() ?? '';
+                      final rosterIdB = b['rosterId']?.toString() ?? '';
+                      final derbySlotA = pickingOrderMap[rosterIdA] ?? 999;
+                      final derbySlotB = pickingOrderMap[rosterIdB] ?? 999;
+                      return derbySlotA.compareTo(derbySlotB);
+                    });
+                  }
+
+                  return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Final Draft Order',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Header row
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 80,
+                                child: InkWell(
+                                  onTap: () {
+                                    setBuilderState(() {
+                                      sortByDraftOrder = false;
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Derby Slot',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: !sortByDraftOrder
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                        ),
+                                      ),
+                                      if (!sortByDraftOrder)
+                                        Icon(
+                                          Icons.arrow_drop_down,
+                                          size: 16,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Team',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 80,
+                                child: InkWell(
+                                  onTap: () {
+                                    setBuilderState(() {
+                                      sortByDraftOrder = true;
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Draft Order',
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: sortByDraftOrder
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                        ),
+                                      ),
+                                      if (sortByDraftOrder)
+                                        Icon(
+                                          Icons.arrow_drop_down,
+                                          size: 16,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        const SizedBox(height: 8),
+                        ...sortedOrder.map((item) {
+                          final draftSlot = item['draftPosition'] as int?;
+                          final rosterId = item['rosterId']?.toString() ?? '';
+                          final derbySlot = pickingOrderMap[rosterId];
+                          final username = item['username'] as String? ??
+                              'Team ${item['rosterNumber']}';
+
+                          if (draftSlot == null) return const SizedBox.shrink();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 80,
+                                  child: Text(
+                                    derbySlot != null ? '#$derbySlot' : '-',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    child: Text(
+                                      username,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 80,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Slot $draftSlot',
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  // Draft Room button
+                  const SizedBox(height: 16),
+                  Center(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        context.goNamed(
+                          'draft-room',
+                          pathParameters: {
+                            'leagueId': widget.league.id.toString(),
+                            'draftId': widget.draft.id.toString(),
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.meeting_room),
+                      label: const Text('Enter Draft Room'),
+                    ),
+                  ),
+                ],
+                  );
+                },
+              );
+            }
+
+            // If derby is randomized but not started, show picking order
+            if (draftOrder.toLowerCase() == 'derby' &&
+                order.isNotEmpty &&
+                derbyStatus != 'in_progress' &&
+                derbyStatus != 'paused' &&
+                derbyStatus != 'completed') {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Derby Pick Order',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...order.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final item = entry.value;
+                          final username = item['username'] as String? ??
+                              'Team ${item['rosterNumber']}';
+                          final isCurrent = index == 0;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: isCurrent
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isCurrent
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    username,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: isCurrent
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+
             // Normal draft order display
             return Column(
-              children: order.map((item) {
-                final position = item['draftPosition'] as int;
+              children: order
+                  .where((item) => item['draftPosition'] != null)
+                  .map((item) {
+                final position = (item['draftPosition'] as num?)?.toInt() ?? 0;
                 final username = item['username'] as String? ??
                     'Team ${item['rosterNumber']}';
 

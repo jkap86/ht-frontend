@@ -58,7 +58,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localDerbyTimerHours = 0;
       _localDerbyTimerMinutes = 5;
       _localDerbyTimerSeconds = 0;
-      _localDerbyOnTimeout = 'skip';
+      _localDerbyOnTimeout = 'auto';
     });
   }
 
@@ -83,7 +83,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localDerbyTimerHours = derbyTimerSeconds ~/ 3600;
       _localDerbyTimerMinutes = (derbyTimerSeconds % 3600) ~/ 60;
       _localDerbyTimerSeconds = derbyTimerSeconds % 60;
-      _localDerbyOnTimeout = settings?.derbyOnTimeout ?? 'skip';
+      _localDerbyOnTimeout = settings?.derbyOnTimeout ?? 'auto';
     });
   }
 
@@ -325,7 +325,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
                   _localDerbyTimerHours = 0;
                   _localDerbyTimerMinutes = 5;
                   _localDerbyTimerSeconds = 0;
-                  _localDerbyOnTimeout = 'skip';
+                  _localDerbyOnTimeout = 'auto';
                 }
               }),
               onTimerModeChanged: (value) => setState(() => _localTimerMode = value),

@@ -7,8 +7,8 @@ class DraftHelpers {
   ) {
     final takenPositions = <int, Map<String, dynamic>>{};
 
-    // Only mark positions as taken for users who have already picked
-    for (int i = 0; i < currentPickerIndex; i++) {
+    // Mark positions as taken for all users who have picked (draftPosition is not null)
+    for (int i = 0; i < draftOrder.length; i++) {
       final item = draftOrder[i];
       final position = item['draftPosition'] as int?;
       if (position != null) {

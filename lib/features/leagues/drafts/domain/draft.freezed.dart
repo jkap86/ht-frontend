@@ -24,12 +24,15 @@ mixin _$Draft {
   int get leagueId => throw _privateConstructorUsedError;
   String get draftType => throw _privateConstructorUsedError;
   int get rounds => throw _privateConstructorUsedError;
+  int get totalRosters => throw _privateConstructorUsedError;
   int? get pickTimeSeconds => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   int? get currentPick => throw _privateConstructorUsedError;
   int? get currentRound => throw _privateConstructorUsedError;
   bool get thirdRoundReversal => throw _privateConstructorUsedError;
   int? get currentRosterId => throw _privateConstructorUsedError;
+  int? get commissionerRosterId => throw _privateConstructorUsedError;
+  int? get userRosterId => throw _privateConstructorUsedError;
   DateTime? get pickDeadline => throw _privateConstructorUsedError;
   DateTime? get startedAt => throw _privateConstructorUsedError;
   DateTime? get completedAt => throw _privateConstructorUsedError;
@@ -56,12 +59,15 @@ abstract class $DraftCopyWith<$Res> {
       int leagueId,
       String draftType,
       int rounds,
+      int totalRosters,
       int? pickTimeSeconds,
       String status,
       int? currentPick,
       int? currentRound,
       bool thirdRoundReversal,
       int? currentRosterId,
+      int? commissionerRosterId,
+      int? userRosterId,
       DateTime? pickDeadline,
       DateTime? startedAt,
       DateTime? completedAt,
@@ -91,12 +97,15 @@ class _$DraftCopyWithImpl<$Res, $Val extends Draft>
     Object? leagueId = null,
     Object? draftType = null,
     Object? rounds = null,
+    Object? totalRosters = null,
     Object? pickTimeSeconds = freezed,
     Object? status = null,
     Object? currentPick = freezed,
     Object? currentRound = freezed,
     Object? thirdRoundReversal = null,
     Object? currentRosterId = freezed,
+    Object? commissionerRosterId = freezed,
+    Object? userRosterId = freezed,
     Object? pickDeadline = freezed,
     Object? startedAt = freezed,
     Object? completedAt = freezed,
@@ -121,6 +130,10 @@ class _$DraftCopyWithImpl<$Res, $Val extends Draft>
           ? _value.rounds
           : rounds // ignore: cast_nullable_to_non_nullable
               as int,
+      totalRosters: null == totalRosters
+          ? _value.totalRosters
+          : totalRosters // ignore: cast_nullable_to_non_nullable
+              as int,
       pickTimeSeconds: freezed == pickTimeSeconds
           ? _value.pickTimeSeconds
           : pickTimeSeconds // ignore: cast_nullable_to_non_nullable
@@ -144,6 +157,14 @@ class _$DraftCopyWithImpl<$Res, $Val extends Draft>
       currentRosterId: freezed == currentRosterId
           ? _value.currentRosterId
           : currentRosterId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      commissionerRosterId: freezed == commissionerRosterId
+          ? _value.commissionerRosterId
+          : commissionerRosterId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      userRosterId: freezed == userRosterId
+          ? _value.userRosterId
+          : userRosterId // ignore: cast_nullable_to_non_nullable
               as int?,
       pickDeadline: freezed == pickDeadline
           ? _value.pickDeadline
@@ -199,12 +220,15 @@ abstract class _$$DraftImplCopyWith<$Res> implements $DraftCopyWith<$Res> {
       int leagueId,
       String draftType,
       int rounds,
+      int totalRosters,
       int? pickTimeSeconds,
       String status,
       int? currentPick,
       int? currentRound,
       bool thirdRoundReversal,
       int? currentRosterId,
+      int? commissionerRosterId,
+      int? userRosterId,
       DateTime? pickDeadline,
       DateTime? startedAt,
       DateTime? completedAt,
@@ -233,12 +257,15 @@ class __$$DraftImplCopyWithImpl<$Res>
     Object? leagueId = null,
     Object? draftType = null,
     Object? rounds = null,
+    Object? totalRosters = null,
     Object? pickTimeSeconds = freezed,
     Object? status = null,
     Object? currentPick = freezed,
     Object? currentRound = freezed,
     Object? thirdRoundReversal = null,
     Object? currentRosterId = freezed,
+    Object? commissionerRosterId = freezed,
+    Object? userRosterId = freezed,
     Object? pickDeadline = freezed,
     Object? startedAt = freezed,
     Object? completedAt = freezed,
@@ -263,6 +290,10 @@ class __$$DraftImplCopyWithImpl<$Res>
           ? _value.rounds
           : rounds // ignore: cast_nullable_to_non_nullable
               as int,
+      totalRosters: null == totalRosters
+          ? _value.totalRosters
+          : totalRosters // ignore: cast_nullable_to_non_nullable
+              as int,
       pickTimeSeconds: freezed == pickTimeSeconds
           ? _value.pickTimeSeconds
           : pickTimeSeconds // ignore: cast_nullable_to_non_nullable
@@ -286,6 +317,14 @@ class __$$DraftImplCopyWithImpl<$Res>
       currentRosterId: freezed == currentRosterId
           ? _value.currentRosterId
           : currentRosterId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      commissionerRosterId: freezed == commissionerRosterId
+          ? _value.commissionerRosterId
+          : commissionerRosterId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      userRosterId: freezed == userRosterId
+          ? _value.userRosterId
+          : userRosterId // ignore: cast_nullable_to_non_nullable
               as int?,
       pickDeadline: freezed == pickDeadline
           ? _value.pickDeadline
@@ -317,24 +356,28 @@ class __$$DraftImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$DraftImpl implements _Draft {
+class _$DraftImpl extends _Draft {
   const _$DraftImpl(
       {required this.id,
       required this.leagueId,
       required this.draftType,
       required this.rounds,
+      required this.totalRosters,
       this.pickTimeSeconds,
       required this.status,
       this.currentPick,
       this.currentRound,
       this.thirdRoundReversal = false,
       this.currentRosterId,
+      this.commissionerRosterId,
+      this.userRosterId,
       this.pickDeadline,
       this.startedAt,
       this.completedAt,
       this.createdAt,
       this.updatedAt,
-      this.settings});
+      this.settings})
+      : super._();
 
   factory _$DraftImpl.fromJson(Map<String, dynamic> json) =>
       _$$DraftImplFromJson(json);
@@ -348,6 +391,8 @@ class _$DraftImpl implements _Draft {
   @override
   final int rounds;
   @override
+  final int totalRosters;
+  @override
   final int? pickTimeSeconds;
   @override
   final String status;
@@ -360,6 +405,10 @@ class _$DraftImpl implements _Draft {
   final bool thirdRoundReversal;
   @override
   final int? currentRosterId;
+  @override
+  final int? commissionerRosterId;
+  @override
+  final int? userRosterId;
   @override
   final DateTime? pickDeadline;
   @override
@@ -375,7 +424,7 @@ class _$DraftImpl implements _Draft {
 
   @override
   String toString() {
-    return 'Draft(id: $id, leagueId: $leagueId, draftType: $draftType, rounds: $rounds, pickTimeSeconds: $pickTimeSeconds, status: $status, currentPick: $currentPick, currentRound: $currentRound, thirdRoundReversal: $thirdRoundReversal, currentRosterId: $currentRosterId, pickDeadline: $pickDeadline, startedAt: $startedAt, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt, settings: $settings)';
+    return 'Draft(id: $id, leagueId: $leagueId, draftType: $draftType, rounds: $rounds, totalRosters: $totalRosters, pickTimeSeconds: $pickTimeSeconds, status: $status, currentPick: $currentPick, currentRound: $currentRound, thirdRoundReversal: $thirdRoundReversal, currentRosterId: $currentRosterId, commissionerRosterId: $commissionerRosterId, userRosterId: $userRosterId, pickDeadline: $pickDeadline, startedAt: $startedAt, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt, settings: $settings)';
   }
 
   @override
@@ -389,6 +438,8 @@ class _$DraftImpl implements _Draft {
             (identical(other.draftType, draftType) ||
                 other.draftType == draftType) &&
             (identical(other.rounds, rounds) || other.rounds == rounds) &&
+            (identical(other.totalRosters, totalRosters) ||
+                other.totalRosters == totalRosters) &&
             (identical(other.pickTimeSeconds, pickTimeSeconds) ||
                 other.pickTimeSeconds == pickTimeSeconds) &&
             (identical(other.status, status) || other.status == status) &&
@@ -400,6 +451,10 @@ class _$DraftImpl implements _Draft {
                 other.thirdRoundReversal == thirdRoundReversal) &&
             (identical(other.currentRosterId, currentRosterId) ||
                 other.currentRosterId == currentRosterId) &&
+            (identical(other.commissionerRosterId, commissionerRosterId) ||
+                other.commissionerRosterId == commissionerRosterId) &&
+            (identical(other.userRosterId, userRosterId) ||
+                other.userRosterId == userRosterId) &&
             (identical(other.pickDeadline, pickDeadline) ||
                 other.pickDeadline == pickDeadline) &&
             (identical(other.startedAt, startedAt) ||
@@ -416,24 +471,28 @@ class _$DraftImpl implements _Draft {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      leagueId,
-      draftType,
-      rounds,
-      pickTimeSeconds,
-      status,
-      currentPick,
-      currentRound,
-      thirdRoundReversal,
-      currentRosterId,
-      pickDeadline,
-      startedAt,
-      completedAt,
-      createdAt,
-      updatedAt,
-      settings);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        leagueId,
+        draftType,
+        rounds,
+        totalRosters,
+        pickTimeSeconds,
+        status,
+        currentPick,
+        currentRound,
+        thirdRoundReversal,
+        currentRosterId,
+        commissionerRosterId,
+        userRosterId,
+        pickDeadline,
+        startedAt,
+        completedAt,
+        createdAt,
+        updatedAt,
+        settings
+      ]);
 
   /// Create a copy of Draft
   /// with the given fields replaced by the non-null parameter values.
@@ -451,24 +510,28 @@ class _$DraftImpl implements _Draft {
   }
 }
 
-abstract class _Draft implements Draft {
+abstract class _Draft extends Draft {
   const factory _Draft(
       {required final int id,
       required final int leagueId,
       required final String draftType,
       required final int rounds,
+      required final int totalRosters,
       final int? pickTimeSeconds,
       required final String status,
       final int? currentPick,
       final int? currentRound,
       final bool thirdRoundReversal,
       final int? currentRosterId,
+      final int? commissionerRosterId,
+      final int? userRosterId,
       final DateTime? pickDeadline,
       final DateTime? startedAt,
       final DateTime? completedAt,
       final DateTime? createdAt,
       final DateTime? updatedAt,
       final DraftSettings? settings}) = _$DraftImpl;
+  const _Draft._() : super._();
 
   factory _Draft.fromJson(Map<String, dynamic> json) = _$DraftImpl.fromJson;
 
@@ -481,6 +544,8 @@ abstract class _Draft implements Draft {
   @override
   int get rounds;
   @override
+  int get totalRosters;
+  @override
   int? get pickTimeSeconds;
   @override
   String get status;
@@ -492,6 +557,10 @@ abstract class _Draft implements Draft {
   bool get thirdRoundReversal;
   @override
   int? get currentRosterId;
+  @override
+  int? get commissionerRosterId;
+  @override
+  int? get userRosterId;
   @override
   DateTime? get pickDeadline;
   @override
