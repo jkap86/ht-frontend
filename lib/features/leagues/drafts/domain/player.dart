@@ -11,8 +11,8 @@ class Player with _$Player {
     required String firstName,
     required String lastName,
     @JsonKey(name: 'fantasy_positions') required List<String> fantasyPositions,
-    required int yearsExp,
-    required int age,
+    int? yearsExp,
+    int? age,
     String? team,
     String? position,
     int? number,
@@ -31,9 +31,9 @@ extension PlayerExtension on Player {
       ? fantasyPositions.first
       : position ?? 'N/A';
 
-  bool get isRookie => yearsExp == 0;
+  bool get isRookie => (yearsExp ?? 1) == 0;
 
-  bool get isVeteran => yearsExp > 0;
+  bool get isVeteran => (yearsExp ?? 0) > 0;
 
   String get displayTeam => team ?? 'FA';
 }

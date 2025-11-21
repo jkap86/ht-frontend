@@ -14,8 +14,8 @@ _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       fantasyPositions: (json['fantasy_positions'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
-      yearsExp: (json['yearsExp'] as num).toInt(),
-      age: (json['age'] as num).toInt(),
+      yearsExp: (json['yearsExp'] as num?)?.toInt(),
+      age: (json['age'] as num?)?.toInt(),
       team: json['team'] as String?,
       position: json['position'] as String?,
       number: (json['number'] as num?)?.toInt(),

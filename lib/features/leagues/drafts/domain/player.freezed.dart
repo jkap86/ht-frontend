@@ -26,8 +26,8 @@ mixin _$Player {
   String get lastName => throw _privateConstructorUsedError;
   @JsonKey(name: 'fantasy_positions')
   List<String> get fantasyPositions => throw _privateConstructorUsedError;
-  int get yearsExp => throw _privateConstructorUsedError;
-  int get age => throw _privateConstructorUsedError;
+  int? get yearsExp => throw _privateConstructorUsedError;
+  int? get age => throw _privateConstructorUsedError;
   String? get team => throw _privateConstructorUsedError;
   String? get position => throw _privateConstructorUsedError;
   int? get number => throw _privateConstructorUsedError;
@@ -55,8 +55,8 @@ abstract class $PlayerCopyWith<$Res> {
       String firstName,
       String lastName,
       @JsonKey(name: 'fantasy_positions') List<String> fantasyPositions,
-      int yearsExp,
-      int age,
+      int? yearsExp,
+      int? age,
       String? team,
       String? position,
       int? number,
@@ -85,8 +85,8 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
     Object? firstName = null,
     Object? lastName = null,
     Object? fantasyPositions = null,
-    Object? yearsExp = null,
-    Object? age = null,
+    Object? yearsExp = freezed,
+    Object? age = freezed,
     Object? team = freezed,
     Object? position = freezed,
     Object? number = freezed,
@@ -115,14 +115,14 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
           ? _value.fantasyPositions
           : fantasyPositions // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      yearsExp: null == yearsExp
+      yearsExp: freezed == yearsExp
           ? _value.yearsExp
           : yearsExp // ignore: cast_nullable_to_non_nullable
-              as int,
-      age: null == age
+              as int?,
+      age: freezed == age
           ? _value.age
           : age // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       team: freezed == team
           ? _value.team
           : team // ignore: cast_nullable_to_non_nullable
@@ -164,8 +164,8 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
       String firstName,
       String lastName,
       @JsonKey(name: 'fantasy_positions') List<String> fantasyPositions,
-      int yearsExp,
-      int age,
+      int? yearsExp,
+      int? age,
       String? team,
       String? position,
       int? number,
@@ -192,8 +192,8 @@ class __$$PlayerImplCopyWithImpl<$Res>
     Object? firstName = null,
     Object? lastName = null,
     Object? fantasyPositions = null,
-    Object? yearsExp = null,
-    Object? age = null,
+    Object? yearsExp = freezed,
+    Object? age = freezed,
     Object? team = freezed,
     Object? position = freezed,
     Object? number = freezed,
@@ -222,14 +222,14 @@ class __$$PlayerImplCopyWithImpl<$Res>
           ? _value._fantasyPositions
           : fantasyPositions // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      yearsExp: null == yearsExp
+      yearsExp: freezed == yearsExp
           ? _value.yearsExp
           : yearsExp // ignore: cast_nullable_to_non_nullable
-              as int,
-      age: null == age
+              as int?,
+      age: freezed == age
           ? _value.age
           : age // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       team: freezed == team
           ? _value.team
           : team // ignore: cast_nullable_to_non_nullable
@@ -268,8 +268,8 @@ class _$PlayerImpl implements _Player {
       required this.lastName,
       @JsonKey(name: 'fantasy_positions')
       required final List<String> fantasyPositions,
-      required this.yearsExp,
-      required this.age,
+      this.yearsExp,
+      this.age,
       this.team,
       this.position,
       this.number,
@@ -300,9 +300,9 @@ class _$PlayerImpl implements _Player {
   }
 
   @override
-  final int yearsExp;
+  final int? yearsExp;
   @override
-  final int age;
+  final int? age;
   @override
   final String? team;
   @override
@@ -390,8 +390,8 @@ abstract class _Player implements Player {
       required final String lastName,
       @JsonKey(name: 'fantasy_positions')
       required final List<String> fantasyPositions,
-      required final int yearsExp,
-      required final int age,
+      final int? yearsExp,
+      final int? age,
       final String? team,
       final String? position,
       final int? number,
@@ -413,9 +413,9 @@ abstract class _Player implements Player {
   @JsonKey(name: 'fantasy_positions')
   List<String> get fantasyPositions;
   @override
-  int get yearsExp;
+  int? get yearsExp;
   @override
-  int get age;
+  int? get age;
   @override
   String? get team;
   @override

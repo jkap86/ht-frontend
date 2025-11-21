@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-DraftOrderEntry _$DraftOrderEntryFromJson(Map<String, dynamic> json) {
-  return _DraftOrderEntry.fromJson(json);
-}
-
 /// @nodoc
 mixin _$DraftOrderEntry {
   int get id => throw _privateConstructorUsedError;
@@ -27,9 +23,6 @@ mixin _$DraftOrderEntry {
   String? get userId => throw _privateConstructorUsedError;
   String? get username => throw _privateConstructorUsedError;
   String? get teamName => throw _privateConstructorUsedError;
-
-  /// Serializes this DraftOrderEntry to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of DraftOrderEntry
   /// with the given fields replaced by the non-null parameter values.
@@ -183,7 +176,7 @@ class __$$DraftOrderEntryImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$DraftOrderEntryImpl implements _DraftOrderEntry {
   const _$DraftOrderEntryImpl(
       {required this.id,
@@ -193,9 +186,6 @@ class _$DraftOrderEntryImpl implements _DraftOrderEntry {
       this.userId,
       this.username,
       this.teamName});
-
-  factory _$DraftOrderEntryImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DraftOrderEntryImplFromJson(json);
 
   @override
   final int id;
@@ -235,7 +225,6 @@ class _$DraftOrderEntryImpl implements _DraftOrderEntry {
                 other.teamName == teamName));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, draftId, rosterId,
       draftPosition, userId, username, teamName);
@@ -248,13 +237,6 @@ class _$DraftOrderEntryImpl implements _DraftOrderEntry {
   _$$DraftOrderEntryImplCopyWith<_$DraftOrderEntryImpl> get copyWith =>
       __$$DraftOrderEntryImplCopyWithImpl<_$DraftOrderEntryImpl>(
           this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DraftOrderEntryImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _DraftOrderEntry implements DraftOrderEntry {
@@ -266,9 +248,6 @@ abstract class _DraftOrderEntry implements DraftOrderEntry {
       final String? userId,
       final String? username,
       final String? teamName}) = _$DraftOrderEntryImpl;
-
-  factory _DraftOrderEntry.fromJson(Map<String, dynamic> json) =
-      _$DraftOrderEntryImpl.fromJson;
 
   @override
   int get id;
