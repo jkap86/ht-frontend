@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../../core/domain/players/player.dart';
 import 'draft.dart';
-import 'player.dart';
 import 'draft_pick.dart';
 import 'draft_order_entry.dart';
 

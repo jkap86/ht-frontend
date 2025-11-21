@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/draft_room_provider.dart';
 import '../../domain/draft.dart';
-import '../../domain/player.dart';
+import '../../../../../core/domain/players/player.dart';
 
 class PlayerSelectionPanel extends ConsumerStatefulWidget {
   final int leagueId;

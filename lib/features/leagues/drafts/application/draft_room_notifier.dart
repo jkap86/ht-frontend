@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/domain/players/player.dart';
 import '../data/drafts_api_client.dart';
 import '../domain/draft_room_state.dart';
 import '../domain/draft.dart';
-import '../domain/player.dart';
 import '../domain/draft_pick.dart';
 import '../domain/draft_order_entry.dart';
 import '../../../../core/services/socket/socket_service.dart';

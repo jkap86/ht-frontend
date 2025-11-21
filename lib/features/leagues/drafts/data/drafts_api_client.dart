@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import '../../../../core/infrastructure/api_client.dart';
+import '../../../../core/domain/players/player.dart';
 import '../../../auth/data/auth_storage.dart';
 import '../domain/draft.dart';
-import '../domain/player.dart';
 import '../domain/draft_pick.dart';
 
 /// API client for draft-related endpoints
