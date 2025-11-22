@@ -51,28 +51,74 @@ class _DraftRoomScreenState extends ConsumerState<DraftRoomScreen> {
 
               // Commissioner controls
               if (draft.isCommissioner) ...[
-                IconButton(
-                  icon: Icon(
-                    draftRoomState.draft.status == 'paused'
-                        ? Icons.play_arrow
-                        : Icons.pause,
-                  ),
-                  onPressed: () async {
-                    final notifier = ref.read(
-                      draftRoomProvider((
-                        leagueId: widget.leagueId,
-                        draftId: widget.draftId,
-                        draft: draft,
-                      )).notifier,
-                    );
+                // Start Draft button (only when not started)
+                if (draftRoomState.draft.status == 'not_started')
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final notifier = ref.read(
+                          draftRoomProvider((
+                            leagueId: widget.leagueId,
+                            draftId: widget.draftId,
+                            draft: draft,
+                          )).notifier,
+                        );
 
-                    if (draftRoomState.draft.status == 'paused') {
-                      await notifier.resumeDraft();
-                    } else {
-                      await notifier.pauseDraft();
-                    }
-                  },
-                ),
+                        try {
+                          await notifier.startDraft();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Draft started!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to start draft: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Start Draft'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                // Pause/Resume button (only when draft is active)
+                if (draftRoomState.draft.status == 'in_progress' ||
+                    draftRoomState.draft.status == 'paused')
+                  IconButton(
+                    icon: Icon(
+                      draftRoomState.draft.status == 'paused'
+                          ? Icons.play_arrow
+                          : Icons.pause,
+                    ),
+                    onPressed: () async {
+                      final notifier = ref.read(
+                        draftRoomProvider((
+                          leagueId: widget.leagueId,
+                          draftId: widget.draftId,
+                          draft: draft,
+                        )).notifier,
+                      );
+
+                      if (draftRoomState.draft.status == 'paused') {
+                        await notifier.resumeDraft();
+                      } else {
+                        await notifier.pauseDraft();
+                      }
+                    },
+                  ),
               ],
             ],
           ),

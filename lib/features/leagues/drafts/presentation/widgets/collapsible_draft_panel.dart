@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/draft.dart';
 import 'player_selection_panel.dart';
+import 'draft_queue_widget.dart';
 import '../../../../../shared/widgets/collapsible/collapsible_widget.dart';
 
 /// Collapsible draft panel that shows player selection and activity feed
@@ -81,10 +82,18 @@ class _CollapsibleDraftPanelState
               ),
               Expanded(
                 child: _TabButton(
-                  label: 'Activity',
-                  icon: Icons.history,
+                  label: 'Queue',
+                  icon: Icons.queue_outlined,
                   isSelected: _selectedTab == 1,
                   onTap: () => setState(() => _selectedTab = 1),
+                ),
+              ),
+              Expanded(
+                child: _TabButton(
+                  label: 'Activity',
+                  icon: Icons.history,
+                  isSelected: _selectedTab == 2,
+                  onTap: () => setState(() => _selectedTab = 2),
                 ),
               ),
             ],
@@ -99,6 +108,10 @@ class _CollapsibleDraftPanelState
                 leagueId: widget.leagueId,
                 draftId: widget.draftId,
                 draft: widget.draft,
+              ),
+              DraftQueueWidget(
+                leagueId: widget.leagueId,
+                draftId: widget.draftId,
               ),
               _ActivityFeedPanel(
                 leagueId: widget.leagueId,

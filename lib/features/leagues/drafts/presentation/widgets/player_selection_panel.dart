@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/draft_room_provider.dart';
+import '../../application/queue_provider.dart';
 import '../../domain/draft.dart';
 import '../../../../../core/domain/players/player.dart';
 
@@ -41,11 +42,25 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
       )),
     );
 
-    final notifier = ref.read(
+    final queueState = ref.watch(
+      queueProvider((
+        leagueId: widget.leagueId,
+        draftId: widget.draftId,
+      )),
+    );
+
+    final draftNotifier = ref.read(
       draftRoomProvider((
         leagueId: widget.leagueId,
         draftId: widget.draftId,
         draft: widget.draft,
+      )).notifier,
+    );
+
+    final queueNotifier = ref.read(
+      queueProvider((
+        leagueId: widget.leagueId,
+        draftId: widget.draftId,
       )).notifier,
     );
 
@@ -64,7 +79,7 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
                       icon: const Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
-                        notifier.updateSearchQuery('');
+                        draftNotifier.updateSearchQuery('');
                       },
                     )
                   : null,
@@ -73,7 +88,7 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
               ),
             ),
             onChanged: (value) {
-              notifier.updateSearchQuery(value);
+              draftNotifier.updateSearchQuery(value);
             },
           ),
         ),
@@ -90,7 +105,7 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
                 label: Text(position),
                 selected: isSelected,
                 onSelected: (selected) {
-                  notifier.togglePositionFilter(position);
+                  draftNotifier.togglePositionFilter(position);
                 },
               );
             }).toList(),
@@ -126,12 +141,20 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
                           itemBuilder: (context, index) {
                             final player =
                                 draftRoomState.filteredPlayers[index];
+                            final isInQueue = queueState.items
+                                .any((q) => q.playerId == player.id);
+
                             return PlayerCard(
                               player: player,
                               canPick: draftRoomState.canMakePick,
+                              isInQueue: isInQueue,
                               onPick: () async {
                                 try {
-                                  await notifier.makePick(player.id);
+                                  await draftNotifier.makePick(player.id);
+                                  // Also remove from queue if present
+                                  if (isInQueue) {
+                                    queueNotifier.removePlayerFromQueue(player.id);
+                                  }
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -153,6 +176,45 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
                                   }
                                 }
                               },
+                              onToggleQueue: () async {
+                                try {
+                                  if (isInQueue) {
+                                    final queueEntry = queueState.items
+                                        .firstWhere((q) => q.playerId == player.id);
+                                    await queueNotifier.removeFromQueue(queueEntry.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Removed ${player.fullName} from queue',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    await queueNotifier.addToQueue(player.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Added ${player.fullName} to queue',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to update queue: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                             );
                           },
                         ),
@@ -165,13 +227,17 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
 class PlayerCard extends StatelessWidget {
   final Player player;
   final bool canPick;
+  final bool isInQueue;
   final VoidCallback onPick;
+  final VoidCallback onToggleQueue;
 
   const PlayerCard({
     super.key,
     required this.player,
     required this.canPick,
+    required this.isInQueue,
     required this.onPick,
+    required this.onToggleQueue,
   });
 
   @override
@@ -222,12 +288,29 @@ class PlayerCard extends StatelessWidget {
             ],
           ],
         ),
-        trailing: canPick
-            ? ElevatedButton(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Queue button
+            IconButton(
+              icon: Icon(
+                isInQueue ? Icons.star : Icons.star_border,
+                color: isInQueue ? Colors.amber : Colors.grey,
+              ),
+              onPressed: onToggleQueue,
+              tooltip: isInQueue ? 'Remove from queue' : 'Add to queue',
+            ),
+            const SizedBox(width: 8),
+            // Pick button
+            if (canPick)
+              ElevatedButton(
                 onPressed: onPick,
                 child: const Text('Pick'),
               )
-            : const Icon(Icons.lock, color: Colors.grey),
+            else
+              const Icon(Icons.lock, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
