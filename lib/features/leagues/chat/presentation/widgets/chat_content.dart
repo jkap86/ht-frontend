@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/unified_league_chat_notifier.dart';
 import '../../../../auth/application/auth_notifier.dart';
 import '../../../../auth/application/users_search_provider.dart';
-import '../../../../chat/presentation/widgets/chat_message_bubble.dart';
-import '../../../../chat/presentation/widgets/chat_input_bar.dart';
-import '../../../../chat/presentation/widgets/chat_error_banner.dart';
 import '../../../../direct_messages/presentation/dm_screen.dart';
 import '../../../../home/presentation/widgets/dm_chat_content.dart';
-import '../../../../../core/chat/chat_state.dart';
+import 'league_chat_header.dart';
+import 'league_chat_message_list.dart';
+import 'league_chat_input_section.dart';
 
 /// Embeddable league chat content widget (no AppBar / Scaffold).
 ///
@@ -70,98 +69,14 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
   }
 
   Widget _buildTabHeader() {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor,
-            width: 1,
-          ),
-        ),
-      ),
-      child: Center(
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildToggleButton(
-                label: widget.leagueName ?? 'League',
-                icon: Icons.groups,
-                isSelected: _selectedTab == ChatTab.league,
-                onTap: () => setState(() {
-                  _selectedTab = ChatTab.league;
-                  _selectedConversationId = null;
-                }),
-                isLeft: true,
-              ),
-              _buildToggleButton(
-                label: 'DMs',
-                icon: Icons.person,
-                isSelected: _selectedTab == ChatTab.dms,
-                onTap: () => setState(() => _selectedTab = ChatTab.dms),
-                isLeft: false,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToggleButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required bool isLeft,
-  }) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.horizontal(
-        left: isLeft ? const Radius.circular(8) : Radius.zero,
-        right: !isLeft ? const Radius.circular(8) : Radius.zero,
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.horizontal(
-            left: isLeft ? const Radius.circular(8) : Radius.zero,
-            right: !isLeft ? const Radius.circular(8) : Radius.zero,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected
-                  ? theme.colorScheme.onPrimary
-                  : theme.textTheme.bodyMedium?.color,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-                color: isSelected
-                    ? theme.colorScheme.onPrimary
-                    : theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return LeagueChatHeader(
+      leagueName: widget.leagueName ?? 'League',
+      isLeagueSelected: _selectedTab == ChatTab.league,
+      onLeagueSelected: () => setState(() {
+        _selectedTab = ChatTab.league;
+        _selectedConversationId = null;
+      }),
+      onDmsSelected: () => setState(() => _selectedTab = ChatTab.dms),
     );
   }
 
@@ -184,15 +99,17 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
     return Column(
       children: [
         Expanded(
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildLeagueMessagesList(state),
+          child: LeagueChatMessageList(
+            messages: state.messages,
+            scrollController: _scrollController,
+            isLoading: isLoading,
+          ),
         ),
-        ChatErrorBanner(errorMessage: state.errorMessage),
-        ChatInputBar(
+        LeagueChatInputSection(
           controller: _textController,
           onSend: () => _handleSend(notifier),
           enabled: state.isConnected,
+          errorMessage: state.errorMessage,
         ),
       ],
     );
@@ -449,41 +366,6 @@ class _LeagueChatContentState extends ConsumerState<LeagueChatContent> {
           style: TextStyle(color: Theme.of(context).colorScheme.error),
         ),
       ),
-    );
-  }
-
-  Widget _buildLeagueMessagesList(ChatState state) {
-    if (state.messages.isEmpty) {
-      return const Center(
-        child: Text(
-          'No messages yet. Be the first to say something!',
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      itemCount: state.messages.length,
-      itemBuilder: (context, index) {
-        final msg = state.messages[index];
-
-        final text = (msg['message'] ?? '').toString();
-        final username = (msg['username'] ?? '').toString();
-        final messageType = (msg['message_type'] ?? 'chat').toString();
-
-        final isSystem = messageType == 'system';
-
-        if (isSystem) {
-          return ChatMessageBubble.system(text: text);
-        }
-
-        return ChatMessageBubble.user(
-          text: text,
-          username: username,
-        );
-      },
     );
   }
 

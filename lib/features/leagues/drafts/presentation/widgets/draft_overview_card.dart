@@ -12,6 +12,7 @@ import 'derby/derby_countdown_widget.dart';
 import 'derby/derby_slot_grid.dart';
 import 'derby/derby_status_banner.dart';
 import 'derby/derby_control_buttons.dart';
+import 'draft_header_bar.dart';
 
 /// Card showing draft overview with draft details
 class DraftOverviewCard extends ConsumerWidget {
@@ -172,52 +173,13 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
       child: Column(
         children: [
           // Header - always visible
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Draft ${widget.draftNumber}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Summary info
-                        Row(
-                          children: [
-                            _SummaryChip(
-                              label: DraftHelpers.formatDraftType(draftType),
-                              icon: Icons.swap_vert,
-                            ),
-                            const SizedBox(width: 8),
-                            _SummaryChip(
-                              label: '$rounds rounds',
-                              icon: Icons.repeat,
-                            ),
-                            const SizedBox(width: 8),
-                            _SummaryChip(
-                              label: DraftHelpers.formatPlayerPool(playerPool),
-                              icon: Icons.people,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                  ),
-                ],
-              ),
-            ),
+          DraftHeaderBar(
+            draftName: 'Draft ${widget.draftNumber}',
+            draftTypeLabel: DraftHelpers.formatDraftType(draftType),
+            rounds: rounds,
+            playerPoolLabel: DraftHelpers.formatPlayerPool(playerPool),
+            isExpanded: _isExpanded,
+            onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
           ),
 
           // Expanded content - sections
@@ -1221,42 +1183,6 @@ class _DraftCardState extends ConsumerState<_DraftCard> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Small chip for summary information
-class _SummaryChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-
-  const _SummaryChip({
-    required this.label,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

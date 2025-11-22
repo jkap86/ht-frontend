@@ -1,7 +1,14 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'countdown_controller.dart';
+import 'text_countdown_timer.dart' as text;
+import 'circular_countdown_timer.dart' as circular;
 
-/// Reusable countdown timer widget
+// Re-export for convenience
+export 'countdown_controller.dart';
+export 'text_countdown_timer.dart';
+export 'circular_countdown_timer.dart';
+
+/// Reusable countdown timer widget (backward compatible wrapper)
 /// Can be used for draft picks, auction bids, or any timed events
 class CountdownTimer extends StatefulWidget {
   /// Duration of the timer in seconds
@@ -53,16 +60,18 @@ class CountdownTimer extends StatefulWidget {
 }
 
 class CountdownTimerState extends State<CountdownTimer> {
-  Timer? _timer;
-  late int _remainingSeconds;
-  bool _isRunning = false;
+  late CountdownController _controller;
 
   @override
   void initState() {
     super.initState();
-    _remainingSeconds = widget.durationSeconds;
+    _controller = CountdownController(
+      durationSeconds: widget.durationSeconds,
+      onComplete: widget.onComplete,
+      onTick: widget.onTick,
+    );
     if (widget.autoStart && !widget.isPaused) {
-      start();
+      _controller.start();
     }
   }
 
@@ -72,181 +81,51 @@ class CountdownTimerState extends State<CountdownTimer> {
 
     // Handle pause/resume
     if (widget.isPaused && !oldWidget.isPaused) {
-      pause();
-    } else if (!widget.isPaused && oldWidget.isPaused && _isRunning) {
-      resume();
-    }
-
-    // Handle duration changes
-    if (widget.durationSeconds != oldWidget.durationSeconds && !_isRunning) {
-      setState(() {
-        _remainingSeconds = widget.durationSeconds;
-      });
+      _controller.pause();
+    } else if (!widget.isPaused && oldWidget.isPaused && _controller.isRunning) {
+      _controller.resume();
     }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
   /// Start the timer
-  void start() {
-    if (_isRunning || widget.isPaused) return;
-
-    setState(() {
-      _isRunning = true;
-      _remainingSeconds = widget.durationSeconds;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.isPaused) return;
-
-      setState(() {
-        if (_remainingSeconds > 0) {
-          _remainingSeconds--;
-          widget.onTick?.call(_remainingSeconds);
-        } else {
-          _timer?.cancel();
-          _isRunning = false;
-          widget.onComplete?.call();
-        }
-      });
-    });
-  }
+  void start() => _controller.start();
 
   /// Pause the timer
-  void pause() {
-    setState(() {
-      _isRunning = false;
-    });
-    _timer?.cancel();
-  }
+  void pause() => _controller.pause();
 
   /// Resume the timer
-  void resume() {
-    if (_isRunning || widget.isPaused) return;
-
-    setState(() {
-      _isRunning = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.isPaused) return;
-
-      setState(() {
-        if (_remainingSeconds > 0) {
-          _remainingSeconds--;
-          widget.onTick?.call(_remainingSeconds);
-        } else {
-          _timer?.cancel();
-          _isRunning = false;
-          widget.onComplete?.call();
-        }
-      });
-    });
-  }
+  void resume() => _controller.resume();
 
   /// Reset the timer to initial duration
-  void reset() {
-    _timer?.cancel();
-    setState(() {
-      _remainingSeconds = widget.durationSeconds;
-      _isRunning = false;
-    });
-  }
+  void reset() => _controller.reset();
 
   /// Stop the timer
-  void stop() {
-    _timer?.cancel();
-    setState(() {
-      _remainingSeconds = 0;
-      _isRunning = false;
-    });
-  }
+  void stop() => _controller.stop();
 
   /// Add time to the timer
-  void addTime(int seconds) {
-    setState(() {
-      _remainingSeconds += seconds;
-    });
-  }
+  void addTime(int seconds) => _controller.addTime(seconds);
 
   /// Get remaining seconds
-  int get remainingSeconds => _remainingSeconds;
+  int get remainingSeconds => _controller.remainingSeconds;
 
   /// Check if timer is running
-  bool get isRunning => _isRunning;
-
-  String _formatTime() {
-    final minutes = _remainingSeconds ~/ 60;
-    final seconds = _remainingSeconds % 60;
-
-    if (widget.compact) {
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    } else {
-      if (minutes > 0) {
-        return '$minutes min ${seconds}s';
-      } else {
-        return '${seconds}s';
-      }
-    }
-  }
-
-  Color _getTimerColor() {
-    if (widget.textColor != null) return widget.textColor!;
-
-    // Change color based on urgency
-    if (_remainingSeconds <= 10) {
-      return Colors.red;
-    } else if (_remainingSeconds <= 30) {
-      return Colors.orange;
-    } else {
-      return Colors.green;
-    }
-  }
+  bool get isRunning => _controller.isRunning;
 
   @override
   Widget build(BuildContext context) {
-    final progress = _remainingSeconds / widget.durationSeconds;
-    final timerColor = _getTimerColor();
-
-    if (widget.showProgress) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            _formatTime(),
-            style: TextStyle(
-              fontSize: widget.fontSize ?? 24,
-              fontWeight: FontWeight.bold,
-              color: timerColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: 200,
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey.shade300,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                widget.progressColor ?? timerColor,
-              ),
-              minHeight: 8,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Text(
-      _formatTime(),
-      style: TextStyle(
-        fontSize: widget.fontSize ?? 24,
-        fontWeight: FontWeight.bold,
-        color: timerColor,
-      ),
+    return text.TextCountdownTimer(
+      controller: _controller,
+      compact: widget.compact,
+      textColor: widget.textColor,
+      fontSize: widget.fontSize,
+      showProgress: widget.showProgress,
+      progressColor: widget.progressColor,
     );
   }
 }
@@ -302,16 +181,18 @@ class CircularCountdownTimer extends StatefulWidget {
 }
 
 class CircularCountdownTimerState extends State<CircularCountdownTimer> {
-  Timer? _timer;
-  late int _remainingSeconds;
-  bool _isRunning = false;
+  late CountdownController _controller;
 
   @override
   void initState() {
     super.initState();
-    _remainingSeconds = widget.durationSeconds;
+    _controller = CountdownController(
+      durationSeconds: widget.durationSeconds,
+      onComplete: widget.onComplete,
+      onTick: widget.onTick,
+    );
     if (widget.autoStart && !widget.isPaused) {
-      start();
+      _controller.start();
     }
   }
 
@@ -320,167 +201,37 @@ class CircularCountdownTimerState extends State<CircularCountdownTimer> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.isPaused && !oldWidget.isPaused) {
-      pause();
-    } else if (!widget.isPaused && oldWidget.isPaused && _isRunning) {
-      resume();
-    }
-
-    if (widget.durationSeconds != oldWidget.durationSeconds && !_isRunning) {
-      setState(() {
-        _remainingSeconds = widget.durationSeconds;
-      });
+      _controller.pause();
+    } else if (!widget.isPaused && oldWidget.isPaused && _controller.isRunning) {
+      _controller.resume();
     }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
-  void start() {
-    if (_isRunning || widget.isPaused) return;
+  void start() => _controller.start();
+  void pause() => _controller.pause();
+  void resume() => _controller.resume();
+  void reset() => _controller.reset();
+  void stop() => _controller.stop();
+  void addTime(int seconds) => _controller.addTime(seconds);
 
-    setState(() {
-      _isRunning = true;
-      _remainingSeconds = widget.durationSeconds;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.isPaused) return;
-
-      setState(() {
-        if (_remainingSeconds > 0) {
-          _remainingSeconds--;
-          widget.onTick?.call(_remainingSeconds);
-        } else {
-          _timer?.cancel();
-          _isRunning = false;
-          widget.onComplete?.call();
-        }
-      });
-    });
-  }
-
-  void pause() {
-    setState(() {
-      _isRunning = false;
-    });
-    _timer?.cancel();
-  }
-
-  void resume() {
-    if (_isRunning || widget.isPaused) return;
-
-    setState(() {
-      _isRunning = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.isPaused) return;
-
-      setState(() {
-        if (_remainingSeconds > 0) {
-          _remainingSeconds--;
-          widget.onTick?.call(_remainingSeconds);
-        } else {
-          _timer?.cancel();
-          _isRunning = false;
-          widget.onComplete?.call();
-        }
-      });
-    });
-  }
-
-  void reset() {
-    _timer?.cancel();
-    setState(() {
-      _remainingSeconds = widget.durationSeconds;
-      _isRunning = false;
-    });
-  }
-
-  void stop() {
-    _timer?.cancel();
-    setState(() {
-      _remainingSeconds = 0;
-      _isRunning = false;
-    });
-  }
-
-  void addTime(int seconds) {
-    setState(() {
-      _remainingSeconds += seconds;
-    });
-  }
-
-  int get remainingSeconds => _remainingSeconds;
-  bool get isRunning => _isRunning;
-
-  String _formatTime() {
-    final minutes = _remainingSeconds ~/ 60;
-    final seconds = _remainingSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  Color _getRingColor() {
-    if (widget.ringColor != null) return widget.ringColor!;
-
-    if (_remainingSeconds <= 10) {
-      return Colors.red;
-    } else if (_remainingSeconds <= 30) {
-      return Colors.orange;
-    } else {
-      return Colors.green;
-    }
-  }
+  int get remainingSeconds => _controller.remainingSeconds;
+  bool get isRunning => _controller.isRunning;
 
   @override
   Widget build(BuildContext context) {
-    final progress = _remainingSeconds / widget.durationSeconds;
-    final ringColor = _getRingColor();
-
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Background circle
-          SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: CircularProgressIndicator(
-              value: 1.0,
-              strokeWidth: widget.strokeWidth,
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                widget.backgroundColor ?? Colors.grey.shade300,
-              ),
-            ),
-          ),
-          // Progress circle
-          SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: widget.strokeWidth,
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(ringColor),
-            ),
-          ),
-          // Timer text
-          Text(
-            _formatTime(),
-            style: TextStyle(
-              fontSize: widget.size * 0.25,
-              fontWeight: FontWeight.bold,
-              color: widget.textColor ?? ringColor,
-            ),
-          ),
-        ],
-      ),
+    return circular.CircularCountdownTimer(
+      controller: _controller,
+      size: widget.size,
+      strokeWidth: widget.strokeWidth,
+      ringColor: widget.ringColor,
+      backgroundColor: widget.backgroundColor,
+      textColor: widget.textColor,
     );
   }
 }
