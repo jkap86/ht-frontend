@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Widget that builds resize handles for the chat widget
-class ChatResizeHandles extends StatelessWidget {
+/// Widget that builds resize handles for collapsible widgets
+class ResizeHandles extends StatelessWidget {
   final Function(String) onResizeStart;
   final Function(DragUpdateDetails) onResizeUpdate;
   final VoidCallback onResizeEnd;
 
-  const ChatResizeHandles({
+  const ResizeHandles({
     super.key,
     required this.onResizeStart,
     required this.onResizeUpdate,

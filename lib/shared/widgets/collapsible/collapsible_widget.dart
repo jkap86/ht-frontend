@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../features/leagues/chat/presentation/widgets/chat_resize_handles.dart';
+import '../resize_handles.dart';
 
 /// Position for the collapsible widget when collapsed
 enum CollapsiblePosition {
@@ -340,7 +340,7 @@ abstract class CollapsibleWidgetState<T extends CollapsibleWidget>
                 child: _isExpanded ? _buildExpanded() : buildCollapsedIcon(context),
               ),
               if (_isExpanded)
-                ChatResizeHandles(
+                ResizeHandles(
                   onResizeStart: (edge) => setState(() => _resizingEdge = edge),
                   onResizeUpdate: _handleResize,
                   onResizeEnd: () {

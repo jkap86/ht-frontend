@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 
 import '../../../core/infrastructure/api_client.dart';
+import '../../../core/infrastructure/api_exceptions.dart' as api;
 import '../domain/auth_exceptions.dart';
 import 'dtos/auth_result_dto.dart';
 import 'dtos/user_dto.dart';
@@ -20,41 +20,21 @@ class AuthApiClient {
   })  : _apiClient = apiClient,
         _storage = storage;
 
-  /// Parse HTTP errors and throw appropriate exceptions
-  Never _handleError(http.Response response, String operation) {
-    final statusCode = response.statusCode;
-
-    try {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final errorMessage = json['error'] as String? ?? 'Unknown error occurred';
-
-      switch (statusCode) {
-        case 400:
-          throw ValidationException(errorMessage);
-        case 401:
-          throw InvalidCredentialsException(errorMessage);
-        case 404:
-          throw NotFoundException(errorMessage);
-        case 409:
-          throw ConflictException(errorMessage);
-        default:
-          throw ServerException(errorMessage, statusCode);
-      }
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      throw ServerException('$operation failed with status $statusCode', statusCode);
+  /// Convert core API exceptions to auth-specific exceptions
+  Never _handleApiException(api.ApiException e, String operation) {
+    if (e is api.UnauthorizedException) {
+      throw InvalidCredentialsException(e.message);
+    } else if (e is api.ValidationException) {
+      throw ValidationException(e.message);
+    } else if (e is api.NotFoundException) {
+      throw NotFoundException(e.message);
+    } else if (e is api.NetworkException) {
+      throw NetworkException(e.message);
+    } else if (e is api.ServerException) {
+      throw ServerException(e.message, e.statusCode ?? 500);
+    } else {
+      throw ServerException('$operation failed: ${e.message}', e.statusCode ?? 500);
     }
-  }
-
-  /// Handle network errors
-  Never _handleNetworkError(Object error, String operation) {
-    if (error is SocketException) {
-      throw const NetworkException('Unable to connect to server');
-    }
-    if (error is FormatException) {
-      throw const NetworkException('Invalid response from server');
-    }
-    throw NetworkException('$operation failed: ${error.toString()}');
   }
 
   /// Register a new user
@@ -65,15 +45,12 @@ class AuthApiClient {
         body: {'username': username, 'password': password},
       );
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        _handleError(response, 'Registration');
-      }
-
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return AuthResultDto.fromJson(json);
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      _handleNetworkError(e, 'Registration');
+    } on api.ApiException catch (e) {
+      _handleApiException(e, 'Registration');
+    } on AuthException {
+      rethrow;
     }
   }
 
@@ -85,15 +62,12 @@ class AuthApiClient {
         body: {'username': username, 'password': password},
       );
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        _handleError(response, 'Login');
-      }
-
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return AuthResultDto.fromJson(json);
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      _handleNetworkError(e, 'Login');
+    } on api.ApiException catch (e) {
+      _handleApiException(e, 'Login');
+    } on AuthException {
+      rethrow;
     }
   }
 
@@ -110,10 +84,6 @@ class AuthApiClient {
         token: token,
       );
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        _handleError(response, 'User info retrieval');
-      }
-
       final json = jsonDecode(response.body) as Map<String, dynamic>;
 
       // Backend returns { user: { id, username } }, extract the user object
@@ -123,9 +93,10 @@ class AuthApiClient {
       }
 
       return UserDto.fromJson(userData);
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      _handleNetworkError(e, 'User info retrieval');
+    } on api.ApiException catch (e) {
+      _handleApiException(e, 'User info retrieval');
+    } on AuthException {
+      rethrow;
     }
   }
 
@@ -142,15 +113,12 @@ class AuthApiClient {
         body: {'refreshToken': refreshToken},
       );
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        _handleError(response, 'Token refresh');
-      }
-
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return AuthResultDto.fromJson(json);
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      _handleNetworkError(e, 'Token refresh');
+    } on api.ApiException catch (e) {
+      _handleApiException(e, 'Token refresh');
+    } on AuthException {
+      rethrow;
     }
   }
 
@@ -168,15 +136,12 @@ class AuthApiClient {
         queryParameters: {'q': query},
       );
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        _handleError(response, 'User search');
-      }
-
       final json = jsonDecode(response.body) as List<dynamic>;
       return json.map((userData) => UserDto.fromJson(userData as Map<String, dynamic>)).toList();
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      _handleNetworkError(e, 'User search');
+    } on api.ApiException catch (e) {
+      _handleApiException(e, 'User search');
+    } on AuthException {
+      rethrow;
     }
   }
 }
