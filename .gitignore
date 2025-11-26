@@ -1,0 +1,48 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Android
+android/.gradle/
+android/captures/
+android/app/build/
+*.apk
+*.aar
+*.iml
+*.class
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework
+ios/Flutter/engine/
+ios/Flutter/*.xcarchive
+Runner.xcworkspace/
+Runner.xcodeproj/xcuserdata/
+
+# Web
+web/.dart_tool/
+build/
+
+# VS Code
+.vscode/
+.idea/
+
+# Crashlytics (just in case)
+**/firebase_app_id_file.json
+
+# Sensitive
+*.env
+*.pem
+
+# Logs
+*.log
+.claude/
