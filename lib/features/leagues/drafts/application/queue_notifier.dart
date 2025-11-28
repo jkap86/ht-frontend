@@ -99,8 +99,8 @@ class QueueNotifier extends StateNotifier<QueueState> {
     final updates = <Map<String, int>>[];
     for (int i = 0; i < queue.length; i++) {
       updates.add({
-        'id': queue[i].id,
-        'queuePosition': i + 1,
+        'queue_id': queue[i].id,
+        'queue_position': i + 1,
       });
     }
 
