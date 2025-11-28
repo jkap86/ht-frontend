@@ -51,7 +51,7 @@ class DraftQueueApiClient {
     final response = await _apiClient.postJson(
       '/api/leagues/$leagueId/drafts/$draftId/queue',
       token: token,
-      body: {'playerId': playerId},
+      body: {'player_id': playerId},
     );
 
     if (response.statusCode == 201) {
