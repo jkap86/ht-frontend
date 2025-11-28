@@ -26,11 +26,24 @@ class DraftGridView extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Sort draft order by actual draft position (not derby pick order)
+    final sortedDraftOrder = List<DraftOrderEntry>.from(draftOrder)
+      ..sort((a, b) {
+        // If both have draft positions, sort by those
+        if (a.draftPosition != null && b.draftPosition != null) {
+          return a.draftPosition!.compareTo(b.draftPosition!);
+        }
+        // If one has null draft position, put it at the end
+        if (a.draftPosition == null) return 1;
+        if (b.draftPosition == null) return -1;
+        return 0;
+      });
+
     // Create a table with managers on X-axis and rounds on Y-axis using TableView
     return TableView.builder(
       pinnedRowCount: 1, // Keep header row sticky
       pinnedColumnCount: 0, // No pinned columns
-      columnCount: draftOrder.length, // One column per manager
+      columnCount: sortedDraftOrder.length, // One column per manager
       rowCount: draft.rounds + 1, // +1 for header row
       columnBuilder: (index) {
         return const TableSpan(
@@ -59,7 +72,7 @@ class DraftGridView extends StatelessWidget {
         if (vicinity.row == 0) {
           // Manager headers
           final managerIndex = vicinity.column;
-          final manager = draftOrder[managerIndex];
+          final manager = sortedDraftOrder[managerIndex];
           return TableViewCell(
             child: Container(
               decoration: BoxDecoration(
@@ -101,9 +114,9 @@ class DraftGridView extends StatelessWidget {
 
         // Calculate the pick position for this manager in this round
         final positionInRound = isSnakeRound
-            ? (draftOrder.length - 1 - managerIndex)
+            ? (sortedDraftOrder.length - 1 - managerIndex)
             : managerIndex;
-        final pickNumber = ((round - 1) * draftOrder.length) + positionInRound + 1;
+        final pickNumber = ((round - 1) * sortedDraftOrder.length) + positionInRound + 1;
         final pickInRound = positionInRound + 1; // 1-indexed for display
 
         // Find the pick for this slot
@@ -114,7 +127,7 @@ class DraftGridView extends StatelessWidget {
             draftId: draft.id,
             pickNumber: pickNumber,
             roundNumber: round,
-            rosterId: draftOrder[managerIndex].rosterId,
+            rosterId: sortedDraftOrder[managerIndex].rosterId,
             pickedAt: DateTime.now(),
           ),
         );

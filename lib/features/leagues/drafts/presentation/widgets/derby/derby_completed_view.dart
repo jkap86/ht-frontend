@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../domain/league.dart';
 import '../../../domain/draft.dart';
@@ -237,23 +236,6 @@ class DerbyCompletedView extends StatelessWidget {
                     );
                   }),
                 ],
-              ),
-            ),
-            // Draft Room button
-            const SizedBox(height: 16),
-            Center(
-              child: FilledButton.icon(
-                onPressed: () {
-                  context.goNamed(
-                    'draft-room',
-                    pathParameters: {
-                      'leagueId': league.id.toString(),
-                      'draftId': draft.id.toString(),
-                    },
-                  );
-                },
-                icon: const Icon(Icons.meeting_room),
-                label: const Text('Enter Draft Room'),
               ),
             ),
           ],

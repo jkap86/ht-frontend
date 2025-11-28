@@ -22,8 +22,10 @@ class CommissionerActionButtons extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Only show for commissioners when derby is not in progress
-    if (!isCommissioner || derbyStatus == 'in_progress') {
+    // Only show for commissioners when derby is not in progress or completed
+    if (!isCommissioner ||
+        derbyStatus == 'in_progress' ||
+        derbyStatus == 'completed') {
       return const SizedBox.shrink();
     }
 
