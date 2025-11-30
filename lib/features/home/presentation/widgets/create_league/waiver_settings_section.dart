@@ -24,7 +24,6 @@ class WaiverSettingsSection extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         title: const Text('Waiver Settings'),
-        leading: const Icon(Icons.swap_horiz),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),

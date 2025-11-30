@@ -15,6 +15,7 @@ class LeagueCreationData {
   final int playoffWeekStart;
   final int playoffTeams;
   final String matchupType;
+  final String matchupGeneration;
 
   // Scoring Settings
   final Map<String, double> scoringSettings;
@@ -51,6 +52,7 @@ class LeagueCreationData {
     required this.playoffWeekStart,
     required this.playoffTeams,
     required this.matchupType,
+    required this.matchupGeneration,
     required this.scoringSettings,
     required this.rosterPositions,
     required this.waiverType,
@@ -76,6 +78,7 @@ class LeagueCreationData {
       'playoff_week_start': playoffWeekStart,
       'playoff_teams': playoffTeams,
       'matchup_type': matchupType,
+      'matchup_generation': matchupGeneration,
       'waiver_type': waiverType,
       'faab_budget': faabBudget,
       'waiver_period_days': waiverPeriodDays,
@@ -91,7 +94,7 @@ class LeagueCreationData {
   factory LeagueCreationData.defaults() {
     return LeagueCreationData(
       name: '',
-      season: DateTime.now().year.toString(),
+      season: '2025',
       isPublic: false,
       totalRosters: 12,
       seasonType: 'regular',
@@ -101,6 +104,7 @@ class LeagueCreationData {
       playoffWeekStart: 15,
       playoffTeams: 4,
       matchupType: 'head_to_head',
+      matchupGeneration: 'after_draft',
       scoringSettings: {
         'passing_touchdowns': 4.0,
         'passing_yards': 0.04,
@@ -145,6 +149,7 @@ class LeagueCreationData {
     int? playoffWeekStart,
     int? playoffTeams,
     String? matchupType,
+    String? matchupGeneration,
     Map<String, double>? scoringSettings,
     Map<String, int>? rosterPositions,
     String? waiverType,
@@ -169,6 +174,7 @@ class LeagueCreationData {
       playoffWeekStart: playoffWeekStart ?? this.playoffWeekStart,
       playoffTeams: playoffTeams ?? this.playoffTeams,
       matchupType: matchupType ?? this.matchupType,
+      matchupGeneration: matchupGeneration ?? this.matchupGeneration,
       scoringSettings: scoringSettings ?? this.scoringSettings,
       rosterPositions: rosterPositions ?? this.rosterPositions,
       waiverType: waiverType ?? this.waiverType,

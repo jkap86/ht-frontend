@@ -105,7 +105,7 @@ class DraftSummaryCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 _DetailRow(
                   label: 'Draft Order',
-                  value: settings!.draftOrder == 'randomize' ? 'Randomize' : 'Derby',
+                  value: settings!.draftOrder == 'random' ? 'Randomize' : 'Derby',
                 ),
               ],
             ],

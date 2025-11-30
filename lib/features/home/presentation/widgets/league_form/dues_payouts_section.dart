@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'components/components.dart';
-import 'utils/payout_helpers.dart';
 
 class DuesPayoutsSection extends StatefulWidget {
   final double entryFee;
@@ -159,9 +158,11 @@ class _DuesPayoutsSectionState extends State<DuesPayoutsSection> {
                     prefixText: '\$',
                     helperText: 'Leave as \$0.00 for free leagues',
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}')),
                   ],
                   onChanged: (value) {
                     final newFee = double.tryParse(value) ?? 0.0;
@@ -183,7 +184,8 @@ class _DuesPayoutsSectionState extends State<DuesPayoutsSection> {
                 PayoutAllocationIndicator(
                   entryFee: entryFee,
                   totalRosters: widget.totalRosters,
-                  totalAllocatedPercentage: _calculateTotalAllocatedPercentage(),
+                  totalAllocatedPercentage:
+                      _calculateTotalAllocatedPercentage(),
                 ),
                 const SizedBox(height: 24),
                 // Payouts Header
@@ -206,7 +208,8 @@ class _DuesPayoutsSectionState extends State<DuesPayoutsSection> {
                       onToggleEnabled: () {
                         setState(() {
                           _enabledCategories[type] = !_enabledCategories[type]!;
-                          if (_enabledCategories[type]! && _visiblePlaces[type]!.isEmpty) {
+                          if (_enabledCategories[type]! &&
+                              _visiblePlaces[type]!.isEmpty) {
                             _visiblePlaces[type]!.add(1);
                             _categoryPayouts[type]![1] = {
                               'percentage': 0.0,

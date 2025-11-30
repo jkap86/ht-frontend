@@ -7,7 +7,7 @@ part 'draft_settings.g.dart';
 @freezed
 class DraftSettings with _$DraftSettings {
   const factory DraftSettings({
-    @JsonKey(name: 'draft_order') @Default('randomize') String draftOrder,
+    @JsonKey(name: 'draft_order') @Default('random') String draftOrder,
     @JsonKey(name: 'player_pool') @Default('all') String playerPool,
     @JsonKey(name: 'current_picker_index') int? currentPickerIndex,
     @JsonKey(name: 'draft_order_list') List<Map<String, dynamic>>? draftOrderList,

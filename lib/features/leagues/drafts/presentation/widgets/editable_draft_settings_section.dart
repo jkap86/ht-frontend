@@ -56,7 +56,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localDraftRounds = 15;
       _localPickTimeSeconds = 90;
       _localPlayerPool = 'all';
-      _localDraftOrder = 'randomize';
+      _localDraftOrder = 'random';
       _localTimerMode = 'per_pick';
       _localUseRosterPositions = false;
       _localDerbyStartTime = null;
@@ -83,7 +83,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localDraftRounds = draft.rounds;
       _localPickTimeSeconds = draft.pickTimeSeconds;
       _localPlayerPool = settings?.playerPool ?? 'all';
-      _localDraftOrder = settings?.draftOrder ?? 'randomize';
+      _localDraftOrder = settings?.draftOrder ?? 'random';
       _localTimerMode = 'per_pick'; // Default value - not in settings model yet
       _localUseRosterPositions = false; // Not stored in API yet
       _localDerbyStartTime = settings?.derbyStartTime;
@@ -112,7 +112,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       'player_pool': _localPlayerPool ?? 'all',
       'settings': {
         'pick_time_seconds': _localPickTimeSeconds ?? 90,
-        'draft_order': _localDraftOrder ?? 'randomize',
+        'draft_order': _localDraftOrder ?? 'random',
         'timer_mode': _localTimerMode ?? 'per_pick',
         'player_pool': _localPlayerPool ?? 'all',  // Also in settings for backward compatibility
       },
@@ -334,7 +334,7 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
               draftRounds: _localDraftRounds ?? 15,
               pickTimeSeconds: _localPickTimeSeconds ?? 90,
               playerPool: _localPlayerPool ?? 'all',
-              draftOrder: _localDraftOrder ?? 'randomize',
+              draftOrder: _localDraftOrder ?? 'random',
               timerMode: _localTimerMode ?? 'per_pick',
               useRosterPositions: _localUseRosterPositions ?? false,
               derbyStartTime: _localDerbyStartTime,

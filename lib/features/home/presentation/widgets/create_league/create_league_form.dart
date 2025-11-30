@@ -72,6 +72,7 @@ class CreateLeagueForm extends ConsumerWidget {
             onPlayoffsEnabledChanged: controller.updatePlayoffsEnabled,
             onPlayoffWeekStartChanged: controller.updatePlayoffWeekStart,
             onPlayoffTeamsChanged: controller.updatePlayoffTeams,
+            onMatchupGenerationChanged: controller.updateMatchupGeneration,
             nameError: state.error?.contains('name') == true ? state.error : null,
             seasonError: state.error?.contains('season') == true ? state.error : null,
           ),

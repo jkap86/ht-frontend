@@ -20,7 +20,6 @@ class TradeSettingsSection extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         title: const Text('Trade Notification Settings'),
-        leading: const Icon(Icons.notifications),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),

@@ -6,8 +6,6 @@ class DraftHeaderBar extends StatelessWidget {
   final String draftTypeLabel;
   final int rounds;
   final String playerPoolLabel;
-  final bool isExpanded;
-  final VoidCallback onToggleExpanded;
 
   const DraftHeaderBar({
     super.key,
@@ -15,57 +13,43 @@ class DraftHeaderBar extends StatelessWidget {
     required this.draftTypeLabel,
     required this.rounds,
     required this.playerPoolLabel,
-    required this.isExpanded,
-    required this.onToggleExpanded,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onToggleExpanded,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    draftName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Summary info
-                  Row(
-                    children: [
-                      SummaryChip(
-                        label: draftTypeLabel,
-                        icon: Icons.swap_vert,
-                      ),
-                      const SizedBox(width: 8),
-                      SummaryChip(
-                        label: '$rounds rounds',
-                        icon: Icons.repeat,
-                      ),
-                      const SizedBox(width: 8),
-                      SummaryChip(
-                        label: playerPoolLabel,
-                        icon: Icons.people,
-                      ),
-                    ],
-                  ),
-                ],
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            draftName,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Summary info
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              SummaryChip(
+                label: draftTypeLabel,
+                icon: Icons.swap_vert,
               ),
-            ),
-            Icon(
-              isExpanded ? Icons.expand_less : Icons.expand_more,
-            ),
-          ],
-        ),
+              SummaryChip(
+                label: '$rounds rounds',
+                icon: Icons.repeat,
+              ),
+              SummaryChip(
+                label: playerPoolLabel,
+                icon: Icons.people,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

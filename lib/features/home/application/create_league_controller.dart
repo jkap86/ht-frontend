@@ -128,6 +128,13 @@ class CreateLeagueController extends StateNotifier<CreateLeagueState> {
     );
   }
 
+  void updateMatchupGeneration(String timing) {
+    state = state.copyWith(
+      data: state.data.copyWith(matchupGeneration: timing),
+      clearError: true,
+    );
+  }
+
   void updateScoringSettings(Map<String, double> settings) {
     state = state.copyWith(
       data: state.data.copyWith(scoringSettings: settings),

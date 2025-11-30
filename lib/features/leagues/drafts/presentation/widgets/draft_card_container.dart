@@ -34,6 +34,7 @@ class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
   bool _isExpanded = false;
   String? _expandedSection; // Track which section is expanded
   void Function()? _derbyUpdateListener;
+  String? _joinedRoomName;
 
   @override
   void initState() {
@@ -44,12 +45,22 @@ class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
   @override
   void dispose() {
     _derbyUpdateListener?.call();
+    // Leave the room when disposing
+    if (_joinedRoomName != null) {
+      final socketService = ref.read(socketServiceProvider);
+      socketService.leaveRoom(_joinedRoomName!);
+    }
     super.dispose();
   }
 
   void _setupDerbyUpdateListener() {
     // Get the socket service and listen for derby updates
     final socketService = ref.read(socketServiceProvider);
+
+    // Join the league room to receive derby update events
+    final roomName = 'league_${widget.leagueId}';
+    socketService.joinRoom(roomName);
+    _joinedRoomName = roomName;
 
     _derbyUpdateListener = socketService.on('derby_updated', (data) {
       if (data is Map<String, dynamic>) {
@@ -83,8 +94,6 @@ class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
         draftTypeLabel: _formatDraftType(widget.draft.draftType),
         rounds: widget.draft.rounds,
         playerPoolLabel: _formatPlayerPool(widget.draft.settings?.playerPool ?? 'all'),
-        isExpanded: _isExpanded,
-        onToggleExpanded: () => setState(() => _isExpanded = !_isExpanded),
       ),
       child: _buildDraftOrderSection(),
     );
@@ -93,7 +102,7 @@ class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
   Widget _buildDraftOrderSection() {
     final isExpanded = _expandedSection == 'draft_order';
     final settings = widget.draft.settings;
-    final draftOrder = settings?.draftOrder ?? 'randomize';
+    final draftOrder = settings?.draftOrder ?? 'random';
     final draftOrderLabel =
         draftOrder.toLowerCase() == 'derby' ? 'Derby' : 'Randomize';
 

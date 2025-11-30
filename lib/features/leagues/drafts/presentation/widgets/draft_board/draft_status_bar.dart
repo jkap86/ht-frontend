@@ -45,7 +45,7 @@ class DraftStatusBar extends StatelessWidget {
               ),
             ),
           // Autopick status indicator
-          if (isAutopickEnabled && draft.status == 'in_progress')
+          if (isAutopickEnabled && (draft.status == 'in_progress' || draft.status == 'paused'))
             Container(
               margin: const EdgeInsets.only(top: 8.0),
               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),

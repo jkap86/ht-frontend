@@ -5,7 +5,6 @@ import '../../../../core/chat/base_chat_notifier.dart';
 import '../../../../core/chat/chat_state.dart';
 import '../../../../core/infrastructure/api_client.dart';
 import '../../../../core/services/socket/socket_providers.dart';
-import '../../../../core/services/socket/socket_service.dart';
 import '../../../auth/application/auth_notifier.dart';
 import '../data/league_chat_api_client.dart';
 import '../data/league_chat_repository.dart';
@@ -18,13 +17,10 @@ class LeagueChatNotifier extends BaseChatNotifier {
   final int leagueId;
 
   LeagueChatNotifier({
-    required SocketService socketService,
-    required LeagueChatRepository repository,
+    required super.socketService,
+    required LeagueChatRepository super.repository,
     required this.leagueId,
-  }) : super(
-          socketService: socketService,
-          repository: repository,
-        ) {
+  }) {
     // Kick off initial load + socket wiring
     initialize();
   }

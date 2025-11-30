@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import '../../../core/infrastructure/api_client.dart';
 import '../../../core/infrastructure/api_exceptions.dart' as api;
@@ -33,7 +32,8 @@ class AuthApiClient {
     } else if (e is api.ServerException) {
       throw ServerException(e.message, e.statusCode ?? 500);
     } else {
-      throw ServerException('$operation failed: ${e.message}', e.statusCode ?? 500);
+      throw ServerException(
+          '$operation failed: ${e.message}', e.statusCode ?? 500);
     }
   }
 
@@ -89,7 +89,8 @@ class AuthApiClient {
       // Backend returns { user: { id, username } }, extract the user object
       final userData = json['user'] as Map<String, dynamic>?;
       if (userData == null) {
-        throw const UnauthenticatedException('Invalid response format from /me endpoint');
+        throw const UnauthenticatedException(
+            'Invalid response format from /me endpoint');
       }
 
       return UserDto.fromJson(userData);
@@ -137,7 +138,9 @@ class AuthApiClient {
       );
 
       final json = jsonDecode(response.body) as List<dynamic>;
-      return json.map((userData) => UserDto.fromJson(userData as Map<String, dynamic>)).toList();
+      return json
+          .map((userData) => UserDto.fromJson(userData as Map<String, dynamic>))
+          .toList();
     } on api.ApiException catch (e) {
       _handleApiException(e, 'User search');
     } on AuthException {

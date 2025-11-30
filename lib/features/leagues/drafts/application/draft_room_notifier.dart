@@ -51,7 +51,8 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
       final orderData = results[3] as List<Map<String, dynamic>>;
 
       // Parse autopick statuses
-      final autopickStatusesData = stateData['autopickStatuses'] as Map<String, dynamic>?;
+      final autopickStatusesData =
+          stateData['autopickStatuses'] as Map<String, dynamic>?;
       final autopickStatuses = <int, bool>{};
       if (autopickStatusesData != null) {
         autopickStatusesData.forEach((key, value) {
@@ -61,9 +62,8 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
 
       // Parse draft order entries
       print('Draft order raw data: $orderData');
-      final draftOrder = orderData
-          .map((json) => DraftOrderEntry.fromJson(json))
-          .toList();
+      final draftOrder =
+          orderData.map((json) => DraftOrderEntry.fromJson(json)).toList();
       print('Parsed draft order: ${draftOrder.length} entries');
 
       state = state.copyWith(
@@ -87,7 +87,7 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
 
   void _setupSocketListeners() {
     // Join the draft room
-    _socketService.joinRoom('draft_${_draftId}');
+    _socketService.joinRoom('draft_$_draftId');
 
     // Listen for connection status changes
     _socketService.on('connect', _handleConnectionChange);
@@ -146,15 +146,13 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
     final updatedPicks = [...state.picks, pick];
 
     // Remove player from available players
-    final updatedPlayers = state.availablePlayers
-        .where((p) => p.id != pick.playerId)
-        .toList();
+    final updatedPlayers =
+        state.availablePlayers.where((p) => p.id != pick.playerId).toList();
 
     // Extract updated draft with new pickDeadline
     final draftData = data['draft'] as Map<String, dynamic>?;
-    final updatedDraft = draftData != null
-        ? Draft.fromJson(draftData)
-        : state.draft;
+    final updatedDraft =
+        draftData != null ? Draft.fromJson(draftData) : state.draft;
 
     state = state.copyWith(
       picks: updatedPicks,
@@ -259,9 +257,8 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
 
       // Optimistically update UI (will be confirmed by WebSocket event)
       final updatedPicks = [...state.picks, pick];
-      final updatedPlayers = state.availablePlayers
-          .where((p) => p.id != playerId)
-          .toList();
+      final updatedPlayers =
+          state.availablePlayers.where((p) => p.id != playerId).toList();
 
       state = state.copyWith(
         picks: updatedPicks,
@@ -358,7 +355,8 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
     if (rosterId == null) return;
 
     try {
-      final result = await _apiClient.toggleAutopick(_leagueId, _draftId, rosterId);
+      final result =
+          await _apiClient.toggleAutopick(_leagueId, _draftId, rosterId);
 
       // Update all autopick statuses from the server response
       if (result['all_statuses'] != null) {
@@ -377,7 +375,7 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
 
   @override
   void dispose() {
-    _socketService.leaveRoom('draft_${_draftId}');
+    _socketService.leaveRoom('draft_$_draftId');
     _socketService.off('draft_event');
     _socketService.off('connect');
     _socketService.off('disconnect');

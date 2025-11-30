@@ -27,14 +27,23 @@ class DraftOrderContentWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = draft.settings;
-    final draftOrder = settings?.draftOrder ?? 'randomize';
     final draftId = draft.id;
+
+    // Watch the drafts provider to get live updates (e.g., from derby auto-picks)
+    final draftsAsync = ref.watch(leagueDraftsProvider(leagueId));
+    final liveDraft = draftsAsync.whenOrNull(
+      data: (drafts) => drafts.where((d) => d.id == draftId).firstOrNull,
+    );
+
+    // Use live draft if available, otherwise fall back to prop
+    final currentDraft = liveDraft ?? draft;
+    final settings = currentDraft.settings;
+    final draftOrder = settings?.draftOrder ?? 'random';
 
     // Parse derby times and status
     final derbyStartTime = settings?.derbyStartTime;
     final derbyStatus = settings?.derbyStatus;
-    final pickDeadline = draft.pickDeadline;
+    final pickDeadline = currentDraft.pickDeadline;
 
     // Watch the draft order provider
     final draftOrderState = ref.watch(
@@ -100,7 +109,7 @@ class DraftOrderContentWidget extends ConsumerWidget {
               return DerbyCompletedView(
                 order: order,
                 league: league,
-                draft: draft,
+                draft: currentDraft,
               );
             }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/matchup_drafts_provider.dart';
-import '../application/matchup_draft_room_notifier.dart';
 import 'widgets/matchup_draft_board_panel.dart';
 import 'widgets/matchup_selection_panel.dart';
 import 'widgets/matchup_draft_commissioner_controls.dart';
@@ -27,8 +26,7 @@ class _MatchupDraftRoomScreenState
   @override
   Widget build(BuildContext context) {
     // First, get the matchup draft
-    final matchupDraftAsync =
-        ref.watch(matchupDraftProvider(widget.leagueId));
+    final matchupDraftAsync = ref.watch(matchupDraftProvider(widget.leagueId));
 
     return matchupDraftAsync.when(
       data: (draft) {

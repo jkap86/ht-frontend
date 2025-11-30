@@ -5,7 +5,6 @@ import '../../../core/chat/base_chat_notifier.dart';
 import '../../../core/chat/chat_state.dart';
 import '../../../core/infrastructure/api_client.dart';
 import '../../../core/services/socket/socket_providers.dart';
-import '../../../core/services/socket/socket_service.dart';
 import '../../auth/application/auth_notifier.dart';
 import '../data/dm_api_client.dart';
 import '../data/dm_chat_repository.dart';
@@ -43,15 +42,12 @@ class UnifiedDmChatNotifier extends BaseChatNotifier {
   final String currentUserId;
 
   UnifiedDmChatNotifier({
-    required SocketService socketService,
-    required DmChatRepository repository,
+    required super.socketService,
+    required DmChatRepository super.repository,
     required this.conversationId,
     required this.otherUserId,
     required this.currentUserId,
-  }) : super(
-          socketService: socketService,
-          repository: repository,
-        ) {
+  }) {
     initialize();
   }
 

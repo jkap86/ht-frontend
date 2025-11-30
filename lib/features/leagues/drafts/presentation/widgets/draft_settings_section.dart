@@ -102,7 +102,7 @@ class _DraftInfo extends StatelessWidget {
     final pickTimeSeconds = draft.pickTimeSeconds ?? 90;
     final settings = draft.settings;
     final playerPool = settings?.playerPool ?? 'all';
-    final draftOrder = settings?.draftOrder ?? 'randomize';
+    final draftOrder = settings?.draftOrder ?? 'random';
     // Note: timerMode and autoStartDerby are not in the DraftSettings model yet
     // These will need to be added to the model or handled differently
     final derbyStartTime = settings?.derbyStartTime;
@@ -191,7 +191,7 @@ class _DraftInfo extends StatelessWidget {
 
   String _formatDraftOrder(String order) {
     switch (order.toLowerCase()) {
-      case 'randomize':
+      case 'random':
         return 'Randomize';
       case 'derby':
         return 'Derby';

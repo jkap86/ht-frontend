@@ -25,8 +25,7 @@ class NetworkException extends AuthException {
 
 /// Thrown when the server returns an error
 class ServerException extends AuthException {
-  const ServerException(String message, [int? statusCode])
-      : super(message, statusCode);
+  const ServerException(super.message, [super.statusCode]);
 }
 
 /// Thrown when input validation fails

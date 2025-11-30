@@ -26,7 +26,6 @@ class ScoringSettingsSection extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         title: const Text('Scoring Settings'),
-        leading: const Icon(Icons.calculate),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),

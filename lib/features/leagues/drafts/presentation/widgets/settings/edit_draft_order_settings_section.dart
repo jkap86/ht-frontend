@@ -20,7 +20,7 @@ class EditDraftOrderSettingsSection extends StatelessWidget {
       decoration: const InputDecoration(
           labelText: 'Draft Order', border: OutlineInputBorder()),
       items: const [
-        DropdownMenuItem(value: 'randomize', child: Text('Randomize')),
+        DropdownMenuItem(value: 'random', child: Text('Randomize')),
         DropdownMenuItem(value: 'derby', child: Text('Derby')),
       ],
       onChanged: isCommissioner

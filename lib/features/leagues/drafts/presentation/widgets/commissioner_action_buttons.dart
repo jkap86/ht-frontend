@@ -40,6 +40,38 @@ class CommissionerActionButtons extends ConsumerWidget {
             derbyStatus != 'completed') {
           return Column(
             children: [
+              // Re-randomize option for derby
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: draftOrderState.isLoading
+                      ? null
+                      : () async {
+                          try {
+                            await ref
+                                .read(draftOrderProvider((
+                                  leagueId: leagueId,
+                                  draftId: draftId
+                                )).notifier)
+                                .randomize();
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Error randomizing draft order: $e'),
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  icon: const Icon(Icons.shuffle, size: 16),
+                  label: const Text('Re-randomize'),
+                ),
+              ),
+              const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: () async {
                   final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -76,7 +108,47 @@ class CommissionerActionButtons extends ConsumerWidget {
           );
         }
 
-        // Show "Randomize" button if order is not randomized or not derby
+        // Show "Randomize" button if order is empty, or "Re-randomize" if already randomized
+        final hasOrder = order.isNotEmpty;
+
+        if (hasOrder) {
+          // Show smaller "Re-randomize" button when order already exists
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: draftOrderState.isLoading
+                    ? null
+                    : () async {
+                        try {
+                          await ref
+                              .read(draftOrderProvider((
+                                leagueId: leagueId,
+                                draftId: draftId
+                              )).notifier)
+                              .randomize();
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Error randomizing draft order: $e'),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                icon: const Icon(Icons.shuffle, size: 16),
+                label: const Text('Re-randomize'),
+              ),
+            ),
+          );
+        }
+
+        // Show full "Randomize" button when order is empty
         return Column(
           children: [
             FilledButton.icon(

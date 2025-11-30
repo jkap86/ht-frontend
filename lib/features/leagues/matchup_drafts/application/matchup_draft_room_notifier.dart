@@ -71,7 +71,7 @@ class MatchupDraftRoomNotifier extends StateNotifier<MatchupDraftRoomState> {
 
   void _setupSocketListeners() {
     // Join the matchup draft room
-    _socketService.joinRoom('matchup_draft_${_draftId}');
+    _socketService.joinRoom('matchup_draft_$_draftId');
 
     // Listen for connection status changes
     _socketService.on('connect', _handleConnectionChange);
@@ -122,15 +122,14 @@ class MatchupDraftRoomNotifier extends StateNotifier<MatchupDraftRoomState> {
 
     // Remove matchup from available matchups
     final updatedMatchups = state.availableMatchups
-        .where((m) =>
-            !(m.opponentRosterId == pick.opponentRosterId && m.weekNumber == pick.weekNumber))
+        .where((m) => !(m.opponentRosterId == pick.opponentRosterId &&
+            m.weekNumber == pick.weekNumber))
         .toList();
 
     // Extract updated draft with new pickDeadline
     final draftData = data['draft'] as Map<String, dynamic>?;
-    final updatedDraft = draftData != null
-        ? Draft.fromJson(draftData)
-        : state.draft;
+    final updatedDraft =
+        draftData != null ? Draft.fromJson(draftData) : state.draft;
 
     state = state.copyWith(
       picks: updatedPicks,
@@ -218,8 +217,8 @@ class MatchupDraftRoomNotifier extends StateNotifier<MatchupDraftRoomState> {
       // Optimistically update UI (will be confirmed by WebSocket event)
       final updatedPicks = [...state.picks, pick];
       final updatedMatchups = state.availableMatchups
-          .where((m) =>
-              !(m.opponentRosterId == opponentRosterId && m.weekNumber == weekNumber))
+          .where((m) => !(m.opponentRosterId == opponentRosterId &&
+              m.weekNumber == weekNumber))
           .toList();
 
       state = state.copyWith(
@@ -314,7 +313,7 @@ class MatchupDraftRoomNotifier extends StateNotifier<MatchupDraftRoomState> {
 
   @override
   void dispose() {
-    _socketService.leaveRoom('matchup_draft_${_draftId}');
+    _socketService.leaveRoom('matchup_draft_$_draftId');
     _socketService.off('matchup_draft_event');
     _socketService.off('connect');
     _socketService.off('disconnect');

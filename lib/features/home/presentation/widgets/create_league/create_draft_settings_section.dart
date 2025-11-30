@@ -18,10 +18,12 @@ class CreateDraftSettingsSection extends StatefulWidget {
   });
 
   @override
-  State<CreateDraftSettingsSection> createState() => _CreateDraftSettingsSectionState();
+  State<CreateDraftSettingsSection> createState() =>
+      _CreateDraftSettingsSectionState();
 }
 
-class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection> {
+class _CreateDraftSettingsSectionState
+    extends State<CreateDraftSettingsSection> {
   bool _isDraftMode = false;
   int? _editingIndex;
 
@@ -31,7 +33,7 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
   int _localDraftRounds = 15;
   int _localPickTimeSeconds = 90;
   String _localPlayerPool = 'all';
-  String _localDraftOrder = 'randomize';
+  String _localDraftOrder = 'random';
   String _localTimerMode = 'per_pick';
   DateTime? _localDerbyStartTime;
   bool _localAutoStartDerby = false;
@@ -48,7 +50,7 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
       _localDraftRounds = 15;
       _localPickTimeSeconds = 90;
       _localPlayerPool = 'all';
-      _localDraftOrder = 'randomize';
+      _localDraftOrder = 'random';
       _localTimerMode = 'per_pick';
       _localDerbyStartTime = null;
       _localAutoStartDerby = false;
@@ -64,16 +66,19 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
       _isDraftMode = true;
       _editingIndex = index;
       _localDraftType = draft['draft_type'] as String? ?? 'snake';
-      _localThirdRoundReversal = draft['third_round_reversal'] as bool? ?? false;
+      _localThirdRoundReversal =
+          draft['third_round_reversal'] as bool? ?? false;
       _localDraftRounds = draft['rounds'] as int? ?? 15;
       _localPickTimeSeconds = draft['pick_time_seconds'] as int? ?? 90;
       _localPlayerPool = draft['player_pool'] as String? ?? 'all';
-      _localDraftOrder = draft['draft_order'] as String? ?? 'randomize';
+      _localDraftOrder = draft['draft_order'] as String? ?? 'random';
       _localTimerMode = draft['timer_mode'] as String? ?? 'per_pick';
 
       // Parse derby start time if present
       final derbyStartTimeStr = draft['derby_start_time'] as String?;
-      _localDerbyStartTime = derbyStartTimeStr != null ? DateTime.tryParse(derbyStartTimeStr) : null;
+      _localDerbyStartTime = derbyStartTimeStr != null
+          ? DateTime.tryParse(derbyStartTimeStr)
+          : null;
       _localAutoStartDerby = draft['auto_start_derby'] as bool? ?? false;
 
       // Parse derby timer if present
@@ -96,7 +101,8 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
         'pick_time_seconds': _localPickTimeSeconds,
         'draft_order': _localDraftOrder,
         'timer_mode': _localTimerMode,
-        'player_pool': _localPlayerPool,  // Also in settings for backward compatibility
+        'player_pool':
+            _localPlayerPool, // Also in settings for backward compatibility
       },
     };
 
@@ -105,18 +111,21 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
       final derbySettings = <String, dynamic>{};
 
       if (_localDerbyStartTime != null) {
-        derbySettings['derby_start_time'] = _localDerbyStartTime!.toIso8601String();
+        derbySettings['derby_start_time'] =
+            _localDerbyStartTime!.toIso8601String();
       }
 
       // Calculate derby timer seconds from individual fields
       final totalSeconds = _localDerbyTimerHours * 3600 +
-                          _localDerbyTimerMinutes * 60 +
-                          _localDerbyTimerSeconds;
-      derbySettings['derby_timer_seconds'] = totalSeconds > 0 ? totalSeconds : 300; // Default to 5 minutes if 0
+          _localDerbyTimerMinutes * 60 +
+          _localDerbyTimerSeconds;
+      derbySettings['derby_timer_seconds'] =
+          totalSeconds > 0 ? totalSeconds : 300; // Default to 5 minutes if 0
 
       // Set default derby duration to 24 hours for league creation
       derbySettings['derby_duration_hours'] = 24;
-      derbySettings['auto_assign_remaining'] = true; // Default for league creation
+      derbySettings['auto_assign_remaining'] =
+          true; // Default for league creation
 
       draftData['derby_settings'] = derbySettings;
       draftData['auto_start'] = _localAutoStartDerby;
@@ -171,7 +180,8 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Create Draft'),
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
               ),
@@ -198,7 +208,7 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
                 onEdit: () => _editDraft(index),
                 onDelete: () => _deleteDraft(index),
               );
-            }).toList(),
+            }),
 
           if (_isDraftMode)
             _DraftConfigurationForm(
@@ -214,11 +224,16 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
               derbyTimerHours: _localDerbyTimerHours,
               derbyTimerMinutes: _localDerbyTimerMinutes,
               derbyTimerSeconds: _localDerbyTimerSeconds,
-              onDraftTypeChanged: (value) => setState(() => _localDraftType = value),
-              onThirdRoundReversalChanged: (value) => setState(() => _localThirdRoundReversal = value),
-              onDraftRoundsChanged: (value) => setState(() => _localDraftRounds = value),
-              onPickTimeSecondsChanged: (value) => setState(() => _localPickTimeSeconds = value),
-              onPlayerPoolChanged: (value) => setState(() => _localPlayerPool = value),
+              onDraftTypeChanged: (value) =>
+                  setState(() => _localDraftType = value),
+              onThirdRoundReversalChanged: (value) =>
+                  setState(() => _localThirdRoundReversal = value),
+              onDraftRoundsChanged: (value) =>
+                  setState(() => _localDraftRounds = value),
+              onPickTimeSecondsChanged: (value) =>
+                  setState(() => _localPickTimeSeconds = value),
+              onPlayerPoolChanged: (value) =>
+                  setState(() => _localPlayerPool = value),
               onDraftOrderChanged: (value) => setState(() {
                 _localDraftOrder = value;
                 // Reset derby settings when switching away from derby
@@ -227,12 +242,18 @@ class _CreateDraftSettingsSectionState extends State<CreateDraftSettingsSection>
                   _localAutoStartDerby = false;
                 }
               }),
-              onTimerModeChanged: (value) => setState(() => _localTimerMode = value),
-              onDerbyStartTimeChanged: (value) => setState(() => _localDerbyStartTime = value),
-              onAutoStartDerbyChanged: (value) => setState(() => _localAutoStartDerby = value),
-              onDerbyTimerHoursChanged: (value) => setState(() => _localDerbyTimerHours = value),
-              onDerbyTimerMinutesChanged: (value) => setState(() => _localDerbyTimerMinutes = value),
-              onDerbyTimerSecondsChanged: (value) => setState(() => _localDerbyTimerSeconds = value),
+              onTimerModeChanged: (value) =>
+                  setState(() => _localTimerMode = value),
+              onDerbyStartTimeChanged: (value) =>
+                  setState(() => _localDerbyStartTime = value),
+              onAutoStartDerbyChanged: (value) =>
+                  setState(() => _localAutoStartDerby = value),
+              onDerbyTimerHoursChanged: (value) =>
+                  setState(() => _localDerbyTimerHours = value),
+              onDerbyTimerMinutesChanged: (value) =>
+                  setState(() => _localDerbyTimerMinutes = value),
+              onDerbyTimerSecondsChanged: (value) =>
+                  setState(() => _localDerbyTimerSeconds = value),
               onSaveDraft: _saveDraft,
               onCancelDraft: _cancelDraft,
             ),
@@ -287,10 +308,6 @@ class _DraftSummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: Theme.of(context).dividerColor),
         ),
-        leading: Icon(
-          Icons.edit_note,
-          color: Theme.of(context).colorScheme.primary,
-        ),
         title: Row(
           children: [
             Expanded(
@@ -299,7 +316,8 @@ class _DraftSummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     _formatDraftType(draftType),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -329,25 +347,31 @@ class _DraftSummaryCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _DetailRow(label: 'Draft Type', value: _formatDraftType(draftType)),
+              _DetailRow(
+                  label: 'Draft Type', value: _formatDraftType(draftType)),
               const SizedBox(height: 12),
               _DetailRow(label: 'Rounds', value: rounds.toString()),
               const SizedBox(height: 12),
               _DetailRow(label: 'Pick Time', value: '$pickTimeSeconds seconds'),
               const SizedBox(height: 12),
-              _DetailRow(label: 'Player Pool', value: _formatPlayerPool(playerPool)),
+              _DetailRow(
+                  label: 'Player Pool', value: _formatPlayerPool(playerPool)),
               if (draft['draft_order'] != null) ...[
                 const SizedBox(height: 12),
                 _DetailRow(
                   label: 'Draft Order',
-                  value: draft['draft_order'] == 'randomize' ? 'Randomize' : 'Derby',
+                  value: draft['draft_order'] == 'random'
+                      ? 'Randomize'
+                      : 'Derby',
                 ),
               ],
               if (draft['timer_mode'] != null) ...[
                 const SizedBox(height: 12),
                 _DetailRow(
                   label: 'Timer Mode',
-                  value: draft['timer_mode'] == 'per_pick' ? 'Per Pick' : 'Per Manager',
+                  value: draft['timer_mode'] == 'per_pick'
+                      ? 'Per Pick'
+                      : 'Per Manager',
                 ),
               ],
             ],
@@ -376,7 +400,8 @@ class _DetailRow extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
       ],
     );
   }

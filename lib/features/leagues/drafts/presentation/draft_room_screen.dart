@@ -76,8 +76,10 @@ class _DraftRoomScreenState extends ConsumerState<DraftRoomScreen> {
                   child: Icon(Icons.cloud_off, color: Colors.red),
                 ),
 
-              // Autopick toggle (available to all users during active draft)
-              if (draftRoomState.draft.status == 'in_progress')
+              // Autopick toggle (available to all users once draft has started and state is loaded)
+              if ((draftRoomState.draft.status == 'in_progress' ||
+                      draftRoomState.draft.status == 'paused') &&
+                  draftRoomState.draft.userRosterId != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Row(

@@ -8,7 +8,7 @@ part of 'draft_settings.dart';
 
 _$DraftSettingsImpl _$$DraftSettingsImplFromJson(Map<String, dynamic> json) =>
     _$DraftSettingsImpl(
-      draftOrder: json['draft_order'] as String? ?? 'randomize',
+      draftOrder: json['draft_order'] as String? ?? 'random',
       playerPool: json['player_pool'] as String? ?? 'all',
       currentPickerIndex: (json['current_picker_index'] as num?)?.toInt(),
       draftOrderList: (json['draft_order_list'] as List<dynamic>?)

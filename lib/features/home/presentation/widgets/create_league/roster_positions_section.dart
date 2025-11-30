@@ -23,7 +23,6 @@ class RosterPositionsSection extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         title: const Text('Roster Positions'),
-        leading: const Icon(Icons.people),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),

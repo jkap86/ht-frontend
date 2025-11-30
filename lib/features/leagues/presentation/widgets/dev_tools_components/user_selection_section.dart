@@ -63,8 +63,8 @@ class UserSelectionSection extends StatelessWidget {
                       child: Checkbox(
                         value: selectedUsers.contains(username),
                         onChanged: (bool? value) => onUserToggled(username),
-                        fillColor: MaterialStateProperty.resolveWith((states) {
-                          if (states.contains(MaterialState.selected)) {
+                        fillColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.selected)) {
                             return Colors.white;
                           }
                           return Colors.white24;

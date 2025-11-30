@@ -210,7 +210,7 @@ class __$$DraftSettingsImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DraftSettingsImpl implements _DraftSettings {
   const _$DraftSettingsImpl(
-      {@JsonKey(name: 'draft_order') this.draftOrder = 'randomize',
+      {@JsonKey(name: 'draft_order') this.draftOrder = 'random',
       @JsonKey(name: 'player_pool') this.playerPool = 'all',
       @JsonKey(name: 'current_picker_index') this.currentPickerIndex,
       @JsonKey(name: 'draft_order_list')

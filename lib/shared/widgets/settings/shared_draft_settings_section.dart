@@ -30,7 +30,7 @@ class SharedDraftSettingsSection extends StatelessWidget {
 
     final settings = draftSettings['settings'] as Map<String, dynamic>? ?? {};
     final playerPool = settings['player_pool']?.toString() ?? 'all';
-    final draftOrder = settings['draft_order']?.toString() ?? 'randomize';
+    final draftOrder = settings['draft_order']?.toString() ?? 'random';
     final timerMode = settings['timer_mode']?.toString() ?? 'per_pick';
     final derbyStartTimeStr = settings['derby_start_time'] as String?;
     final autoStartDerby = settings['auto_start_derby'] as bool? ?? false;
@@ -123,7 +123,7 @@ class SharedDraftSettingsSection extends StatelessWidget {
             fields.SettingsFormFields.buildDropdownField<String>(
               label: 'Draft Order',
               value: draftOrder,
-              items: const ['randomize', 'derby'],
+              items: const ['random', 'derby'],
               mode: mode,
               displayText: _formatDraftOrder,
               onChanged: (value) {
@@ -303,7 +303,7 @@ class SharedDraftSettingsSection extends StatelessWidget {
 
   static String _formatDraftOrder(String order) {
     switch (order.toLowerCase()) {
-      case 'randomize':
+      case 'random':
         return 'Randomize';
       case 'derby':
         return 'Derby';

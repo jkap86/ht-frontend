@@ -14,6 +14,7 @@ class BasicSettingsSection extends StatelessWidget {
   final Function(bool) onPlayoffsEnabledChanged;
   final Function(int) onPlayoffWeekStartChanged;
   final Function(int) onPlayoffTeamsChanged;
+  final Function(String) onMatchupGenerationChanged;
   final String? nameError;
   final String? seasonError;
 
@@ -29,6 +30,7 @@ class BasicSettingsSection extends StatelessWidget {
     required this.onPlayoffsEnabledChanged,
     required this.onPlayoffWeekStartChanged,
     required this.onPlayoffTeamsChanged,
+    required this.onMatchupGenerationChanged,
     this.nameError,
     this.seasonError,
   });
@@ -39,7 +41,6 @@ class BasicSettingsSection extends StatelessWidget {
       child: ExpansionTile(
         initiallyExpanded: true,
         title: const Text('Basic League Information'),
-        leading: const Icon(Icons.info_outline),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -57,25 +58,20 @@ class BasicSettingsSection extends StatelessWidget {
                   onChanged: onNameChanged,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  initialValue: data.season,
+                DropdownButtonFormField<String>(
+                  value: data.season,
                   decoration: InputDecoration(
                     labelText: 'Season',
-                    hintText: 'YYYY',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.calendar_today),
                     errorText: seasonError,
                   ),
-                  keyboardType: TextInputType.number,
-                  onChanged: onSeasonChanged,
-                ),
-                const SizedBox(height: 16),
-                _NumberSelector(
-                  label: 'Number of Teams',
-                  value: data.totalRosters,
-                  min: 2,
-                  max: 20,
-                  onChanged: onTotalRostersChanged,
+                  items: const [
+                    DropdownMenuItem(value: '2025', child: Text('2025')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) onSeasonChanged(value);
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -84,12 +80,43 @@ class BasicSettingsSection extends StatelessWidget {
                     labelText: 'Season Type',
                     border: OutlineInputBorder(),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'regular', child: Text('Regular Season')),
-                    DropdownMenuItem(value: 'offseason', child: Text('Offseason')),
+                  items: [
+                    const DropdownMenuItem(value: 'regular', child: Text('Regular')),
+                    DropdownMenuItem(
+                      value: 'pre',
+                      enabled: false,
+                      child: Text(
+                        'Pre',
+                        style: TextStyle(color: Colors.grey.shade400),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'post',
+                      enabled: false,
+                      child: Text(
+                        'Post',
+                        style: TextStyle(color: Colors.grey.shade400),
+                      ),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value != null) onSeasonTypeChanged(value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: data.totalRosters,
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Teams',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.groups),
+                  ),
+                  items: [
+                    for (int i = 4; i <= 16; i += 2)
+                      DropdownMenuItem(value: i, child: Text('$i teams')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) onTotalRostersChanged(value);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -132,6 +159,28 @@ class BasicSettingsSection extends StatelessWidget {
                     onChanged: onPlayoffTeamsChanged,
                   ),
                 ],
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: data.matchupGeneration,
+                  decoration: const InputDecoration(
+                    labelText: 'Matchup Generation',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'after_draft', child: Text('After Draft')),
+                    DropdownMenuItem(
+                      value: 'before_draft',
+                      enabled: false,
+                      child: Text(
+                        'Before Draft',
+                        style: TextStyle(color: Colors.grey.shade400),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) onMatchupGenerationChanged(value);
+                  },
+                ),
               ],
             ),
           ),
