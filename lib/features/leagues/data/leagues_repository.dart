@@ -1,5 +1,6 @@
 import '../domain/league.dart';
 import '../dues_payouts/domain/league_member.dart';
+import '../dues_payouts/domain/payout.dart';
 import '../domain/repositories/leagues_repository_interface.dart';
 import 'leagues_api_client.dart';
 
@@ -142,6 +143,72 @@ class LeaguesRepository implements ILeaguesRepository {
   Future<void> toggleMemberPayment(int leagueId, int rosterId, bool paid) async {
     try {
       await _apiClient.toggleMemberPayment(leagueId, rosterId, paid);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Payout Management
+  // ============================================
+
+  /// Get all payouts for a league
+  @override
+  Future<List<Payout>> getPayouts(int leagueId) async {
+    try {
+      final data = await _apiClient.getPayouts(leagueId);
+      return data.map((json) => Payout.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Add a new payout to a league
+  @override
+  Future<Payout> addPayout(int leagueId, {
+    required PayoutType type,
+    required int place,
+    required double amount,
+  }) async {
+    try {
+      final data = await _apiClient.addPayout(
+        leagueId,
+        type: type.value,
+        place: place,
+        amount: amount,
+      );
+      return Payout.fromJson(data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Update an existing payout
+  @override
+  Future<Payout> updatePayout(int leagueId, String payoutId, {
+    PayoutType? type,
+    int? place,
+    double? amount,
+  }) async {
+    try {
+      final data = await _apiClient.updatePayout(
+        leagueId,
+        payoutId,
+        type: type?.value,
+        place: place,
+        amount: amount,
+      );
+      return Payout.fromJson(data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Delete a payout
+  @override
+  Future<void> deletePayout(int leagueId, String payoutId) async {
+    try {
+      await _apiClient.deletePayout(leagueId, payoutId);
     } catch (e) {
       rethrow;
     }

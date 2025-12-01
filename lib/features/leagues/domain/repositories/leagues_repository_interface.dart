@@ -1,5 +1,6 @@
 import '../league.dart';
 import '../../dues_payouts/domain/league_member.dart';
+import '../../dues_payouts/domain/payout.dart';
 
 /// Abstract interface for leagues repository
 /// Defines contract for data operations without implementation details
@@ -49,4 +50,28 @@ abstract class ILeaguesRepository {
 
   /// Toggle member payment status
   Future<void> toggleMemberPayment(int leagueId, int rosterId, bool paid);
+
+  // ============================================
+  // Payout Management
+  // ============================================
+
+  /// Get all payouts for a league
+  Future<List<Payout>> getPayouts(int leagueId);
+
+  /// Add a new payout to a league
+  Future<Payout> addPayout(int leagueId, {
+    required PayoutType type,
+    required int place,
+    required double amount,
+  });
+
+  /// Update an existing payout
+  Future<Payout> updatePayout(int leagueId, String payoutId, {
+    PayoutType? type,
+    int? place,
+    double? amount,
+  });
+
+  /// Delete a payout
+  Future<void> deletePayout(int leagueId, String payoutId);
 }

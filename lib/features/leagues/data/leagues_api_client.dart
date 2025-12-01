@@ -245,4 +245,108 @@ class LeaguesApiClient {
       throw Exception('Failed to update payment status: ${response.statusCode} - ${response.body}');
     }
   }
+
+  // ============================================
+  // Payout Management
+  // ============================================
+
+  /// Get all payouts for a league
+  Future<List<Map<String, dynamic>>> getPayouts(int leagueId) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _apiClient.getJson(
+      '/api/leagues/$leagueId/payouts',
+      token: token,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final payouts = data['payouts'] as List<dynamic>;
+      return payouts.map((p) => p as Map<String, dynamic>).toList();
+    } else {
+      throw Exception('Failed to load payouts: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Add a new payout to a league
+  Future<Map<String, dynamic>> addPayout(
+    int leagueId, {
+    required String type,
+    required int place,
+    required double amount,
+  }) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _apiClient.postJson(
+      '/api/leagues/$leagueId/payouts',
+      token: token,
+      body: {
+        'type': type,
+        'place': place,
+        'amount': amount,
+      },
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['payout'] as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to add payout: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Update an existing payout
+  Future<Map<String, dynamic>> updatePayout(
+    int leagueId,
+    String payoutId, {
+    String? type,
+    int? place,
+    double? amount,
+  }) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final Map<String, dynamic> body = {};
+    if (type != null) body['type'] = type;
+    if (place != null) body['place'] = place;
+    if (amount != null) body['amount'] = amount;
+
+    final response = await _apiClient.putJson(
+      '/api/leagues/$leagueId/payouts/$payoutId',
+      token: token,
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['payout'] as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to update payout: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Delete a payout
+  Future<void> deletePayout(int leagueId, String payoutId) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _apiClient.deleteJson(
+      '/api/leagues/$leagueId/payouts/$payoutId',
+      token: token,
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to delete payout: ${response.statusCode} - ${response.body}');
+    }
+  }
 }

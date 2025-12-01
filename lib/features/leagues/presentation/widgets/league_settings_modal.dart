@@ -143,10 +143,10 @@ class _LeagueSettingsModalState extends State<LeagueSettingsModal> {
                     const SizedBox(height: 16),
 
                     // Dues & Payouts
-                    if (widget.league.settings != null &&
-                        widget.league.settings!['dues'] != null) ...[
+                    if (widget.league.settings != null) ...[
                       DuesPayoutsSection(
                         settings: widget.league.settings!,
+                        leagueId: widget.league.id,
                         initiallyExpanded: _expansionStates['dues_payouts'],
                         onExpansionChanged: (isExpanded) => _updateExpansionState('dues_payouts', isExpanded),
                       ),
