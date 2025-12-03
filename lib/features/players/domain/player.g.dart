@@ -22,6 +22,10 @@ _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       status: json['status'] as String?,
       injuryStatus: json['injuryStatus'] as String?,
       active: json['active'] as bool?,
+      priorSeasonPts: (json['priorSeasonPts'] as num?)?.toDouble(),
+      seasonToDatePts: (json['seasonToDatePts'] as num?)?.toDouble(),
+      remainingProjectedPts:
+          (json['remainingProjectedPts'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
@@ -39,4 +43,7 @@ Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
       'status': instance.status,
       'injuryStatus': instance.injuryStatus,
       'active': instance.active,
+      'priorSeasonPts': instance.priorSeasonPts,
+      'seasonToDatePts': instance.seasonToDatePts,
+      'remainingProjectedPts': instance.remainingProjectedPts,
     };

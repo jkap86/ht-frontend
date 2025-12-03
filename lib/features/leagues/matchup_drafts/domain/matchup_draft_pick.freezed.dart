@@ -21,6 +21,8 @@ mixin _$MatchupDraftPick {
   int get pickNumber => throw _privateConstructorUsedError;
   int get roundNumber => throw _privateConstructorUsedError;
   int get rosterId => throw _privateConstructorUsedError;
+  String? get pickerUsername => throw _privateConstructorUsedError;
+  String? get pickerRosterNumber => throw _privateConstructorUsedError;
   int get opponentRosterId => throw _privateConstructorUsedError;
   int get weekNumber => throw _privateConstructorUsedError;
   String? get opponentUsername => throw _privateConstructorUsedError;
@@ -47,6 +49,8 @@ abstract class $MatchupDraftPickCopyWith<$Res> {
       int pickNumber,
       int roundNumber,
       int rosterId,
+      String? pickerUsername,
+      String? pickerRosterNumber,
       int opponentRosterId,
       int weekNumber,
       String? opponentUsername,
@@ -75,6 +79,8 @@ class _$MatchupDraftPickCopyWithImpl<$Res, $Val extends MatchupDraftPick>
     Object? pickNumber = null,
     Object? roundNumber = null,
     Object? rosterId = null,
+    Object? pickerUsername = freezed,
+    Object? pickerRosterNumber = freezed,
     Object? opponentRosterId = null,
     Object? weekNumber = null,
     Object? opponentUsername = freezed,
@@ -103,6 +109,14 @@ class _$MatchupDraftPickCopyWithImpl<$Res, $Val extends MatchupDraftPick>
           ? _value.rosterId
           : rosterId // ignore: cast_nullable_to_non_nullable
               as int,
+      pickerUsername: freezed == pickerUsername
+          ? _value.pickerUsername
+          : pickerUsername // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pickerRosterNumber: freezed == pickerRosterNumber
+          ? _value.pickerRosterNumber
+          : pickerRosterNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       opponentRosterId: null == opponentRosterId
           ? _value.opponentRosterId
           : opponentRosterId // ignore: cast_nullable_to_non_nullable
@@ -145,6 +159,8 @@ abstract class _$$MatchupDraftPickImplCopyWith<$Res>
       int pickNumber,
       int roundNumber,
       int rosterId,
+      String? pickerUsername,
+      String? pickerRosterNumber,
       int opponentRosterId,
       int weekNumber,
       String? opponentUsername,
@@ -171,6 +187,8 @@ class __$$MatchupDraftPickImplCopyWithImpl<$Res>
     Object? pickNumber = null,
     Object? roundNumber = null,
     Object? rosterId = null,
+    Object? pickerUsername = freezed,
+    Object? pickerRosterNumber = freezed,
     Object? opponentRosterId = null,
     Object? weekNumber = null,
     Object? opponentUsername = freezed,
@@ -199,6 +217,14 @@ class __$$MatchupDraftPickImplCopyWithImpl<$Res>
           ? _value.rosterId
           : rosterId // ignore: cast_nullable_to_non_nullable
               as int,
+      pickerUsername: freezed == pickerUsername
+          ? _value.pickerUsername
+          : pickerUsername // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pickerRosterNumber: freezed == pickerRosterNumber
+          ? _value.pickerRosterNumber
+          : pickerRosterNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
       opponentRosterId: null == opponentRosterId
           ? _value.opponentRosterId
           : opponentRosterId // ignore: cast_nullable_to_non_nullable
@@ -236,6 +262,8 @@ class _$MatchupDraftPickImpl implements _MatchupDraftPick {
       required this.pickNumber,
       required this.roundNumber,
       required this.rosterId,
+      this.pickerUsername,
+      this.pickerRosterNumber,
       required this.opponentRosterId,
       required this.weekNumber,
       this.opponentUsername,
@@ -254,6 +282,10 @@ class _$MatchupDraftPickImpl implements _MatchupDraftPick {
   @override
   final int rosterId;
   @override
+  final String? pickerUsername;
+  @override
+  final String? pickerRosterNumber;
+  @override
   final int opponentRosterId;
   @override
   final int weekNumber;
@@ -268,7 +300,7 @@ class _$MatchupDraftPickImpl implements _MatchupDraftPick {
 
   @override
   String toString() {
-    return 'MatchupDraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, opponentRosterId: $opponentRosterId, weekNumber: $weekNumber, opponentUsername: $opponentUsername, opponentRosterNumber: $opponentRosterNumber, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick)';
+    return 'MatchupDraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, pickerUsername: $pickerUsername, pickerRosterNumber: $pickerRosterNumber, opponentRosterId: $opponentRosterId, weekNumber: $weekNumber, opponentUsername: $opponentUsername, opponentRosterNumber: $opponentRosterNumber, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick)';
   }
 
   @override
@@ -284,6 +316,10 @@ class _$MatchupDraftPickImpl implements _MatchupDraftPick {
                 other.roundNumber == roundNumber) &&
             (identical(other.rosterId, rosterId) ||
                 other.rosterId == rosterId) &&
+            (identical(other.pickerUsername, pickerUsername) ||
+                other.pickerUsername == pickerUsername) &&
+            (identical(other.pickerRosterNumber, pickerRosterNumber) ||
+                other.pickerRosterNumber == pickerRosterNumber) &&
             (identical(other.opponentRosterId, opponentRosterId) ||
                 other.opponentRosterId == opponentRosterId) &&
             (identical(other.weekNumber, weekNumber) ||
@@ -306,6 +342,8 @@ class _$MatchupDraftPickImpl implements _MatchupDraftPick {
       pickNumber,
       roundNumber,
       rosterId,
+      pickerUsername,
+      pickerRosterNumber,
       opponentRosterId,
       weekNumber,
       opponentUsername,
@@ -330,6 +368,8 @@ abstract class _MatchupDraftPick implements MatchupDraftPick {
       required final int pickNumber,
       required final int roundNumber,
       required final int rosterId,
+      final String? pickerUsername,
+      final String? pickerRosterNumber,
       required final int opponentRosterId,
       required final int weekNumber,
       final String? opponentUsername,
@@ -347,6 +387,10 @@ abstract class _MatchupDraftPick implements MatchupDraftPick {
   int get roundNumber;
   @override
   int get rosterId;
+  @override
+  String? get pickerUsername;
+  @override
+  String? get pickerRosterNumber;
   @override
   int get opponentRosterId;
   @override

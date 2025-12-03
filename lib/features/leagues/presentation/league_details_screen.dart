@@ -9,6 +9,7 @@ import 'widgets/league_workflow_widget.dart';
 import 'widgets/matchups_overview_card.dart';
 import '../dues_payouts/presentation/widgets/dues_overview_card.dart';
 import '../drafts/presentation/widgets/draft_overview_card.dart';
+import '../drafts/application/drafts_provider.dart';
 import '../chat/presentation/widgets/collapsible_chat_widget.dart';
 import 'widgets/developer_tools_widget.dart';
 import '../dues_payouts/application/league_members_provider.dart';
@@ -109,6 +110,7 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
   Widget _buildLeagueOverview(BuildContext context, League league, WidgetRef ref) {
     final dues = (league.settings?['dues'] as num?)?.toDouble() ?? 0.0;
     final membersAsync = ref.watch(leagueMembersProvider(league.id));
+    final draftsAsync = ref.watch(leagueDraftsProvider(league.id));
 
     // Determine default workflow step based on league state
     String defaultStep = 'Dues';
@@ -118,6 +120,16 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
         final leagueFull = members.length >= league.totalRosters;
         if (leagueFull && allPaid) {
           defaultStep = 'Draft';
+        }
+      }
+    });
+
+    // Check if all drafts are completed, if so, default to Matchups
+    draftsAsync.whenData((drafts) {
+      if (drafts.isNotEmpty) {
+        final allDraftsCompleted = drafts.every((draft) => draft.status == 'completed');
+        if (allDraftsCompleted) {
+          defaultStep = 'Matchups';
         }
       }
     });

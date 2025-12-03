@@ -38,7 +38,13 @@ mixin _$Player {
   String? get status => throw _privateConstructorUsedError;
   @JsonKey(name: 'injuryStatus')
   String? get injuryStatus => throw _privateConstructorUsedError;
-  bool? get active => throw _privateConstructorUsedError;
+  bool? get active => throw _privateConstructorUsedError; // Fantasy stats
+  @JsonKey(name: 'priorSeasonPts')
+  double? get priorSeasonPts => throw _privateConstructorUsedError;
+  @JsonKey(name: 'seasonToDatePts')
+  double? get seasonToDatePts => throw _privateConstructorUsedError;
+  @JsonKey(name: 'remainingProjectedPts')
+  double? get remainingProjectedPts => throw _privateConstructorUsedError;
 
   /// Serializes this Player to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -67,7 +73,10 @@ abstract class $PlayerCopyWith<$Res> {
       int? number,
       String? status,
       @JsonKey(name: 'injuryStatus') String? injuryStatus,
-      bool? active});
+      bool? active,
+      @JsonKey(name: 'priorSeasonPts') double? priorSeasonPts,
+      @JsonKey(name: 'seasonToDatePts') double? seasonToDatePts,
+      @JsonKey(name: 'remainingProjectedPts') double? remainingProjectedPts});
 }
 
 /// @nodoc
@@ -98,6 +107,9 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
     Object? status = freezed,
     Object? injuryStatus = freezed,
     Object? active = freezed,
+    Object? priorSeasonPts = freezed,
+    Object? seasonToDatePts = freezed,
+    Object? remainingProjectedPts = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -152,6 +164,18 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
           ? _value.active
           : active // ignore: cast_nullable_to_non_nullable
               as bool?,
+      priorSeasonPts: freezed == priorSeasonPts
+          ? _value.priorSeasonPts
+          : priorSeasonPts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      seasonToDatePts: freezed == seasonToDatePts
+          ? _value.seasonToDatePts
+          : seasonToDatePts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      remainingProjectedPts: freezed == remainingProjectedPts
+          ? _value.remainingProjectedPts
+          : remainingProjectedPts // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -176,7 +200,10 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
       int? number,
       String? status,
       @JsonKey(name: 'injuryStatus') String? injuryStatus,
-      bool? active});
+      bool? active,
+      @JsonKey(name: 'priorSeasonPts') double? priorSeasonPts,
+      @JsonKey(name: 'seasonToDatePts') double? seasonToDatePts,
+      @JsonKey(name: 'remainingProjectedPts') double? remainingProjectedPts});
 }
 
 /// @nodoc
@@ -205,6 +232,9 @@ class __$$PlayerImplCopyWithImpl<$Res>
     Object? status = freezed,
     Object? injuryStatus = freezed,
     Object? active = freezed,
+    Object? priorSeasonPts = freezed,
+    Object? seasonToDatePts = freezed,
+    Object? remainingProjectedPts = freezed,
   }) {
     return _then(_$PlayerImpl(
       id: null == id
@@ -259,6 +289,18 @@ class __$$PlayerImplCopyWithImpl<$Res>
           ? _value.active
           : active // ignore: cast_nullable_to_non_nullable
               as bool?,
+      priorSeasonPts: freezed == priorSeasonPts
+          ? _value.priorSeasonPts
+          : priorSeasonPts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      seasonToDatePts: freezed == seasonToDatePts
+          ? _value.seasonToDatePts
+          : seasonToDatePts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      remainingProjectedPts: freezed == remainingProjectedPts
+          ? _value.remainingProjectedPts
+          : remainingProjectedPts // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -280,7 +322,10 @@ class _$PlayerImpl implements _Player {
       this.number,
       this.status,
       @JsonKey(name: 'injuryStatus') this.injuryStatus,
-      this.active})
+      this.active,
+      @JsonKey(name: 'priorSeasonPts') this.priorSeasonPts,
+      @JsonKey(name: 'seasonToDatePts') this.seasonToDatePts,
+      @JsonKey(name: 'remainingProjectedPts') this.remainingProjectedPts})
       : _fantasyPositions = fantasyPositions;
 
   factory _$PlayerImpl.fromJson(Map<String, dynamic> json) =>
@@ -325,10 +370,20 @@ class _$PlayerImpl implements _Player {
   final String? injuryStatus;
   @override
   final bool? active;
+// Fantasy stats
+  @override
+  @JsonKey(name: 'priorSeasonPts')
+  final double? priorSeasonPts;
+  @override
+  @JsonKey(name: 'seasonToDatePts')
+  final double? seasonToDatePts;
+  @override
+  @JsonKey(name: 'remainingProjectedPts')
+  final double? remainingProjectedPts;
 
   @override
   String toString() {
-    return 'Player(id: $id, sleeperId: $sleeperId, firstName: $firstName, lastName: $lastName, fantasyPositions: $fantasyPositions, yearsExp: $yearsExp, age: $age, team: $team, position: $position, number: $number, status: $status, injuryStatus: $injuryStatus, active: $active)';
+    return 'Player(id: $id, sleeperId: $sleeperId, firstName: $firstName, lastName: $lastName, fantasyPositions: $fantasyPositions, yearsExp: $yearsExp, age: $age, team: $team, position: $position, number: $number, status: $status, injuryStatus: $injuryStatus, active: $active, priorSeasonPts: $priorSeasonPts, seasonToDatePts: $seasonToDatePts, remainingProjectedPts: $remainingProjectedPts)';
   }
 
   @override
@@ -355,7 +410,13 @@ class _$PlayerImpl implements _Player {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.injuryStatus, injuryStatus) ||
                 other.injuryStatus == injuryStatus) &&
-            (identical(other.active, active) || other.active == active));
+            (identical(other.active, active) || other.active == active) &&
+            (identical(other.priorSeasonPts, priorSeasonPts) ||
+                other.priorSeasonPts == priorSeasonPts) &&
+            (identical(other.seasonToDatePts, seasonToDatePts) ||
+                other.seasonToDatePts == seasonToDatePts) &&
+            (identical(other.remainingProjectedPts, remainingProjectedPts) ||
+                other.remainingProjectedPts == remainingProjectedPts));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -374,7 +435,10 @@ class _$PlayerImpl implements _Player {
       number,
       status,
       injuryStatus,
-      active);
+      active,
+      priorSeasonPts,
+      seasonToDatePts,
+      remainingProjectedPts);
 
   /// Create a copy of Player
   /// with the given fields replaced by the non-null parameter values.
@@ -407,7 +471,11 @@ abstract class _Player implements Player {
       final int? number,
       final String? status,
       @JsonKey(name: 'injuryStatus') final String? injuryStatus,
-      final bool? active}) = _$PlayerImpl;
+      final bool? active,
+      @JsonKey(name: 'priorSeasonPts') final double? priorSeasonPts,
+      @JsonKey(name: 'seasonToDatePts') final double? seasonToDatePts,
+      @JsonKey(name: 'remainingProjectedPts')
+      final double? remainingProjectedPts}) = _$PlayerImpl;
 
   factory _Player.fromJson(Map<String, dynamic> json) = _$PlayerImpl.fromJson;
 
@@ -442,7 +510,16 @@ abstract class _Player implements Player {
   @JsonKey(name: 'injuryStatus')
   String? get injuryStatus;
   @override
-  bool? get active;
+  bool? get active; // Fantasy stats
+  @override
+  @JsonKey(name: 'priorSeasonPts')
+  double? get priorSeasonPts;
+  @override
+  @JsonKey(name: 'seasonToDatePts')
+  double? get seasonToDatePts;
+  @override
+  @JsonKey(name: 'remainingProjectedPts')
+  double? get remainingProjectedPts;
 
   /// Create a copy of Player
   /// with the given fields replaced by the non-null parameter values.

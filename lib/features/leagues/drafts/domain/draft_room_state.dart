@@ -6,6 +6,8 @@ import 'draft_order_entry.dart';
 
 part 'draft_room_state.freezed.dart';
 
+enum PlayerSortField { name, lastYear, ytd, proj }
+
 @freezed
 class DraftRoomState with _$DraftRoomState {
   const DraftRoomState._();
@@ -24,6 +26,8 @@ class DraftRoomState with _$DraftRoomState {
     String? searchQuery,
     @Default([]) List<String> positionFilters,
     @Default({}) Map<int, bool> userAutopickStatuses,
+    @Default(PlayerSortField.proj) PlayerSortField sortField,
+    @Default(true) bool sortDescending,
   }) = _DraftRoomState;
 
   bool get isUsersTurn => currentPickerRosterId == draft.userRosterId;
@@ -59,6 +63,27 @@ class DraftRoomState with _$DraftRoomState {
             .any((pos) => positionFilters.contains(pos));
       }).toList();
     }
+
+    // Apply sorting
+    filtered = List.from(filtered);
+    filtered.sort((a, b) {
+      int comparison;
+      switch (sortField) {
+        case PlayerSortField.name:
+          comparison = a.fullName.compareTo(b.fullName);
+          break;
+        case PlayerSortField.lastYear:
+          comparison = (a.priorSeasonPts ?? 0).compareTo(b.priorSeasonPts ?? 0);
+          break;
+        case PlayerSortField.ytd:
+          comparison = (a.seasonToDatePts ?? 0).compareTo(b.seasonToDatePts ?? 0);
+          break;
+        case PlayerSortField.proj:
+          comparison = (a.remainingProjectedPts ?? 0).compareTo(b.remainingProjectedPts ?? 0);
+          break;
+      }
+      return sortDescending ? -comparison : comparison;
+    });
 
     return filtered;
   }

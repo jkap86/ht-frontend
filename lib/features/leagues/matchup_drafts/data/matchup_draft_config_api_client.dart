@@ -100,4 +100,24 @@ class MatchupDraftConfigApiClient {
       throw Exception('Failed to randomize matchup draft order: ${response.statusCode}');
     }
   }
+
+  /// Generate random matchups for all regular season weeks
+  Future<Map<String, dynamic>> generateRandomMatchups(int leagueId) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final response = await _apiClient.postJson(
+      '/api/leagues/$leagueId/matchup-drafts/generate-random',
+      token: token,
+      body: {},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to generate random matchups: ${response.statusCode}');
+    }
+  }
 }

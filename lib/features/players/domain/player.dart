@@ -19,6 +19,10 @@ class Player with _$Player {
     String? status,
     @JsonKey(name: 'injuryStatus') String? injuryStatus,
     bool? active,
+    // Fantasy stats
+    @JsonKey(name: 'priorSeasonPts') double? priorSeasonPts,
+    @JsonKey(name: 'seasonToDatePts') double? seasonToDatePts,
+    @JsonKey(name: 'remainingProjectedPts') double? remainingProjectedPts,
   }) = _Player;
 
   factory Player.fromJson(Map<String, dynamic> json) => _$PlayerFromJson(json);

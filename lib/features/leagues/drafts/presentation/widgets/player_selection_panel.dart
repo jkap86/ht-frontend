@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/draft_room_provider.dart';
 import '../../application/queue_provider.dart';
 import '../../domain/draft.dart';
+import '../../domain/draft_room_state.dart';
 import '../../../../players/domain/player.dart';
 
 class PlayerSelectionPanel extends ConsumerStatefulWidget {
@@ -109,6 +110,50 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
                 },
               );
             }).toList(),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Sort controls
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              const Text('Sort: ', style: TextStyle(fontSize: 12)),
+              const SizedBox(width: 4),
+              _buildSortChip(
+                'Name',
+                PlayerSortField.name,
+                draftRoomState.sortField,
+                draftRoomState.sortDescending,
+                draftNotifier,
+              ),
+              const SizedBox(width: 4),
+              _buildSortChip(
+                'Last Yr',
+                PlayerSortField.lastYear,
+                draftRoomState.sortField,
+                draftRoomState.sortDescending,
+                draftNotifier,
+              ),
+              const SizedBox(width: 4),
+              _buildSortChip(
+                'YTD',
+                PlayerSortField.ytd,
+                draftRoomState.sortField,
+                draftRoomState.sortDescending,
+                draftNotifier,
+              ),
+              const SizedBox(width: 4),
+              _buildSortChip(
+                'Proj',
+                PlayerSortField.proj,
+                draftRoomState.sortField,
+                draftRoomState.sortDescending,
+                draftNotifier,
+              ),
+            ],
           ),
         ),
 
@@ -222,6 +267,45 @@ class _PlayerSelectionPanelState extends ConsumerState<PlayerSelectionPanel> {
       ],
     );
   }
+
+  Widget _buildSortChip(
+    String label,
+    PlayerSortField field,
+    PlayerSortField currentField,
+    bool isDescending,
+    dynamic notifier,
+  ) {
+    final isSelected = currentField == field;
+    return GestureDetector(
+      onTap: () => notifier.setSortField(field),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue[700] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected ? Colors.white : Colors.grey[700],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                isDescending ? Icons.arrow_downward : Icons.arrow_upward,
+                size: 12,
+                color: Colors.white,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class PlayerCard extends StatelessWidget {
@@ -244,73 +328,164 @@ class PlayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getPositionColor(player.displayPosition),
-          child: Text(
-            player.displayPosition,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            // Position avatar
+            CircleAvatar(
+              backgroundColor: _getPositionColor(player.displayPosition),
+              child: Text(
+                player.displayPosition,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
-        ),
-        title: Text(
-          player.fullName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Row(
-          children: [
-            Text('${player.displayTeam} • '),
-            Text('${player.age ?? 0}yo • '),
-            Text('${player.yearsExp ?? 0} yrs exp'),
-            if (player.isRookie) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'ROOKIE',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+            // Player info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          player.fullName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (player.isRookie)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'ROOKIE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  // Team and basic info
+                  Text(
+                    '${player.displayTeam} • ${player.age ?? 0}yo • ${player.yearsExp ?? 0} yrs exp',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Stats row
+                  Row(
+                    children: [
+                      _buildStatChip(
+                        'Last Yr',
+                        player.priorSeasonPts,
+                        Colors.blue[700]!,
+                      ),
+                      const SizedBox(width: 6),
+                      _buildStatChip(
+                        'YTD',
+                        player.seasonToDatePts,
+                        Colors.green[700]!,
+                      ),
+                      const SizedBox(width: 6),
+                      _buildStatChip(
+                        'Proj',
+                        player.remainingProjectedPts,
+                        Colors.orange[800]!,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Queue button
-            IconButton(
-              icon: Icon(
-                isInQueue ? Icons.star : Icons.star_border,
-                color: isInQueue ? Colors.amber : Colors.grey,
-              ),
-              onPressed: onToggleQueue,
-              tooltip: isInQueue ? 'Remove from queue' : 'Add to queue',
             ),
             const SizedBox(width: 8),
-            // Pick button
-            if (canPick)
-              ElevatedButton(
-                onPressed: onPick,
-                child: const Text('Pick'),
-              )
-            else
-              const Icon(Icons.lock, color: Colors.grey),
+            // Action buttons
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Queue button
+                IconButton(
+                  icon: Icon(
+                    isInQueue ? Icons.star : Icons.star_border,
+                    color: isInQueue ? Colors.amber : Colors.grey,
+                  ),
+                  onPressed: onToggleQueue,
+                  tooltip: isInQueue ? 'Remove from queue' : 'Add to queue',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(height: 8),
+                // Pick button
+                if (canPick)
+                  SizedBox(
+                    height: 32,
+                    child: ElevatedButton(
+                      onPressed: onPick,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      child: const Text('Pick', style: TextStyle(fontSize: 12)),
+                    ),
+                  )
+                else
+                  const Icon(Icons.lock, color: Colors.grey, size: 20),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(
+    String label,
+    double? value,
+    Color backgroundColor,
+  ) {
+    final displayValue = value != null ? value.toStringAsFixed(1) : '-';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            displayValue,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

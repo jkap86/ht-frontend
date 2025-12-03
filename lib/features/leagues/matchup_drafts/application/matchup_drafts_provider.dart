@@ -6,6 +6,7 @@ import '../../../auth/application/auth_notifier.dart';
 import '../../drafts/domain/draft.dart';
 import '../../drafts/domain/draft_order_entry.dart';
 import '../domain/matchup_draft_room_state.dart';
+import '../domain/matchup_draft_pick.dart';
 import 'matchup_draft_room_notifier.dart';
 import '../../../../core/services/socket/socket_providers.dart';
 
@@ -52,5 +53,13 @@ final matchupDraftOrderProvider = FutureProvider.family<List<DraftOrderEntry>, (
   (ref, params) async {
     final apiClient = ref.watch(matchupDraftsApiClientProvider);
     return await apiClient.getMatchupDraftOrder(params.leagueId, params.draftId);
+  },
+);
+
+/// Provider for getting matchup draft picks (generated matchups)
+final matchupDraftPicksProvider = FutureProvider.family<List<MatchupDraftPick>, ({int leagueId, int draftId})>(
+  (ref, params) async {
+    final apiClient = ref.watch(matchupDraftsApiClientProvider);
+    return await apiClient.getMatchupDraftPicks(params.leagueId, params.draftId);
   },
 );

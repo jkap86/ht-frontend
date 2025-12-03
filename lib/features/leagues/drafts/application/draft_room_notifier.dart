@@ -294,6 +294,19 @@ class DraftRoomNotifier extends StateNotifier<DraftRoomState> {
     state = state.copyWith(positionFilters: []);
   }
 
+  void setSortField(PlayerSortField field) {
+    if (state.sortField == field) {
+      // Toggle direction if same field
+      state = state.copyWith(sortDescending: !state.sortDescending);
+    } else {
+      // New field, default to descending (highest first) for stats, ascending for name
+      state = state.copyWith(
+        sortField: field,
+        sortDescending: field != PlayerSortField.name,
+      );
+    }
+  }
+
   Future<void> startDraft() async {
     state = state.copyWith(isLoading: true, error: null);
 

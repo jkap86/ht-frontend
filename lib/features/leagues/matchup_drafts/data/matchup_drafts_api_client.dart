@@ -38,6 +38,10 @@ class MatchupDraftsApiClient {
     return _configClient.randomizeMatchupDraftOrder(leagueId, draftId);
   }
 
+  Future<Map<String, dynamic>> generateRandomMatchups(int leagueId) {
+    return _configClient.generateRandomMatchups(leagueId);
+  }
+
   // ========== Room Operations - Delegate to MatchupDraftRoomApiClient ==========
 
   Future<Draft> startMatchupDraft(int leagueId, int draftId) {

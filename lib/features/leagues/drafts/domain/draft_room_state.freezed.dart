@@ -29,6 +29,8 @@ mixin _$DraftRoomState {
   String? get searchQuery => throw _privateConstructorUsedError;
   List<String> get positionFilters => throw _privateConstructorUsedError;
   Map<int, bool> get userAutopickStatuses => throw _privateConstructorUsedError;
+  PlayerSortField get sortField => throw _privateConstructorUsedError;
+  bool get sortDescending => throw _privateConstructorUsedError;
 
   /// Create a copy of DraftRoomState
   /// with the given fields replaced by the non-null parameter values.
@@ -56,7 +58,9 @@ abstract class $DraftRoomStateCopyWith<$Res> {
       DateTime? pausedAtDeadline,
       String? searchQuery,
       List<String> positionFilters,
-      Map<int, bool> userAutopickStatuses});
+      Map<int, bool> userAutopickStatuses,
+      PlayerSortField sortField,
+      bool sortDescending});
 
   $DraftCopyWith<$Res> get draft;
 }
@@ -89,6 +93,8 @@ class _$DraftRoomStateCopyWithImpl<$Res, $Val extends DraftRoomState>
     Object? searchQuery = freezed,
     Object? positionFilters = null,
     Object? userAutopickStatuses = null,
+    Object? sortField = null,
+    Object? sortDescending = null,
   }) {
     return _then(_value.copyWith(
       draft: null == draft
@@ -143,6 +149,14 @@ class _$DraftRoomStateCopyWithImpl<$Res, $Val extends DraftRoomState>
           ? _value.userAutopickStatuses
           : userAutopickStatuses // ignore: cast_nullable_to_non_nullable
               as Map<int, bool>,
+      sortField: null == sortField
+          ? _value.sortField
+          : sortField // ignore: cast_nullable_to_non_nullable
+              as PlayerSortField,
+      sortDescending: null == sortDescending
+          ? _value.sortDescending
+          : sortDescending // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -178,7 +192,9 @@ abstract class _$$DraftRoomStateImplCopyWith<$Res>
       DateTime? pausedAtDeadline,
       String? searchQuery,
       List<String> positionFilters,
-      Map<int, bool> userAutopickStatuses});
+      Map<int, bool> userAutopickStatuses,
+      PlayerSortField sortField,
+      bool sortDescending});
 
   @override
   $DraftCopyWith<$Res> get draft;
@@ -210,6 +226,8 @@ class __$$DraftRoomStateImplCopyWithImpl<$Res>
     Object? searchQuery = freezed,
     Object? positionFilters = null,
     Object? userAutopickStatuses = null,
+    Object? sortField = null,
+    Object? sortDescending = null,
   }) {
     return _then(_$DraftRoomStateImpl(
       draft: null == draft
@@ -264,6 +282,14 @@ class __$$DraftRoomStateImplCopyWithImpl<$Res>
           ? _value._userAutopickStatuses
           : userAutopickStatuses // ignore: cast_nullable_to_non_nullable
               as Map<int, bool>,
+      sortField: null == sortField
+          ? _value.sortField
+          : sortField // ignore: cast_nullable_to_non_nullable
+              as PlayerSortField,
+      sortDescending: null == sortDescending
+          ? _value.sortDescending
+          : sortDescending // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -284,7 +310,9 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
       this.pausedAtDeadline,
       this.searchQuery,
       final List<String> positionFilters = const [],
-      final Map<int, bool> userAutopickStatuses = const {}})
+      final Map<int, bool> userAutopickStatuses = const {},
+      this.sortField = PlayerSortField.proj,
+      this.sortDescending = true})
       : _availablePlayers = availablePlayers,
         _picks = picks,
         _draftOrder = draftOrder,
@@ -358,8 +386,15 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
   }
 
   @override
+  @JsonKey()
+  final PlayerSortField sortField;
+  @override
+  @JsonKey()
+  final bool sortDescending;
+
+  @override
   String toString() {
-    return 'DraftRoomState(draft: $draft, availablePlayers: $availablePlayers, picks: $picks, draftOrder: $draftOrder, isLoading: $isLoading, isConnected: $isConnected, error: $error, currentPickerRosterId: $currentPickerRosterId, pickDeadline: $pickDeadline, pausedAtDeadline: $pausedAtDeadline, searchQuery: $searchQuery, positionFilters: $positionFilters, userAutopickStatuses: $userAutopickStatuses)';
+    return 'DraftRoomState(draft: $draft, availablePlayers: $availablePlayers, picks: $picks, draftOrder: $draftOrder, isLoading: $isLoading, isConnected: $isConnected, error: $error, currentPickerRosterId: $currentPickerRosterId, pickDeadline: $pickDeadline, pausedAtDeadline: $pausedAtDeadline, searchQuery: $searchQuery, positionFilters: $positionFilters, userAutopickStatuses: $userAutopickStatuses, sortField: $sortField, sortDescending: $sortDescending)';
   }
 
   @override
@@ -389,7 +424,11 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
             const DeepCollectionEquality()
                 .equals(other._positionFilters, _positionFilters) &&
             const DeepCollectionEquality()
-                .equals(other._userAutopickStatuses, _userAutopickStatuses));
+                .equals(other._userAutopickStatuses, _userAutopickStatuses) &&
+            (identical(other.sortField, sortField) ||
+                other.sortField == sortField) &&
+            (identical(other.sortDescending, sortDescending) ||
+                other.sortDescending == sortDescending));
   }
 
   @override
@@ -407,7 +446,9 @@ class _$DraftRoomStateImpl extends _DraftRoomState {
       pausedAtDeadline,
       searchQuery,
       const DeepCollectionEquality().hash(_positionFilters),
-      const DeepCollectionEquality().hash(_userAutopickStatuses));
+      const DeepCollectionEquality().hash(_userAutopickStatuses),
+      sortField,
+      sortDescending);
 
   /// Create a copy of DraftRoomState
   /// with the given fields replaced by the non-null parameter values.
@@ -433,7 +474,9 @@ abstract class _DraftRoomState extends DraftRoomState {
       final DateTime? pausedAtDeadline,
       final String? searchQuery,
       final List<String> positionFilters,
-      final Map<int, bool> userAutopickStatuses}) = _$DraftRoomStateImpl;
+      final Map<int, bool> userAutopickStatuses,
+      final PlayerSortField sortField,
+      final bool sortDescending}) = _$DraftRoomStateImpl;
   const _DraftRoomState._() : super._();
 
   @override
@@ -462,6 +505,10 @@ abstract class _DraftRoomState extends DraftRoomState {
   List<String> get positionFilters;
   @override
   Map<int, bool> get userAutopickStatuses;
+  @override
+  PlayerSortField get sortField;
+  @override
+  bool get sortDescending;
 
   /// Create a copy of DraftRoomState
   /// with the given fields replaced by the non-null parameter values.
