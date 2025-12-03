@@ -5,6 +5,7 @@ import '../../domain/draft.dart';
 import 'player_selection_panel.dart';
 import 'draft_queue_widget.dart';
 import '../../../../../shared/widgets/collapsible/collapsible_widget.dart';
+import '../../../chat/presentation/widgets/chat_content.dart';
 
 /// Collapsible draft panel that shows player selection and activity feed
 class CollapsibleDraftPanel extends CollapsibleWidget {
@@ -90,8 +91,8 @@ class _CollapsibleDraftPanelState
               ),
               Expanded(
                 child: _TabButton(
-                  label: 'Activity',
-                  icon: Icons.history,
+                  label: 'Chat',
+                  icon: Icons.chat_bubble_outline,
                   isSelected: _selectedTab == 2,
                   onTap: () => setState(() => _selectedTab = 2),
                 ),
@@ -113,10 +114,8 @@ class _CollapsibleDraftPanelState
                 leagueId: widget.leagueId,
                 draftId: widget.draftId,
               ),
-              _ActivityFeedPanel(
+              LeagueChatContent(
                 leagueId: widget.leagueId,
-                draftId: widget.draftId,
-                draft: widget.draft,
               ),
             ],
           ),
@@ -213,28 +212,6 @@ class _TabButton extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ActivityFeedPanel extends ConsumerWidget {
-  final int leagueId;
-  final int draftId;
-  final Draft draft;
-
-  const _ActivityFeedPanel({
-    required this.leagueId,
-    required this.draftId,
-    required this.draft,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: const Center(
-        child: Text('Activity Feed Panel'),
       ),
     );
   }
