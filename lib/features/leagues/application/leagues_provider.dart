@@ -21,6 +21,12 @@ final leaguesRepositoryProvider = Provider<ILeaguesRepository>((ref) {
   return LeaguesRepository(apiClient: leaguesApiClient);
 });
 
+/// Provider for fetching a single league by ID
+final leagueByIdProvider = FutureProvider.family<League, int>((ref, leagueId) async {
+  final repository = ref.watch(leaguesRepositoryProvider);
+  return await repository.getLeagueById(leagueId);
+});
+
 /// Provider for fetching user's leagues
 /// This is an AsyncNotifierProvider that manages loading, data, and error states
 final myLeaguesProvider = AsyncNotifierProvider<MyLeaguesNotifier, List<League>>(() {

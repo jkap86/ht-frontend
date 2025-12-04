@@ -102,6 +102,30 @@ class DraftRoomApiClient {
     }
   }
 
+  /// Get draft picks with stats for a specific week (for matchup display)
+  Future<List<DraftPick>> getDraftPicksWithStats(int leagueId, int draftId, int week, {String? season}) async {
+    final token = await _storage.readToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    final seasonParam = season ?? DateTime.now().year.toString();
+    final response = await _apiClient.getJson(
+      '/api/leagues/$leagueId/drafts/$draftId/picks',
+      token: token,
+      queryParameters: {'week': week.toString(), 'season': seasonParam},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+      return data
+          .map((json) => DraftPick.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to get draft picks with stats: ${response.statusCode} - ${response.body}');
+    }
+  }
+
   /// Make a draft pick
   Future<DraftPick> makePick(
     int leagueId,

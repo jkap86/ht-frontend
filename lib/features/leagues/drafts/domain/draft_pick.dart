@@ -16,6 +16,10 @@ class DraftPick with _$DraftPick {
     String? playerTeam,
     required DateTime pickedAt,
     bool? wasAutoPick,
+    // Enhanced fields for matchup display
+    String? opponent,
+    double? projectedPts,
+    double? actualPts,
   }) = _DraftPick;
 
   factory DraftPick.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,9 @@ class DraftPick with _$DraftPick {
       playerTeam: json['player_team'] as String?,
       pickedAt: DateTime.parse(json['picked_at'] as String),
       wasAutoPick: json['is_auto_pick'] as bool?,
+      opponent: json['opponent'] as String?,
+      projectedPts: (json['projected_pts'] as num?)?.toDouble(),
+      actualPts: (json['actual_pts'] as num?)?.toDouble(),
     );
   }
 }

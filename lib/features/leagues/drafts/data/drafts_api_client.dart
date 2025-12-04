@@ -70,6 +70,11 @@ class DraftsApiClient {
     return _roomClient.getDraftPicks(leagueId, draftId);
   }
 
+  /// Get draft picks with stats for a specific week (for matchup display)
+  Future<List<DraftPick>> getDraftPicksWithStats(int leagueId, int draftId, int week, {String? season}) {
+    return _roomClient.getDraftPicksWithStats(leagueId, draftId, week, season: season);
+  }
+
   Future<DraftPick> makePick(int leagueId, int draftId, int playerId) {
     return _roomClient.makePick(leagueId, draftId, playerId);
   }

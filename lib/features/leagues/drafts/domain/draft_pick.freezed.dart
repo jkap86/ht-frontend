@@ -26,7 +26,11 @@ mixin _$DraftPick {
   String? get playerPosition => throw _privateConstructorUsedError;
   String? get playerTeam => throw _privateConstructorUsedError;
   DateTime get pickedAt => throw _privateConstructorUsedError;
-  bool? get wasAutoPick => throw _privateConstructorUsedError;
+  bool? get wasAutoPick =>
+      throw _privateConstructorUsedError; // Enhanced fields for matchup display
+  String? get opponent => throw _privateConstructorUsedError;
+  double? get projectedPts => throw _privateConstructorUsedError;
+  double? get actualPts => throw _privateConstructorUsedError;
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.
@@ -51,7 +55,10 @@ abstract class $DraftPickCopyWith<$Res> {
       String? playerPosition,
       String? playerTeam,
       DateTime pickedAt,
-      bool? wasAutoPick});
+      bool? wasAutoPick,
+      String? opponent,
+      double? projectedPts,
+      double? actualPts});
 }
 
 /// @nodoc
@@ -80,6 +87,9 @@ class _$DraftPickCopyWithImpl<$Res, $Val extends DraftPick>
     Object? playerTeam = freezed,
     Object? pickedAt = null,
     Object? wasAutoPick = freezed,
+    Object? opponent = freezed,
+    Object? projectedPts = freezed,
+    Object? actualPts = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -126,6 +136,18 @@ class _$DraftPickCopyWithImpl<$Res, $Val extends DraftPick>
           ? _value.wasAutoPick
           : wasAutoPick // ignore: cast_nullable_to_non_nullable
               as bool?,
+      opponent: freezed == opponent
+          ? _value.opponent
+          : opponent // ignore: cast_nullable_to_non_nullable
+              as String?,
+      projectedPts: freezed == projectedPts
+          ? _value.projectedPts
+          : projectedPts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      actualPts: freezed == actualPts
+          ? _value.actualPts
+          : actualPts // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -149,7 +171,10 @@ abstract class _$$DraftPickImplCopyWith<$Res>
       String? playerPosition,
       String? playerTeam,
       DateTime pickedAt,
-      bool? wasAutoPick});
+      bool? wasAutoPick,
+      String? opponent,
+      double? projectedPts,
+      double? actualPts});
 }
 
 /// @nodoc
@@ -176,6 +201,9 @@ class __$$DraftPickImplCopyWithImpl<$Res>
     Object? playerTeam = freezed,
     Object? pickedAt = null,
     Object? wasAutoPick = freezed,
+    Object? opponent = freezed,
+    Object? projectedPts = freezed,
+    Object? actualPts = freezed,
   }) {
     return _then(_$DraftPickImpl(
       id: null == id
@@ -222,6 +250,18 @@ class __$$DraftPickImplCopyWithImpl<$Res>
           ? _value.wasAutoPick
           : wasAutoPick // ignore: cast_nullable_to_non_nullable
               as bool?,
+      opponent: freezed == opponent
+          ? _value.opponent
+          : opponent // ignore: cast_nullable_to_non_nullable
+              as String?,
+      projectedPts: freezed == projectedPts
+          ? _value.projectedPts
+          : projectedPts // ignore: cast_nullable_to_non_nullable
+              as double?,
+      actualPts: freezed == actualPts
+          ? _value.actualPts
+          : actualPts // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -240,7 +280,10 @@ class _$DraftPickImpl implements _DraftPick {
       this.playerPosition,
       this.playerTeam,
       required this.pickedAt,
-      this.wasAutoPick});
+      this.wasAutoPick,
+      this.opponent,
+      this.projectedPts,
+      this.actualPts});
 
   @override
   final int id;
@@ -264,10 +307,17 @@ class _$DraftPickImpl implements _DraftPick {
   final DateTime pickedAt;
   @override
   final bool? wasAutoPick;
+// Enhanced fields for matchup display
+  @override
+  final String? opponent;
+  @override
+  final double? projectedPts;
+  @override
+  final double? actualPts;
 
   @override
   String toString() {
-    return 'DraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, playerId: $playerId, playerName: $playerName, playerPosition: $playerPosition, playerTeam: $playerTeam, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick)';
+    return 'DraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, playerId: $playerId, playerName: $playerName, playerPosition: $playerPosition, playerTeam: $playerTeam, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick, opponent: $opponent, projectedPts: $projectedPts, actualPts: $actualPts)';
   }
 
   @override
@@ -294,7 +344,13 @@ class _$DraftPickImpl implements _DraftPick {
             (identical(other.pickedAt, pickedAt) ||
                 other.pickedAt == pickedAt) &&
             (identical(other.wasAutoPick, wasAutoPick) ||
-                other.wasAutoPick == wasAutoPick));
+                other.wasAutoPick == wasAutoPick) &&
+            (identical(other.opponent, opponent) ||
+                other.opponent == opponent) &&
+            (identical(other.projectedPts, projectedPts) ||
+                other.projectedPts == projectedPts) &&
+            (identical(other.actualPts, actualPts) ||
+                other.actualPts == actualPts));
   }
 
   @override
@@ -310,7 +366,10 @@ class _$DraftPickImpl implements _DraftPick {
       playerPosition,
       playerTeam,
       pickedAt,
-      wasAutoPick);
+      wasAutoPick,
+      opponent,
+      projectedPts,
+      actualPts);
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.
@@ -333,7 +392,10 @@ abstract class _DraftPick implements DraftPick {
       final String? playerPosition,
       final String? playerTeam,
       required final DateTime pickedAt,
-      final bool? wasAutoPick}) = _$DraftPickImpl;
+      final bool? wasAutoPick,
+      final String? opponent,
+      final double? projectedPts,
+      final double? actualPts}) = _$DraftPickImpl;
 
   @override
   int get id;
@@ -356,7 +418,13 @@ abstract class _DraftPick implements DraftPick {
   @override
   DateTime get pickedAt;
   @override
-  bool? get wasAutoPick;
+  bool? get wasAutoPick; // Enhanced fields for matchup display
+  @override
+  String? get opponent;
+  @override
+  double? get projectedPts;
+  @override
+  double? get actualPts;
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.

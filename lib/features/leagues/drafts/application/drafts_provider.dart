@@ -4,6 +4,7 @@ import '../../../../core/infrastructure/api_client.dart';
 import '../data/drafts_api_client.dart';
 import '../../../auth/application/auth_notifier.dart';
 import '../domain/draft.dart';
+import '../domain/draft_pick.dart';
 
 /// Provider for the DraftsApiClient
 final draftsApiClientProvider = Provider<DraftsApiClient>((ref) {
@@ -20,6 +21,24 @@ final leagueDraftsProvider = FutureProvider.family<List<Draft>, int>(
   (ref, leagueId) async {
     final apiClient = ref.watch(draftsApiClientProvider);
     return await apiClient.getLeagueDrafts(leagueId);
+  },
+);
+
+/// Provider for fetching draft picks for a specific draft
+/// Used to get players drafted by each roster
+final leagueDraftPicksProvider = FutureProvider.family<List<DraftPick>, ({int leagueId, int draftId})>(
+  (ref, params) async {
+    final apiClient = ref.watch(draftsApiClientProvider);
+    return await apiClient.getDraftPicks(params.leagueId, params.draftId);
+  },
+);
+
+/// Provider for fetching draft picks with stats for a specific week
+/// Used in matchup detail dialog to show opponent, projected pts, actual pts
+final leagueDraftPicksWithStatsProvider = FutureProvider.family<List<DraftPick>, ({int leagueId, int draftId, int week})>(
+  (ref, params) async {
+    final apiClient = ref.watch(draftsApiClientProvider);
+    return await apiClient.getDraftPicksWithStats(params.leagueId, params.draftId, params.week);
   },
 );
 
