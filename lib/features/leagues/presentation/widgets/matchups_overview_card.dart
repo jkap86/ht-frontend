@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../domain/league.dart';
+import '../../drafts/application/drafts_provider.dart';
+import '../../live_scores/application/live_score_provider.dart';
 import '../../matchup_drafts/application/matchup_drafts_provider.dart';
 import '../../matchup_drafts/domain/matchup_draft_pick.dart';
 import '../../../../shared/widgets/cards/section_card.dart';
@@ -23,6 +26,52 @@ class MatchupsOverviewCard extends ConsumerStatefulWidget {
 
 class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
   int? _selectedWeek;
+  final ScrollController _weekScrollController = ScrollController();
+  bool _hasScrolledToWeek = false;
+
+  @override
+  void dispose() {
+    _weekScrollController.dispose();
+    super.dispose();
+  }
+
+  /// Estimate current NFL week based on date
+  int _estimateCurrentWeek() {
+    final now = DateTime.now();
+    final currentYear = now.year;
+    final leagueSeason = int.tryParse(widget.league.season) ?? currentYear;
+
+    // NFL season start dates (first Thursday of September)
+    final seasonStartDates = <int, DateTime>{
+      2024: DateTime(2024, 9, 5),
+      2025: DateTime(2025, 9, 4),
+      2026: DateTime(2026, 9, 10),
+    };
+
+    DateTime seasonStart;
+    if (seasonStartDates.containsKey(leagueSeason)) {
+      seasonStart = seasonStartDates[leagueSeason]!;
+    } else {
+      // Calculate first Thursday of September for the league season
+      final sept1 = DateTime(leagueSeason, 9, 1);
+      final dayOfWeek = sept1.weekday; // 1=Mon, 7=Sun
+      final daysUntilThursday = (4 - dayOfWeek + 7) % 7;
+      seasonStart = DateTime(leagueSeason, 9, 1 + daysUntilThursday);
+    }
+
+    // If now is before the season start, default to week 1
+    if (now.isBefore(seasonStart)) {
+      return 1;
+    }
+
+    final weeksSinceStart = now.difference(seasonStart).inDays ~/ 7;
+    final week = weeksSinceStart + 1;
+
+    // Clamp to valid range (1-18)
+    if (week < 1) return 1;
+    if (week > 18) return 18;
+    return week;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,9 +133,20 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
 
         final weeks = picksByWeek.keys.toList()..sort();
 
-        // Initialize selected week if not set
+        // Initialize selected week if not set - default to current NFL week
         if (_selectedWeek == null || !weeks.contains(_selectedWeek)) {
-          _selectedWeek = weeks.first;
+          final currentWeek = _estimateCurrentWeek();
+          // Find the closest available week to the current week
+          if (weeks.contains(currentWeek)) {
+            _selectedWeek = currentWeek;
+          } else {
+            // Find closest week (prefer the week just before current)
+            final closestWeek = weeks.lastWhere(
+              (w) => w <= currentWeek,
+              orElse: () => weeks.first,
+            );
+            _selectedWeek = closestWeek;
+          }
         }
 
         final currentWeekPicks = picksByWeek[_selectedWeek] ?? [];
@@ -97,8 +157,8 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
             // Week selector chips
             _buildWeekSelector(context, weeks),
             const SizedBox(height: 16),
-            // Matchups for selected week
-            _buildMatchupsList(context, currentWeekPicks),
+            // Matchups for selected week (with stats)
+            _buildMatchupsListWithStats(context, currentWeekPicks, draftId),
             const SizedBox(height: 16),
             // Re-generate button for commissioner
             if (widget.league.isCommissioner)
@@ -128,7 +188,28 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
   }
 
   Widget _buildWeekSelector(BuildContext context, List<int> weeks) {
+    // Auto-scroll to selected week after first build
+    if (!_hasScrolledToWeek && _selectedWeek != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_weekScrollController.hasClients) {
+          final selectedIndex = weeks.indexOf(_selectedWeek!);
+          if (selectedIndex > 0) {
+            // Estimate chip width (~80px per chip including padding)
+            const chipWidth = 88.0;
+            final scrollOffset = (selectedIndex * chipWidth) - 40; // Center a bit
+            _weekScrollController.animateTo(
+              scrollOffset.clamp(0.0, _weekScrollController.position.maxScrollExtent),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+          _hasScrolledToWeek = true;
+        }
+      });
+    }
+
     return SingleChildScrollView(
+      controller: _weekScrollController,
       scrollDirection: Axis.horizontal,
       child: Row(
         children: weeks.map((week) {
@@ -157,9 +238,74 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
     );
   }
 
-  Widget _buildMatchupsList(BuildContext context, List<MatchupDraftPick> picks) {
-    // Group picks into matchups (each matchup has 2 entries - one for each team)
-    // For now, we just display each pick as "Team X vs Opponent"
+  Widget _buildMatchupsListWithStats(
+    BuildContext context,
+    List<MatchupDraftPick> picks,
+    int draftId,
+  ) {
+    // Fetch draft picks with stats for calculating team totals
+    final draftsAsync = ref.watch(leagueDraftsProvider(widget.league.id));
+
+    return draftsAsync.when(
+      data: (drafts) {
+        if (drafts.isEmpty) {
+          return _buildMatchupsListSimple(context, picks);
+        }
+
+        final completedDraft = drafts.firstWhere(
+          (d) => d.status == 'completed',
+          orElse: () => drafts.first,
+        );
+
+        final statsAsync = ref.watch(leagueDraftPicksWithStatsProvider((
+          leagueId: widget.league.id,
+          draftId: completedDraft.id,
+          week: _selectedWeek!,
+        )));
+
+        return statsAsync.when(
+          data: (draftPicks) {
+            // Calculate totals per roster (only starters count toward team total)
+            final teamTotals = <int, ({double projected, double actual})>{};
+            for (final pick in draftPicks) {
+              // Only include starters in the team totals
+              if (pick.isStarter != true) continue;
+
+              final rosterId = pick.rosterId;
+              final current = teamTotals[rosterId] ?? (projected: 0.0, actual: 0.0);
+              teamTotals[rosterId] = (
+                projected: current.projected + (pick.projectedPts ?? 0),
+                actual: current.actual + (pick.actualPts ?? 0),
+              );
+            }
+
+            return _buildMatchupsListWithTotals(context, picks, teamTotals);
+          },
+          loading: () => _buildMatchupsListSimple(context, picks),
+          error: (_, __) => _buildMatchupsListSimple(context, picks),
+        );
+      },
+      loading: () => _buildMatchupsListSimple(context, picks),
+      error: (_, __) => _buildMatchupsListSimple(context, picks),
+    );
+  }
+
+  Widget _buildMatchupsListSimple(BuildContext context, List<MatchupDraftPick> picks) {
+    return _buildMatchupsListWithTotals(context, picks, {});
+  }
+
+  Widget _buildMatchupsListWithTotals(
+    BuildContext context,
+    List<MatchupDraftPick> picks,
+    Map<int, ({double projected, double actual})> teamTotals,
+  ) {
+    // Watch live score provider for real-time updates
+    final liveScores = ref.watch(liveScoreProvider(widget.league.id));
+    // Only use live data when viewing the current NFL week
+    final currentWeek = _estimateCurrentWeek();
+    final isCurrentWeek = _selectedWeek == currentWeek;
+    final hasLiveData = liveScores.playerStats.isNotEmpty && isCurrentWeek;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -168,6 +314,28 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
       ),
       child: Column(
         children: picks.map((pick) {
+          // Use live data if available, otherwise fall back to static data
+          double? team1Projected;
+          double? team1Actual;
+          double? team2Projected;
+          double? team2Actual;
+
+          if (hasLiveData) {
+            // Use pace projections from live data
+            team1Projected = liveScores.getRosterPaceProjection(pick.rosterId);
+            team1Actual = liveScores.getRosterActualPoints(pick.rosterId);
+            team2Projected = liveScores.getRosterPaceProjection(pick.opponentRosterId);
+            team2Actual = liveScores.getRosterActualPoints(pick.opponentRosterId);
+          } else {
+            // Fall back to static data
+            final t1 = teamTotals[pick.rosterId];
+            final t2 = teamTotals[pick.opponentRosterId];
+            team1Projected = t1?.projected;
+            team1Actual = t1?.actual;
+            team2Projected = t2?.projected;
+            team2Actual = t2?.actual;
+          }
+
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Material(
@@ -184,20 +352,12 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            pick.pickerUsername ?? 'Team ${pick.pickerRosterNumber ?? pick.rosterId}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                        child: _buildTeamWithScore(
+                          context,
+                          pick.pickerUsername ?? 'Team ${pick.pickerRosterNumber ?? pick.rosterId}',
+                          team1Projected,
+                          team1Actual,
+                          Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
                         ),
                       ),
                       Padding(
@@ -211,20 +371,12 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
                         ),
                       ),
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            pick.opponentUsername ?? 'Team ${pick.opponentRosterNumber}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                        child: _buildTeamWithScore(
+                          context,
+                          pick.opponentUsername ?? 'Team ${pick.opponentRosterNumber}',
+                          team2Projected,
+                          team2Actual,
+                          Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.5),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -240,6 +392,65 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTeamWithScore(
+    BuildContext context,
+    String teamName,
+    double? projectedPts,
+    double? actualPts,
+    Color bgColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            teamName,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (projectedPts != null || actualPts != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Projected points (Caveat font, muted)
+                Text(
+                  projectedPts?.toStringAsFixed(1) ?? '-',
+                  style: GoogleFonts.caveat(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Actual points (Orbitron font, primary)
+                Text(
+                  actualPts?.toStringAsFixed(1) ?? '-',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

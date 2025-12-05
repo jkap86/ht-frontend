@@ -31,6 +31,7 @@ mixin _$DraftPick {
   String? get opponent => throw _privateConstructorUsedError;
   double? get projectedPts => throw _privateConstructorUsedError;
   double? get actualPts => throw _privateConstructorUsedError;
+  bool? get isStarter => throw _privateConstructorUsedError;
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.
@@ -58,7 +59,8 @@ abstract class $DraftPickCopyWith<$Res> {
       bool? wasAutoPick,
       String? opponent,
       double? projectedPts,
-      double? actualPts});
+      double? actualPts,
+      bool? isStarter});
 }
 
 /// @nodoc
@@ -90,6 +92,7 @@ class _$DraftPickCopyWithImpl<$Res, $Val extends DraftPick>
     Object? opponent = freezed,
     Object? projectedPts = freezed,
     Object? actualPts = freezed,
+    Object? isStarter = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -148,6 +151,10 @@ class _$DraftPickCopyWithImpl<$Res, $Val extends DraftPick>
           ? _value.actualPts
           : actualPts // ignore: cast_nullable_to_non_nullable
               as double?,
+      isStarter: freezed == isStarter
+          ? _value.isStarter
+          : isStarter // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -174,7 +181,8 @@ abstract class _$$DraftPickImplCopyWith<$Res>
       bool? wasAutoPick,
       String? opponent,
       double? projectedPts,
-      double? actualPts});
+      double? actualPts,
+      bool? isStarter});
 }
 
 /// @nodoc
@@ -204,6 +212,7 @@ class __$$DraftPickImplCopyWithImpl<$Res>
     Object? opponent = freezed,
     Object? projectedPts = freezed,
     Object? actualPts = freezed,
+    Object? isStarter = freezed,
   }) {
     return _then(_$DraftPickImpl(
       id: null == id
@@ -262,6 +271,10 @@ class __$$DraftPickImplCopyWithImpl<$Res>
           ? _value.actualPts
           : actualPts // ignore: cast_nullable_to_non_nullable
               as double?,
+      isStarter: freezed == isStarter
+          ? _value.isStarter
+          : isStarter // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -283,7 +296,8 @@ class _$DraftPickImpl implements _DraftPick {
       this.wasAutoPick,
       this.opponent,
       this.projectedPts,
-      this.actualPts});
+      this.actualPts,
+      this.isStarter});
 
   @override
   final int id;
@@ -314,10 +328,12 @@ class _$DraftPickImpl implements _DraftPick {
   final double? projectedPts;
   @override
   final double? actualPts;
+  @override
+  final bool? isStarter;
 
   @override
   String toString() {
-    return 'DraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, playerId: $playerId, playerName: $playerName, playerPosition: $playerPosition, playerTeam: $playerTeam, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick, opponent: $opponent, projectedPts: $projectedPts, actualPts: $actualPts)';
+    return 'DraftPick(id: $id, draftId: $draftId, pickNumber: $pickNumber, roundNumber: $roundNumber, rosterId: $rosterId, playerId: $playerId, playerName: $playerName, playerPosition: $playerPosition, playerTeam: $playerTeam, pickedAt: $pickedAt, wasAutoPick: $wasAutoPick, opponent: $opponent, projectedPts: $projectedPts, actualPts: $actualPts, isStarter: $isStarter)';
   }
 
   @override
@@ -350,7 +366,9 @@ class _$DraftPickImpl implements _DraftPick {
             (identical(other.projectedPts, projectedPts) ||
                 other.projectedPts == projectedPts) &&
             (identical(other.actualPts, actualPts) ||
-                other.actualPts == actualPts));
+                other.actualPts == actualPts) &&
+            (identical(other.isStarter, isStarter) ||
+                other.isStarter == isStarter));
   }
 
   @override
@@ -369,7 +387,8 @@ class _$DraftPickImpl implements _DraftPick {
       wasAutoPick,
       opponent,
       projectedPts,
-      actualPts);
+      actualPts,
+      isStarter);
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.
@@ -395,7 +414,8 @@ abstract class _DraftPick implements DraftPick {
       final bool? wasAutoPick,
       final String? opponent,
       final double? projectedPts,
-      final double? actualPts}) = _$DraftPickImpl;
+      final double? actualPts,
+      final bool? isStarter}) = _$DraftPickImpl;
 
   @override
   int get id;
@@ -425,6 +445,8 @@ abstract class _DraftPick implements DraftPick {
   double? get projectedPts;
   @override
   double? get actualPts;
+  @override
+  bool? get isStarter;
 
   /// Create a copy of DraftPick
   /// with the given fields replaced by the non-null parameter values.

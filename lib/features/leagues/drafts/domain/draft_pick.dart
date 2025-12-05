@@ -20,6 +20,7 @@ class DraftPick with _$DraftPick {
     String? opponent,
     double? projectedPts,
     double? actualPts,
+    bool? isStarter,
   }) = _DraftPick;
 
   factory DraftPick.fromJson(Map<String, dynamic> json) {
@@ -38,6 +39,7 @@ class DraftPick with _$DraftPick {
       opponent: json['opponent'] as String?,
       projectedPts: (json['projected_pts'] as num?)?.toDouble(),
       actualPts: (json['actual_pts'] as num?)?.toDouble(),
+      isStarter: json['is_starter'] as bool? ?? true, // Default to true if not set
     );
   }
 }
