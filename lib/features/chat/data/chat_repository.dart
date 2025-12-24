@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/infrastructure/api_client.dart';
+import '../../../core/infrastructure/api_exceptions.dart';
 import '../../auth/data/auth_storage.dart';
 import '../domain/chat_message.dart';
 
@@ -19,7 +20,7 @@ class ChatRepository {
   Future<List<ChatMessage>> fetchLeagueMessages(String leagueId, {int limit = 100}) async {
     final token = await _storage.readToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw const UnauthorizedException(message: 'No authentication token found');
     }
 
     final response = await _apiClient.getJson(
@@ -32,7 +33,11 @@ class ChatRepository {
       final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
       return data.map((json) => ChatMessage.fromLeagueMessage(json as Map<String, dynamic>)).toList();
     } else {
-      throw Exception('Failed to load league messages: ${response.statusCode}');
+      throw ServerException(
+        message: 'Failed to load league messages',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
     }
   }
 
@@ -44,7 +49,7 @@ class ChatRepository {
   }) async {
     final token = await _storage.readToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw const UnauthorizedException(message: 'No authentication token found');
     }
 
     final response = await _apiClient.postJson(
@@ -59,7 +64,11 @@ class ChatRepository {
     if (response.statusCode == 201 || response.statusCode == 200) {
       return ChatMessage.fromLeagueMessage(jsonDecode(response.body) as Map<String, dynamic>);
     } else {
-      throw Exception('Failed to send league message: ${response.statusCode} - ${response.body}');
+      throw ServerException(
+        message: 'Failed to send league message',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
     }
   }
 
@@ -68,7 +77,7 @@ class ChatRepository {
   Future<List<ChatMessage>> fetchDirectMessages(String otherUserId, {int limit = 100}) async {
     final token = await _storage.readToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw const UnauthorizedException(message: 'No authentication token found');
     }
 
     final response = await _apiClient.getJson(
@@ -85,7 +94,11 @@ class ChatRepository {
         return message.copyWith(roomId: otherUserId);
       }).toList();
     } else {
-      throw Exception('Failed to load direct messages: ${response.statusCode}');
+      throw ServerException(
+        message: 'Failed to load direct messages',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
     }
   }
 
@@ -97,7 +110,7 @@ class ChatRepository {
   }) async {
     final token = await _storage.readToken();
     if (token == null) {
-      throw Exception('No authentication token found');
+      throw const UnauthorizedException(message: 'No authentication token found');
     }
 
     final response = await _apiClient.postJson(
@@ -114,7 +127,11 @@ class ChatRepository {
       // Override the roomId to use receiverId for consistency with ChatRoom.id
       return dmMessage.copyWith(roomId: receiverId);
     } else {
-      throw Exception('Failed to send direct message: ${response.statusCode} - ${response.body}');
+      throw ServerException(
+        message: 'Failed to send direct message',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
     }
   }
 }

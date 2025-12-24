@@ -137,25 +137,13 @@ class DraftGridView extends StatelessWidget {
             ),
           ),
           padding: const EdgeInsets.all(12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                manager.username ?? 'Manager',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                manager.draftPosition != null ? '#${manager.draftPosition}' : 'TBD',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          alignment: Alignment.center,
+          child: Text(
+            manager.username ?? 'Manager',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       );
@@ -184,20 +172,13 @@ class DraftGridView extends StatelessWidget {
             border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           ),
           padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                manager.username ?? 'Manager',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                '#${manager.draftPosition ?? "TBD"}',
-                style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color),
-              ),
-            ],
+          alignment: Alignment.center,
+          child: Text(
+            manager.username ?? 'Manager',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       );

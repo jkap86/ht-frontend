@@ -74,10 +74,6 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _editingDraftId = draft.id;
       final settings = draft.settings;
 
-      print('[DEBUG] Editing draft ${draft.id}');
-      print('[DEBUG] Draft settings: ${settings?.toJson()}');
-      print('[DEBUG] Derby timer seconds from settings: ${settings?.derbyTimerSeconds}');
-
       _localDraftType = draft.draftType;
       _localThirdRoundReversal = draft.thirdRoundReversal;
       _localDraftRounds = draft.rounds;
@@ -95,9 +91,6 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
       _localDerbyTimerMinutes = (derbyTimerSeconds % 3600) ~/ 60;
       _localDerbyTimerSeconds = derbyTimerSeconds % 60;
       _localDerbyOnTimeout = settings?.derbyOnTimeout ?? 'auto';
-
-      print('[DEBUG] Parsed derby timer - Hours: $_localDerbyTimerHours, Minutes: $_localDerbyTimerMinutes, Seconds: $_localDerbyTimerSeconds');
-      print('[DEBUG] Total seconds calculated: $derbyTimerSeconds');
     });
   }
 
@@ -131,29 +124,22 @@ class _EditableDraftSettingsSectionState extends ConsumerState<EditableDraftSett
                           (_localDerbyTimerMinutes ?? 0) * 60 +
                           (_localDerbyTimerSeconds ?? 0);
 
-      print('[DEBUG] Derby timer - Hours: $_localDerbyTimerHours, Minutes: $_localDerbyTimerMinutes, Seconds: $_localDerbyTimerSeconds');
-      print('[DEBUG] Total derby timer seconds: $totalSeconds');
-
       if (totalSeconds > 0) {
         // Convert to hours and round up to minimum of 1 hour
         final hours = (totalSeconds / 3600).ceil();
         derbySettings['derby_duration_hours'] = hours < 1 ? 1 : hours;
         // Also send the exact seconds for backwards compatibility
         derbySettings['derby_timer_seconds'] = totalSeconds;
-        print('[DEBUG] Sending derby_timer_seconds: $totalSeconds');
       } else {
         // Default to 5 minutes if no timer is set
         derbySettings['derby_timer_seconds'] = 300;
         derbySettings['derby_duration_hours'] = 1;
-        print('[DEBUG] Using default derby_timer_seconds: 300');
       }
 
       derbySettings['auto_assign_remaining'] = _localDerbyOnTimeout == 'auto' ? true : false;
 
       draftData['derby_settings'] = derbySettings;
       draftData['auto_start'] = _localAutoStartDerby ?? false;
-
-      print('[DEBUG] Full derby_settings: $derbySettings');
     }
 
     try {

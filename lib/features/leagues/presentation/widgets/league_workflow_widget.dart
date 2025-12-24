@@ -126,8 +126,8 @@ class _WorkflowStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
+      width: 110,
+      margin: const EdgeInsets.only(right: 8),
       child: Card(
         color: isSelected
             ? Theme.of(context).colorScheme.primaryContainer
@@ -152,13 +152,15 @@ class _WorkflowStep extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     color: isSelected
                         ? Theme.of(context).colorScheme.onPrimaryContainer
                         : null,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.visible,
                 ),
               ],
             ),

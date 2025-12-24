@@ -159,7 +159,9 @@ class DmConversationsList extends StatelessWidget {
         if (lastAtRaw is String && lastAtRaw.isNotEmpty) {
           try {
             lastMessageAt = DateTime.parse(lastAtRaw).toLocal();
-          } catch (_) {}
+          } on FormatException {
+            // Invalid date format - display without timestamp
+          }
         }
 
         return DmConversationTile(

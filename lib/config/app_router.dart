@@ -5,11 +5,19 @@ import '../features/auth/application/auth_notifier.dart';
 import '../features/auth/application/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
+import '../features/auth/presentation/profile_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/home/presentation/add_league_screen.dart';
 import '../features/leagues/presentation/league_details_screen.dart';
 import '../features/leagues/drafts/presentation/draft_room_screen.dart';
 import '../features/leagues/matchup_drafts/presentation/matchup_draft_room_screen.dart';
 import '../features/direct_messages/presentation/dm_screen.dart';
+
+/// Safely parse an integer from path parameters, returning null if invalid
+int? _parseIntParam(String? value) {
+  if (value == null) return null;
+  return int.tryParse(value);
+}
 
 /// Router provider with auth state and guards
 final routerProvider = Provider<GoRouter>((ref) {
@@ -75,19 +83,40 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/add-league',
+        name: 'add-league',
+        builder: (context, state) => const AddLeagueScreen(),
+      ),
+      GoRoute(
         path: '/league/:leagueId',
         name: 'league',
+        redirect: (context, state) {
+          final leagueId = _parseIntParam(state.pathParameters['leagueId']);
+          if (leagueId == null) return '/home';
+          return null;
+        },
         builder: (context, state) {
-          final leagueId = int.parse(state.pathParameters['leagueId']!);
+          final leagueId = _parseIntParam(state.pathParameters['leagueId']) ?? 0;
           return LeagueDetailsScreen(leagueId: leagueId);
         },
         routes: [
           GoRoute(
             path: 'draft/:draftId/room',
             name: 'draft-room',
+            redirect: (context, state) {
+              final leagueId = _parseIntParam(state.pathParameters['leagueId']);
+              final draftId = _parseIntParam(state.pathParameters['draftId']);
+              if (leagueId == null || draftId == null) return '/home';
+              return null;
+            },
             builder: (context, state) {
-              final leagueId = int.parse(state.pathParameters['leagueId']!);
-              final draftId = int.parse(state.pathParameters['draftId']!);
+              final leagueId = _parseIntParam(state.pathParameters['leagueId']) ?? 0;
+              final draftId = _parseIntParam(state.pathParameters['draftId']) ?? 0;
               return DraftRoomScreen(
                 leagueId: leagueId,
                 draftId: draftId,
@@ -97,9 +126,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'matchup-draft/:draftId/room',
             name: 'matchup-draft-room',
+            redirect: (context, state) {
+              final leagueId = _parseIntParam(state.pathParameters['leagueId']);
+              final draftId = _parseIntParam(state.pathParameters['draftId']);
+              if (leagueId == null || draftId == null) return '/home';
+              return null;
+            },
             builder: (context, state) {
-              final leagueId = int.parse(state.pathParameters['leagueId']!);
-              final draftId = int.parse(state.pathParameters['draftId']!);
+              final leagueId = _parseIntParam(state.pathParameters['leagueId']) ?? 0;
+              final draftId = _parseIntParam(state.pathParameters['draftId']) ?? 0;
               return MatchupDraftRoomScreen(
                 leagueId: leagueId,
                 draftId: draftId,

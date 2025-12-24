@@ -7,22 +7,24 @@ import '../../lineups/application/lineup_provider.dart';
 import '../../lineups/domain/lineup.dart';
 import '../../lineups/presentation/widgets/lineup_edit_view.dart';
 
-/// Dialog showing both teams' lineups for a matchup
-class MatchupDetailDialog extends ConsumerStatefulWidget {
+/// Inline expandable content for matchup details (used in dropdown)
+class MatchupDetailContent extends ConsumerStatefulWidget {
   final int leagueId;
   final MatchupDraftPick matchup;
+  final VoidCallback? onCollapse;
 
-  const MatchupDetailDialog({
+  const MatchupDetailContent({
     super.key,
     required this.leagueId,
     required this.matchup,
+    this.onCollapse,
   });
 
   @override
-  ConsumerState<MatchupDetailDialog> createState() => _MatchupDetailDialogState();
+  ConsumerState<MatchupDetailContent> createState() => _MatchupDetailContentState();
 }
 
-class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
+class _MatchupDetailContentState extends ConsumerState<MatchupDetailContent> {
   bool _isEditMode = false;
   int? _editingRosterId;
 
@@ -32,25 +34,29 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
   @override
   Widget build(BuildContext context) {
     final leagueAsync = ref.watch(leagueByIdProvider(widget.leagueId));
-    final screenWidth = MediaQuery.of(context).size.width;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: screenWidth, maxHeight: 700),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: leagueAsync.when(
-            data: (league) => _buildDialogContent(context, league),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(child: Text('Error loading league: $error')),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+      ),
+      child: leagueAsync.when(
+        data: (league) => _buildContent(context, league),
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
           ),
+        ),
+        error: (error, stack) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error loading league: $error'),
         ),
       ),
     );
   }
 
-  Widget _buildDialogContent(BuildContext context, league) {
+  Widget _buildContent(BuildContext context, league) {
     final userRosterId = league.userRosterId;
     final isCommissioner = league.isCommissioner;
 
@@ -66,24 +72,6 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Week ${widget.matchup.weekNumber} Matchup',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
         // Teams header with edit buttons
         Row(
           children: [
@@ -97,12 +85,12 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 'vs',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 14,
                   color: Theme.of(context).colorScheme.outline,
                 ),
               ),
@@ -118,12 +106,10 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
 
         // Lineups
-        Expanded(
-          child: _buildLineupsView(context, league),
-        ),
+        _buildLineupsView(context, league),
       ],
     );
   }
@@ -147,67 +133,66 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back, size: 20),
                   onPressed: _exitEditMode,
                   tooltip: 'Back to matchup',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
                 Text(
-                  'Edit Lineup - Week ${widget.matchup.weekNumber}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  'Edit Lineup',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
               ],
             ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
           ],
         ),
-        const Divider(),
+        const Divider(height: 16),
 
         // Lineup edit view
-        Expanded(
-          child: lineupAsync.when(
-            data: (lineupResponse) => LineupEditView(
-              leagueId: widget.leagueId,
-              rosterId: _editingRosterId!,
-              week: widget.matchup.weekNumber,
-              season: league.season,
-              initialResponse: lineupResponse,
-              onSaveComplete: () {
-                // Invalidate the lineup provider to refresh data
-                ref.invalidate(lineupProvider((
-                  leagueId: widget.leagueId,
-                  rosterId: _editingRosterId!,
-                  week: widget.matchup.weekNumber,
-                  season: league.season,
-                )));
-                _exitEditMode();
-                // Show success message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Lineup saved successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              onCancel: _exitEditMode,
+        lineupAsync.when(
+          data: (lineupResponse) => LineupEditView(
+            leagueId: widget.leagueId,
+            rosterId: _editingRosterId!,
+            week: widget.matchup.weekNumber,
+            season: league.season,
+            initialResponse: lineupResponse,
+            onSaveComplete: () {
+              ref.invalidate(lineupProvider((
+                leagueId: widget.leagueId,
+                rosterId: _editingRosterId!,
+                week: widget.matchup.weekNumber,
+                season: league.season,
+              )));
+              _exitEditMode();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Lineup saved successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            onCancel: _exitEditMode,
+          ),
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error loading lineup: $error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _exitEditMode,
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
+          ),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Error loading lineup: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _exitEditMode,
+                  child: const Text('Go Back'),
+                ),
+              ],
             ),
           ),
         ),
@@ -232,33 +217,41 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
 
     return team1LineupAsync.when(
       data: (team1Lineup) => team2LineupAsync.when(
-        data: (team2Lineup) => SingleChildScrollView(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildLineupColumnFromResponse(
-                  context,
-                  team1Lineup,
-                  Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                ),
+        data: (team2Lineup) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildLineupColumnFromResponse(
+                context,
+                team1Lineup,
+                Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
               ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: _buildLineupColumnFromResponse(
-                  context,
-                  team2Lineup,
-                  Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _buildLineupColumnFromResponse(
+                context,
+                team2Lineup,
+                Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
               ),
-            ],
+            ),
+          ],
+        ),
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error loading opponent lineup: $error')),
+        error: (error, stack) => Text('Error loading opponent lineup: $error'),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error loading lineup: $error')),
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stack) => Text('Error loading lineup: $error'),
     );
   }
 
@@ -284,10 +277,10 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
     required VoidCallback onEdit,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
@@ -296,7 +289,7 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
               teamName,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 14,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
@@ -308,12 +301,12 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
             IconButton(
               icon: Icon(
                 Icons.edit,
-                size: 16,
+                size: 18,
                 color: Theme.of(context).colorScheme.primary,
               ),
               onPressed: onEdit,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               tooltip: 'Edit lineup',
             ),
         ],
@@ -321,7 +314,6 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
     );
   }
 
-  /// Build a lineup column from the API response (uses saved lineup configuration)
   Widget _buildLineupColumnFromResponse(
     BuildContext context,
     LineupResponse response,
@@ -358,7 +350,7 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
 
     if (slots.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(8),
@@ -389,8 +381,7 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
     final isEmpty = player.playerId == 0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-      margin: const EdgeInsets.symmetric(vertical: 0),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -403,13 +394,13 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
         children: [
           // Position slot badge
           Container(
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: isBench
                   ? Colors.grey.shade600
                   : _getPositionColor(slotPosition),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
@@ -417,22 +408,21 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          // Player info - 2 lines, fixed height
+          // Player info
           Expanded(
             child: SizedBox(
-              height: 42,
+              height: 48,
               child: !isEmpty
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Line 1: Player name, position, team
                         Row(
                           children: [
                             Flexible(
@@ -440,7 +430,7 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
                                 player.playerName,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 11,
+                                  fontSize: 14,
                                   color: player.isLocked
                                       ? Theme.of(context).colorScheme.outline
                                       : Theme.of(context).colorScheme.onSurface,
@@ -449,70 +439,43 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${player.playerPosition} ${player.playerTeam}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                            ),
                             if (player.isLocked)
                               Padding(
                                 padding: const EdgeInsets.only(left: 4),
                                 child: Icon(
                                   Icons.lock,
-                                  size: 10,
+                                  size: 12,
                                   color: Theme.of(context).colorScheme.outline,
                                 ),
                               ),
                           ],
                         ),
                         const SizedBox(height: 2),
-                        // Line 2: Opponent and points
                         Row(
                           children: [
-                            SizedBox(
-                              width: 36,
-                              child: Text(
-                                player.opponent ?? '',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
+                            Text(
+                              player.opponent ?? '',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).colorScheme.outline,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      player.projectedPts?.toStringAsFixed(1) ?? '-',
-                                      style: GoogleFonts.caveat(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: Theme.of(context).colorScheme.outline,
-                                      ),
-                                    ),
-                                    Text(
-                                      player.actualPts?.toStringAsFixed(1) ?? '-',
-                                      style: GoogleFonts.orbitron(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            const Spacer(),
+                            Text(
+                              player.projectedPts?.toStringAsFixed(1) ?? '-',
+                              style: GoogleFonts.caveat(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              player.actualPts?.toStringAsFixed(1) ?? '-',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ],
@@ -523,7 +486,7 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
                       child: Text(
                         'Empty',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontStyle: FontStyle.italic,
                           color: Theme.of(context).colorScheme.outline,
                         ),
@@ -571,19 +534,4 @@ class _MatchupDetailDialogState extends ConsumerState<MatchupDetailDialog> {
         return Colors.grey;
     }
   }
-}
-
-/// Show the matchup detail dialog
-void showMatchupDetailDialog(
-  BuildContext context, {
-  required int leagueId,
-  required MatchupDraftPick matchup,
-}) {
-  showDialog(
-    context: context,
-    builder: (context) => MatchupDetailDialog(
-      leagueId: leagueId,
-      matchup: matchup,
-    ),
-  );
 }

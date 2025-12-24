@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../shared/widgets/app_bar/hype_train_app_bar.dart';
 import '../domain/league.dart';
 import '../application/leagues_provider.dart';
 import 'widgets/league_settings_modal.dart';
-import 'widgets/league_header_card.dart';
 import 'widgets/league_buyin_card.dart';
 import 'widgets/league_workflow_widget.dart';
 import 'widgets/matchups_overview_card.dart';
@@ -11,8 +13,9 @@ import '../dues_payouts/presentation/widgets/dues_overview_card.dart';
 import '../drafts/presentation/widgets/draft_overview_card.dart';
 import '../drafts/application/drafts_provider.dart';
 import '../chat/presentation/widgets/collapsible_chat_widget.dart';
-import 'widgets/developer_tools_widget.dart';
+import 'widgets/developer_tools_dialog.dart';
 import '../dues_payouts/application/league_members_provider.dart';
+import '../transactions/presentation/widgets/collapsible_transactions_widget.dart';
 
 class LeagueDetailsScreen extends ConsumerStatefulWidget {
   final int leagueId;
@@ -45,42 +48,82 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
     final leaguesAsync = ref.watch(myLeaguesProvider);
 
     return leaguesAsync.when(
-      loading: () => Scaffold(
-        appBar: AppBar(title: const Text('League Details')),
-        body: const Center(child: CircularProgressIndicator()),
+      loading: () => const Scaffold(
+        appBar: HypeTrainAppBar(title: 'League Details', isLoggedIn: true),
+        body: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: const Text('League Details')),
+        appBar: const HypeTrainAppBar(title: 'League Details', isLoggedIn: true),
         body: _buildError(error, ref),
       ),
       data: (leagues) {
-        final league = leagues.firstWhere(
-          (l) => l.id == widget.leagueId,
-          orElse: () => throw Exception('League not found'),
-        );
+        final league = leagues.where((l) => l.id == widget.leagueId).firstOrNull;
+
+        if (league == null) {
+          return Scaffold(
+            appBar: const HypeTrainAppBar(title: 'League Details', isLoggedIn: true),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.search_off, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text('League not found'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.go('/home'),
+                    child: const Text('Back to Home'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(league.name),
+          appBar: HypeTrainAppBar(
+            title: league.name,
+            isLoggedIn: true,
+            onProfileTap: () => context.push('/profile'),
             actions: [
-              // Settings button - always shows read-only modal
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => LeagueSettingsModal(league: league),
-                  );
-                },
-              ),
+              // Dev tools icon - only shown in debug mode
+              if (!kReleaseMode)
+                IconButton(
+                  icon: const Icon(Icons.developer_mode),
+                  tooltip: 'Developer Tools',
+                  onPressed: () => showDeveloperToolsDialog(context, widget.leagueId),
+                ),
             ],
           ),
           body: SizedBox.expand(
             child: Stack(
               children: [
                 _buildLeagueOverview(context, league, ref),
+                // Settings button positioned in top right
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    tooltip: 'League Settings',
+                    icon: Icon(
+                      Icons.settings,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 28,
+                    ),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => LeagueSettingsModal(league: league),
+                      );
+                    },
+                  ),
+                ),
                 CollapsibleChatWidget(leagueId: widget.leagueId),
-                DeveloperToolsWidget(leagueId: widget.leagueId),
+                CollapsibleTransactionsWidget(
+                  leagueId: widget.leagueId,
+                  userRosterId: league.userRosterId,
+                  isCommissioner: league.isCommissioner,
+                ),
               ],
             ),
           ),
@@ -142,10 +185,6 @@ class _LeagueDetailsScreenState extends ConsumerState<LeagueDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // League Header Card - extracted component
-          LeagueHeaderCard(league: league),
-          const SizedBox(height: 16),
-
           // Workflow steps
           LeagueWorkflowWidget(
             league: league,

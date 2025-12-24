@@ -5,11 +5,10 @@ import '../../../domain/league.dart';
 import '../../domain/draft.dart';
 import '../../application/drafts_provider.dart';
 import '../../../../../core/services/socket/socket_providers.dart';
-import '../../../../../shared/widgets/cards/expandable_card.dart';
 import 'draft_header_bar.dart';
 import 'draft_order_content_widget.dart';
 
-/// Individual draft card with collapsible sections
+/// Individual draft card - always expanded
 class DraftCardContainer extends ConsumerStatefulWidget {
   final Draft draft;
   final int draftNumber;
@@ -31,8 +30,6 @@ class DraftCardContainer extends ConsumerStatefulWidget {
 }
 
 class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
-  bool _isExpanded = false;
-  String? _expandedSection; // Track which section is expanded
   void Function()? _derbyUpdateListener;
   String? _joinedRoomName;
 
@@ -82,56 +79,62 @@ class _DraftCardContainerState extends ConsumerState<DraftCardContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return ExpandableCard(
-      elevation: 2,
-      initiallyExpanded: _isExpanded,
-      onToggle: (expanded) => setState(() => _isExpanded = expanded),
-      headerPadding: EdgeInsets.zero,
-      contentPadding: EdgeInsets.zero,
-      showDivider: true,
-      header: DraftHeaderBar(
-        draftName: 'Draft ${widget.draftNumber}',
-        draftTypeLabel: _formatDraftType(widget.draft.draftType),
-        rounds: widget.draft.rounds,
-        playerPoolLabel: _formatPlayerPool(widget.draft.settings?.playerPool ?? 'all'),
-      ),
-      child: _buildDraftOrderSection(),
-    );
-  }
-
-  Widget _buildDraftOrderSection() {
-    final isExpanded = _expandedSection == 'draft_order';
     final settings = widget.draft.settings;
     final draftOrder = settings?.draftOrder ?? 'random';
     final draftOrderLabel =
         draftOrder.toLowerCase() == 'derby' ? 'Derby' : 'Randomize';
 
-    return ExpandableSection(
-      title: 'Draft Order',
-      badge: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          draftOrderLabel,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
+    return Card(
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          DraftHeaderBar(
+            draftName: 'Draft ${widget.draftNumber}',
+            draftTypeLabel: _formatDraftType(widget.draft.draftType),
+            rounds: widget.draft.rounds,
+            playerPoolLabel: _formatPlayerPool(widget.draft.settings?.playerPool ?? 'all'),
           ),
-        ),
-      ),
-      isExpanded: isExpanded,
-      onToggle: () => setState(() {
-        _expandedSection = isExpanded ? null : 'draft_order';
-      }),
-      child: DraftOrderContentWidget(
-        draft: widget.draft,
-        leagueId: widget.leagueId,
-        isCommissioner: widget.isCommissioner,
-        league: widget.league,
+          const Divider(height: 1),
+          // Draft Order section header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                Text(
+                  'Draft Order',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    draftOrderLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Draft Order content
+          DraftOrderContentWidget(
+            draft: widget.draft,
+            leagueId: widget.leagueId,
+            isCommissioner: widget.isCommissioner,
+            league: widget.league,
+          ),
+        ],
       ),
     );
   }

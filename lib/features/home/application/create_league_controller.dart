@@ -293,9 +293,8 @@ class CreateLeagueController extends StateNotifier<CreateLeagueState> {
         for (final draftConfig in data.draftConfigurations) {
           try {
             await draftsApiClient.createDraft(newLeague.id, draftConfig);
-          } catch (e) {
-            // Log error but continue with other drafts
-            print('Error creating draft: $e');
+          } catch (_) {
+            // Error creating draft - continue with other drafts
           }
         }
       }

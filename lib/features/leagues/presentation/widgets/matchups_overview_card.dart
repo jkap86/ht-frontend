@@ -28,6 +28,8 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
   int? _selectedWeek;
   final ScrollController _weekScrollController = ScrollController();
   bool _hasScrolledToWeek = false;
+  // Track which matchup is expanded (by rosterId)
+  int? _expandedMatchupRosterId;
 
   @override
   void dispose() {
@@ -85,6 +87,8 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
 
     return SectionCard(
       title: 'Matchups',
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      spacing: 8,
       child: matchupDraftAsync.when(
         data: (draft) {
           // If draft is completed, show matchups
@@ -307,11 +311,11 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
     final hasLiveData = liveScores.playerStats.isNotEmpty && isCurrentWeek;
 
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: picks.map((pick) {
           // Use live data if available, otherwise fall back to static data
@@ -336,60 +340,90 @@ class _MatchupsOverviewCardState extends ConsumerState<MatchupsOverviewCard> {
             team2Actual = t2?.actual;
           }
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => showMatchupDetailDialog(
-                  context,
-                  leagueId: widget.league.id,
-                  matchup: pick,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTeamWithScore(
-                          context,
-                          pick.pickerUsername ?? 'Team ${pick.pickerRosterNumber ?? pick.rosterId}',
-                          team1Projected,
-                          team1Actual,
-                          Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          'vs',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+          final isExpanded = _expandedMatchupRosterId == pick.rosterId;
+
+          return Column(
+            children: [
+              // Matchup summary row (clickable header)
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _expandedMatchupRosterId = isExpanded ? null : pick.rosterId;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildTeamWithScore(
+                            context,
+                            pick.pickerUsername ?? 'Team ${pick.pickerRosterNumber ?? pick.rosterId}',
+                            team1Projected,
+                            team1Actual,
+                            Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: _buildTeamWithScore(
-                          context,
-                          pick.opponentUsername ?? 'Team ${pick.opponentRosterNumber}',
-                          team2Projected,
-                          team2Actual,
-                          Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            'vs',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 20,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ],
+                        Expanded(
+                          child: _buildTeamWithScore(
+                            context,
+                            pick.opponentUsername ?? 'Team ${pick.opponentRosterNumber}',
+                            team2Projected,
+                            team2Actual,
+                            Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        AnimatedRotation(
+                          turns: isExpanded ? 0.25 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              // Expanded detail content
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: MatchupDetailContent(
+                  leagueId: widget.league.id,
+                  matchup: pick,
+                  onCollapse: () {
+                    setState(() {
+                      _expandedMatchupRosterId = null;
+                    });
+                  },
+                ),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 200),
+              ),
+              // Divider between matchups (except last)
+              if (pick != picks.last)
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                ),
+            ],
           );
         }).toList(),
       ),

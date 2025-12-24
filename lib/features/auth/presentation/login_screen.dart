@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/app_bar/hype_train_app_bar.dart';
 import 'widgets/login_form.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -11,6 +12,7 @@ class LoginScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: const HypeTrainAppBar(title: 'Hype Train'),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

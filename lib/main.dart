@@ -8,6 +8,7 @@ import 'config/app_theme.dart';
 
 import 'features/auth/application/auth_notifier.dart';
 import 'features/auth/application/auth_state.dart';
+import 'shared/application/theme_notifier.dart';
 
 late final AppConfig appConfig;
 
@@ -37,6 +38,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeProvider);
 
     // Show a splash/loading screen while auth is still resolving.
     if (authState.status == AuthStatus.unknown || authState.isLoading) {
@@ -45,7 +47,7 @@ class MyApp extends ConsumerWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: themeMode,
         home: const Scaffold(
           body: Center(
             child: CircularProgressIndicator(),
@@ -59,7 +61,7 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

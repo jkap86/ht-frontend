@@ -26,7 +26,6 @@ class SocketService {
 
     final token = await _tokenProvider.readToken();
     if (token == null) {
-      print('[SocketService] No auth token found, skipping socket connect');
       return false;
     }
 
@@ -42,11 +41,8 @@ class SocketService {
     );
 
     _socket!.onConnect((_) {
-      print('[SocketService] Connected to $_baseUrl');
-
       // Rejoin all previously joined rooms
       for (final room in _joinedRooms) {
-        print('[SocketService] Rejoining room: $room');
         _emitJoinRoom(room);
       }
 
@@ -55,19 +51,15 @@ class SocketService {
       }
     });
 
-    _socket!.onDisconnect((_) {
-      print('[SocketService] Disconnected from $_baseUrl');
-    });
+    _socket!.onDisconnect((_) {});
 
     _socket!.onConnectError((error) {
-      print('[SocketService] Connect error: $error');
       if (!completer.isCompleted) {
         completer.complete(false);
       }
     });
 
     _socket!.onError((error) {
-      print('[SocketService] Socket error: $error');
       if (!completer.isCompleted) {
         completer.complete(false);
       }
@@ -104,7 +96,6 @@ class SocketService {
     final connected = await connect();
 
     if (!connected || _socket == null) {
-      print('[SocketService] joinRoom failed, socket not ready');
       // Still track desired room so onConnect can re-join it later
       _joinedRooms.add(roomName);
       return false;
@@ -124,7 +115,6 @@ class SocketService {
     Map<String, dynamic>? data,
   }) {
     if (_socket == null || !_socket!.connected) {
-      print('[SocketService] leaveRoom called when socket not connected');
       _joinedRooms.remove(roomName);
       return false;
     }
@@ -141,7 +131,6 @@ class SocketService {
   /// Safe emit: returns false instead of throwing.
   bool tryEmit(String event, dynamic data) {
     if (_socket == null || !_socket!.connected) {
-      print('[SocketService] tryEmit($event) dropped, socket not connected');
       return false;
     }
     _socket!.emit(event, data);
@@ -155,7 +144,6 @@ class SocketService {
     void Function(dynamic) callback,
   ) {
     if (_socket == null) {
-      print('[SocketService] on($event) called before connect');
       return null;
     }
 
