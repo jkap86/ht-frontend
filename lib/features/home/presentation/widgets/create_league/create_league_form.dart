@@ -66,7 +66,6 @@ class CreateLeagueForm extends ConsumerWidget {
             onNameChanged: controller.updateName,
             onSeasonChanged: controller.updateSeason,
             onTotalRostersChanged: controller.updateTotalRosters,
-            onSeasonTypeChanged: controller.updateSeasonType,
             onStartWeekChanged: controller.updateStartWeek,
             onEndWeekChanged: controller.updateEndWeek,
             onPlayoffsEnabledChanged: controller.updatePlayoffsEnabled,

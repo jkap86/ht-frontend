@@ -8,7 +8,6 @@ class BasicSettingsSection extends StatelessWidget {
   final Function(String) onNameChanged;
   final Function(String) onSeasonChanged;
   final Function(int) onTotalRostersChanged;
-  final Function(String) onSeasonTypeChanged;
   final Function(int) onStartWeekChanged;
   final Function(int) onEndWeekChanged;
   final Function(bool) onPlayoffsEnabledChanged;
@@ -24,7 +23,6 @@ class BasicSettingsSection extends StatelessWidget {
     required this.onNameChanged,
     required this.onSeasonChanged,
     required this.onTotalRostersChanged,
-    required this.onSeasonTypeChanged,
     required this.onStartWeekChanged,
     required this.onEndWeekChanged,
     required this.onPlayoffsEnabledChanged,
@@ -74,36 +72,6 @@ class BasicSettingsSection extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: data.seasonType,
-                  decoration: const InputDecoration(
-                    labelText: 'Season Type',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: 'regular', child: Text('Regular')),
-                    DropdownMenuItem(
-                      value: 'pre',
-                      enabled: false,
-                      child: Text(
-                        'Pre',
-                        style: TextStyle(color: Colors.grey.shade400),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'post',
-                      enabled: false,
-                      child: Text(
-                        'Post',
-                        style: TextStyle(color: Colors.grey.shade400),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) onSeasonTypeChanged(value);
-                  },
-                ),
-                const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: data.totalRosters,
                   decoration: const InputDecoration(
@@ -124,7 +92,7 @@ class BasicSettingsSection extends StatelessWidget {
                   label: 'Start Week',
                   value: data.startWeek,
                   min: 1,
-                  max: 18,
+                  max: 21,
                   onChanged: onStartWeekChanged,
                 ),
                 const SizedBox(height: 16),
@@ -132,7 +100,7 @@ class BasicSettingsSection extends StatelessWidget {
                   label: 'End Week',
                   value: data.endWeek,
                   min: data.startWeek,
-                  max: 18,
+                  max: 21,
                   onChanged: onEndWeekChanged,
                 ),
                 const SizedBox(height: 16),
